@@ -8,25 +8,27 @@
   html, body {
     margin: 0;
     padding: 0;
-    /* تم حذف width: 100vw; هنا */
+    width: 100vw;
     height: 100svh;
-    overflow-x: auto; 
     overflow-y: hidden;
     background: black;
     overscroll-behavior: none; 
   }
   
-  body {
-    display: block;
-    width: fit-content; /* هام: لتقييد عرض الـ body بعرض الـ SVG (12288px) */
+  /* الحاوية الجديدة التي تتحكم في التمرير */
+  #scroll-container {
+    width: 100vw; /* عرض النافذة بالكامل */
     height: 100svh;
+    overflow-x: auto; /* هذا هو الذي ينشئ شريط التمرير */
+    overflow-y: hidden;
   }
   
   #main-svg {
     height: 100svh;
     min-height: 100svh;
-    display: inline-block; /* هام: للسماح لـ fit-content بالعمل */
+    display: block; /* لضمان أن الـ SVG يُحترم عرضه */
     background: black;
+    /* العرض الكلي للمحتوى (12 صورة * 1024 بكسل/صورة) */
     width: 12288px; 
   }
   .image-mapper-shape {
@@ -49,11 +51,12 @@
 </style>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 12288 2454"
-    preserveAspectRatio="xMinYMin meet"
-    id="main-svg">
-  <defs id="clip-defs"></defs>
+<div id="scroll-container">
+    <svg xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 12288 2454"
+        preserveAspectRatio="xMinYMin meet"
+        id="main-svg">
+      <defs id="clip-defs"></defs>
 
 <g transform="translate(0,0)">
     <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
@@ -119,16 +122,32 @@
 <g transform="translate(11264,0)">
     <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
 </g>
-</svg>
+    </svg>
+</div>
 
 ---
 
-## 🛠️ كود JavaScript (الزوم و الـ Hover)
+## 🛠️ كود JavaScript المحدث (بما في ذلك التحكم في التمرير)
 
 <script>
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
+const scrollContainer = document.getElementById('scroll-container'); // تعريف الحاوية
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
+
+// تحديد الحد الأقصى للتمرير (هنا: 6 صور * 1024 = 6144 بكسل)
+// يمكنك تغيير الرقم 6144 إلى 12288 لإتاحة التمرير حتى نهاية جميع الصور
+const MAX_SCROLL_LEFT = 6 * 1024; 
+
+// 🎯 التحكم في حدود شريط التمرير (الآلية المطلوبة)
+scrollContainer.addEventListener('scroll', function() {
+    // يجب أن تكون القيمة القصوى للتمرير أقل من (عرض المحتوى - عرض النافذة)
+    // لتجنب المشاكل، نتحقق فقط من أن scrollLeft لا يتجاوز الحد الذي حددناه
+    if (this.scrollLeft > MAX_SCROLL_LEFT) {
+        this.scrollLeft = MAX_SCROLL_LEFT;
+    }
+});
+// نهاية التحكم في التمرير
 
 // حساب الإزاحة التراكمية لجميع <g>
 function getCumulativeTranslate(element) {
@@ -257,7 +276,7 @@ function attachHover(rect, i) {
     }
 
     function stopHover(e) {
-        const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
+        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
         if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
     }
 }
