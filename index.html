@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive SVG Viewer</title>
+<title>Interactive SVG Image Mapper</title>
 <style>
-  html, body {
+html, body {
     margin: 0;
     padding: 0;
     width: 100vw;
@@ -13,27 +13,26 @@
     overflow-y: hidden;
     background: black;
     overscroll-behavior: none;
-  }
-#scroll-container {
-  width: 100vw;
-  height: 100svh;
-  overflow-x: auto;
-  overflow-y: hidden;
 }
-
+#scroll-container {
+    width: 100vw;
+    height: 100svh;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
 #main-svg {
-  height: 100svh;
-  min-height: 100svh;
-  display: block;
-  background: black;
-  width: 3500px;
+    height: 100svh;
+    min-height: 100svh;
+    display: block;
+    background: black;
+    width: 3500px;
 }
 .image-mapper-shape {
-  fill: transparent;
-  stroke: yellow;
-  stroke-width: 2px;
-  transform-origin: center center;
-  transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
+    fill: transparent;
+    stroke: yellow;
+    stroke-width: 2px;
+    transform-origin: center center;
+    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
 }
 .q { stroke: red; }
 .v { stroke: blue; }
@@ -41,9 +40,9 @@
 .o { stroke: #80CBC4; }
 .a { stroke: #F48FB1; }
 .zoom-part {
-  pointer-events: none;
-  transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-  image-rendering: auto;
+    pointer-events: none;
+    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+    image-rendering: auto;
 }
 </style>
 </head>
@@ -55,64 +54,64 @@
         id="main-svg">
       <defs id="clip-defs"></defs>
       <g transform="translate(0,0)">
-    <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
-    <g transform="translate(254,0)">
-      <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>
-      <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>
-    </g>
-    <g transform="translate(484,0)">
-      <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>
-    </g>
-    <g transform="translate(488,0)">
-      <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>
-    </g>
-    <g transform="translate(599,0)">
-      <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-    </g>
-</g>
-<g transform="translate(1024,0)">
-    <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
-</g>
-<g transform="translate(2048,0)">
-    <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
-</g>
-<g transform="translate(3072,0)">
-    <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
-</g>
-<g transform="translate(4096,0)">
-    <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
-</g>
-<g transform="translate(5120,0)">
-    <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
-</g>
-<g transform="translate(6144,0)">
-    <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
-</g>
-<g transform="translate(7168,0)">
-    <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
-    <g transform="translate(368,0)">
-      <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
-      <a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>
-      <a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>
-      <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
-      <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
-    </g>
-</g>
-<g transform="translate(8192,0)">
-    <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
-</g>
-<g transform="translate(9216,0)">
-    <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
-</g>
-<g transform="translate(10240,0)">
-    <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
-    <g transform="translate(400,0)">
-        <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-    </g>
-</g>
-<g transform="translate(11264,0)">
-    <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
-</g>
+        <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
+        <g transform="translate(254,0)">
+          <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>
+          <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>
+        </g>
+        <g transform="translate(484,0)">
+          <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>
+        </g>
+        <g transform="translate(488,0)">
+          <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>
+        </g>
+        <g transform="translate(599,0)">
+          <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+        </g>
+      </g>
+      <g transform="translate(1024,0)">
+        <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(2048,0)">
+        <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(3072,0)">
+        <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(4096,0)">
+        <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(5120,0)">
+        <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(6144,0)">
+        <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(7168,0)">
+        <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
+        <g transform="translate(368,0)">
+          <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
+          <a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>
+          <a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>
+          <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
+          <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
+        </g>
+      </g>
+      <g transform="translate(8192,0)">
+        <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(9216,0)">
+        <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
+      </g>
+      <g transform="translate(10240,0)">
+        <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
+        <g transform="translate(400,0)">
+            <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+        </g>
+      </g>
+      <g transform="translate(11264,0)">
+        <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
+      </g>
     </svg>
 </div>
 
@@ -121,7 +120,6 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
 const scrollContainer = document.getElementById('scroll-container');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
-
 const MAX_SCROLL_LEFT = 6 * 1024;
 
 scrollContainer.addEventListener('scroll', function() {
