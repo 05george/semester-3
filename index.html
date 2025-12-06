@@ -189,15 +189,22 @@
     const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
     return match ? parseFloat(match[2]) : 0;  
   }
-  function getGroupImage(parentGroup) { 
-    const baseImage = parentGroup.querySelector('image');  
-    if (!baseImage) return null;  
-    const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');  
-    const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));  
-    const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));  
-    if (isNaN(IMAGE_WIDTH) || isNaN(IMAGE_HEIGHT)) return null;  
-    return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };  
-  } 
+  function getGroupImage(element) {
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        const baseImage = current.querySelector('image');
+        if (baseImage) {
+            const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
+            const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
+            const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
+            if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) {
+                return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };
+            }
+        }
+        current = current.parentNode;
+    }
+    return null;
+}
 
   function cleanupHover() {  
     if (!activeState.rect) return;  
