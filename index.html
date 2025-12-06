@@ -5,23 +5,21 @@ html, body {
     margin: 0;
     padding: 0;
     width: 100vw;
-    height: 100svh;
-    overflow-x: aoto;
+    height: 100%;
+    overflow-x: auto;
     overflow-y: hidden;
     background: black;
 }
 body {
  display: block;
  width: auto; 
- height: 100svh;
+ height: 100%;
 }
 #main-svg {
-    height: 100svh;
-    max-height:100svh;
-    min-height: 100svh;
+    height: 100%;
     display: block;
     background: black;
-    width: 3500px;
+    width: auto;
 }
 .image-mapper-shape {
     fill: transparent;
@@ -43,12 +41,12 @@ body {
 </style>
 </head>
 <body>
-<div id="scroll-container">
+<div>
     <svg xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 12288 2454"
-        preserveAspectRatio="xMinYMin meet"
+        preserveAspectRatio="xMinYMin slice"
         id="main-svg">
-      <defs id="clip-defs"></defs>
+      <defs></defs>
       <g transform="translate(0,0)">
         <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
         <g transform="translate(254,0)">
@@ -113,8 +111,8 @@ body {
 
 <script>
 const mainSvg = document.getElementById('main-svg');
-const clipDefs = document.getElementById('clip-defs');
-const scrollContainer = document.getElementById('scroll-container');
+const clipDefs = mainSvg.querySelector('defs');
+const scrollContainer = document.querySelector('div');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 const MAX_SCROLL_LEFT = 6 * 1024;
 
