@@ -10,9 +10,11 @@
     padding: 0;
     width: 100vw;
     height: 100svh;
-    overflow-x: auto;
+    overflow-x: auto; /* يسمح بالتمرير الأفقي */
     overflow-y: hidden;
     background: black;
+    /* إضافة هذه الخاصية لمنع "الارتداد" (Bounce Effect) عند الوصول للحد الأقصى (12288px) */
+    overscroll-behavior: none; 
   }
   body {
     display: block;
@@ -25,7 +27,7 @@
     min-height: 100svh;
     display: block;
     background: black;
-    /* العرض الكلي: 12 صورة * 1024 بكسل/صورة */
+    /* العرض الكلي للمحتوى (12 صورة * 1024 بكسل/صورة) */
     width: 12288px; 
   }
   .image-mapper-shape {
@@ -54,6 +56,10 @@
     id="main-svg">
   <defs id="clip-defs"></defs>
 
+---
+
+## 🖼️ محتوى SVG (الصور والمستطيلات الأصلية)
+
 <g transform="translate(0,0)">
     <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
     <g transform="translate(254,0)">
@@ -74,23 +80,18 @@
 <g transform="translate(1024,0)">
     <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(2048,0)">
     <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(3072,0)">
     <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(4096,0)">
     <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(5120,0)">
     <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(6144,0)">
     <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
 </g>
@@ -109,7 +110,6 @@
 <g transform="translate(8192,0)">
     <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
 </g>
-
 <g transform="translate(9216,0)">
     <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
 </g>
@@ -125,6 +125,11 @@
     <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
 </g>
 </svg>
+
+---
+
+## 🛠️ كود JavaScript (الزوم و الـ Hover)
+
 <script>
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
@@ -150,7 +155,6 @@ function getGroupImage(element) {
     let current = element;
     while (current && current.tagName !== 'svg') {
         if (current.tagName === 'g') {
-            // نبحث عن وسم <image> مباشرة داخل المجموعة <g> الحالية
             const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
             if (images.length) {
                 const baseImage = images[0];
