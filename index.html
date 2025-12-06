@@ -5,46 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interactive SVG Viewer</title>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: black;
-    overscroll-behavior: none;
-  }
-
-  #scroll-container {
-    width: 100vw;
-    height: 2454px;  /* ارتفاع الصورة الكامل */
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  #main-svg {
-    height: 2454px;  /* ارتفاع الصورة الكامل */
-    display: block;
-    background: black;
-    width: 12288px; /* مجموع عرض الصور */
-  }
-
-  .image-mapper-shape {
-    fill: transparent;
-    stroke: yellow;
-    stroke-width: 2px;
-    transform-origin: center center;
-    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
-  }
-
-  .q { stroke: red; }
-  .v { stroke: blue; }
-  .ipc { stroke: white; }
-  .o { stroke: #80CBC4; }
-  .a { stroke: #F48FB1; }
-
-  .zoom-part {
-    pointer-events: none;
-    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-    image-rendering: auto;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100svh;
+  overflow-y: hidden;
+  background: black;
+  overscroll-behavior: none;
+}
+#scroll-container {
+  width: 100vw;
+  height: 100svh;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#main-svg {
+  height: 100svh;
+  min-height: 100svh;
+  display: block;
+  background: black;
+  width: 3500px;
+}
+.image-mapper-shape {
+  fill: transparent;
+  stroke: yellow;
+  stroke-width: 2px;
+  transform-origin: center center;
+  transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
+}
+.q { stroke: red; }
+.v { stroke: blue; }
+.ipc { stroke: white; }
+.o { stroke: #80CBC4; }
+.a { stroke: #F48FB1; }
+.zoom-part {
+  pointer-events: none;
+  transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+  image-rendering: auto;
+}
 </style>
 </head>
 <body>
@@ -54,50 +53,65 @@
         preserveAspectRatio="xMinYMin meet"
         id="main-svg">
       <defs id="clip-defs"></defs>
-
-      <!-- الصور والمستطيلات -->
       <g transform="translate(0,0)">
-          <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
-          <g transform="translate(254,0)">
-            <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>
-            <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>
-          </g>
-          <g transform="translate(484,0)">
-            <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>
-          </g>
-          <g transform="translate(488,0)">
-            <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>
-          </g>
-          <g transform="translate(599,0)">
-            <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-          </g>
-      </g>
-
-      <g transform="translate(1024,0)"><image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" /></g>
-      <g transform="translate(2048,0)"><image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" /></g>
-      <g transform="translate(3072,0)"><image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" /></g>
-      <g transform="translate(4096,0)"><image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" /></g>
-      <g transform="translate(5120,0)"><image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" /></g>
-      <g transform="translate(6144,0)"><image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" /></g>
-      <g transform="translate(7168,0)">
-          <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
-          <g transform="translate(368,0)">
-            <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
-            <a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>
-            <a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>
-            <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
-            <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
-          </g>
-      </g>
-      <g transform="translate(8192,0)"><image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" /></g>
-      <g transform="translate(9216,0)"><image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" /></g>
-      <g transform="translate(10240,0)">
-          <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
-          <g transform="translate(400,0)">
-              <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-          </g>
-      </g>
-      <g transform="translate(11264,0)"><image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" /></g>
+    <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
+    <g transform="translate(254,0)">
+      <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>
+      <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>
+    </g>
+    <g transform="translate(484,0)">
+      <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>
+    </g>
+    <g transform="translate(488,0)">
+      <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>
+    </g>
+    <g transform="translate(599,0)">
+      <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+    </g>
+</g>
+<g transform="translate(1024,0)">
+    <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
+</g>
+<g transform="translate(2048,0)">
+    <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
+</g>
+<g transform="translate(3072,0)">
+    <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
+</g>
+<g transform="translate(4096,0)">
+    <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
+</g>
+<g transform="translate(5120,0)">
+    <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
+</g>
+<g transform="translate(6144,0)">
+    <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
+</g>
+<g transform="translate(7168,0)">
+    <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
+    <g transform="translate(368,0)">
+      <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
+      <a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>
+      <a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>
+      <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
+      <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
+    </g>
+</g>
+<g transform="translate(8192,0)">
+    <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
+</g>
+<g transform="translate(9216,0)">
+    <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
+</g>
+<g transform="translate(10240,0)">
+    <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
+    <g transform="translate(400,0)">
+        <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+    </g>
+</g>
+<g transform="translate(11264,0)">
+    <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
+</g>
     </svg>
 </div>
 
@@ -106,20 +120,22 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
 const scrollContainer = document.getElementById('scroll-container');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
-const totalWidthOfAllImages = 12 * 1024;
+
+const MAX_SCROLL_LEFT = 6 * 1024;
 
 scrollContainer.addEventListener('scroll', function() {
-    const maxScroll = totalWidthOfAllImages - scrollContainer.clientWidth;
-    if (this.scrollLeft > maxScroll) this.scrollLeft = maxScroll;
+    if (this.scrollLeft > MAX_SCROLL_LEFT) {
+        this.scrollLeft = MAX_SCROLL_LEFT;
+    }
 });
 
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
     let current = element;
     while (current && current.tagName !== 'svg') {
-        const t = current.getAttribute('transform');
-        if (t) {
-            const match = t.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+        const transformAttr = current.getAttribute('transform');
+        if (transformAttr) {
+            const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
             if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
         }
         current = current.parentNode;
@@ -134,10 +150,10 @@ function getGroupImage(element) {
             const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
             if (images.length) {
                 const baseImage = images[0];
-                const src = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
-                const w = parseFloat(baseImage.getAttribute('width'));
-                const h = parseFloat(baseImage.getAttribute('height'));
-                if (!isNaN(w) && !isNaN(h)) return { src, width: w, height: h, group: current };
+                const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
+                const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
+                const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
+                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
             }
         }
         current = current.parentNode;
@@ -145,7 +161,135 @@ function getGroupImage(element) {
     return null;
 }
 
-// attachHover، cleanupHover، MutationObserver، setLinkTarget تبقى كما في كودك الأصلي
+function cleanupHover() {
+    if (!activeState.rect) return;
+    if(activeState.animationId) clearInterval(activeState.animationId);
+    activeState.rect.style.transform = 'scale(1)';
+    activeState.rect.style.filter = 'none';
+    activeState.rect.style.strokeWidth = '2px';
+    if(activeState.zoomPart) activeState.zoomPart.remove();
+    const currentClip = document.getElementById(activeState.clipPathId);
+    if(currentClip) currentClip.remove();
+    Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
+}
+
+function attachHover(rect, i) {
+    const clipPathId = `clip-${i}-${Date.now()}`;
+    const scale = 1.1;
+    rect.setAttribute('data-index', i);
+
+    rect.addEventListener('mouseover', startHover);
+    rect.addEventListener('mouseout', stopHover);
+    rect.addEventListener('touchstart', startHover);
+    rect.addEventListener('touchend', cleanupHover);
+
+    function startHover() {
+        if(activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
+        activeState.clipPathId = clipPathId;
+
+        const x = parseFloat(rect.getAttribute('x'));
+        const y = parseFloat(rect.getAttribute('y'));
+        const width = parseFloat(rect.getAttribute('width'));
+        const height = parseFloat(rect.getAttribute('height'));
+
+        const cumulative = getCumulativeTranslate(rect);
+        const absoluteX = x + cumulative.x;
+        const absoluteY = y + cumulative.y;
+
+        const imageData = getGroupImage(rect);
+        if (!imageData) return;
+
+        let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+        clip.setAttribute('id', clipPathId);
+        let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        clipRect.setAttribute('x', absoluteX);
+        clipRect.setAttribute('y', absoluteY);
+        clipRect.setAttribute('width', width);
+        clipRect.setAttribute('height', height);
+        clipDefs.appendChild(clip).appendChild(clipRect);
+
+        const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
+        zoomPart.setAttribute('href', imageData.src);
+        zoomPart.setAttribute('width', imageData.width);
+        zoomPart.setAttribute('height', imageData.height);
+        zoomPart.setAttribute('class','zoom-part');
+        zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+
+        const groupParentTransform = imageData.group.getAttribute('transform');
+        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const groupX = match ? parseFloat(match[1]) : 0;
+        const groupY = match ? parseFloat(match[2]) : 0;
+
+        zoomPart.setAttribute('x', groupX);
+        zoomPart.setAttribute('y', groupY);
+
+        zoomPart.style.opacity = 0;
+        mainSvg.appendChild(zoomPart);
+        activeState.zoomPart = zoomPart;
+
+        const centerX = absoluteX + width/2;
+        const centerY = absoluteY + height/2;
+
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        rect.style.transform = `scale(${scale})`;
+        rect.style.strokeWidth = '4px';
+
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+        zoomPart.style.transform = `scale(${scale})`;
+        zoomPart.style.opacity = 1;
+
+        let hue = 0;
+        let currentStrokeWidth = 4;
+        const animationId = setInterval(() => {
+            hue = (hue + 1) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
+            rect.style.filter = glow;
+            if(zoomPart) zoomPart.style.filter = glow;
+            currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
+            rect.style.strokeWidth = `${currentStrokeWidth}px`;
+        }, 100);
+        activeState.animationId = animationId;
+    }
+
+    function stopHover(e) {
+        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
+        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
+    }
+}
+
+document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
+    rect.setAttribute('data-processed', 'true');
+    attachHover(rect, i);
+});
+
+const rootObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+                if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+                    attachHover(node, Date.now());
+                    node.setAttribute('data-processed', 'true');
+                }
+                if (node.querySelector) {
+                    node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
+                        attachHover(rect, Date.now());
+                        rect.setAttribute('data-processed', 'true');
+                    });
+                }
+            }
+        });
+    });
+});
+rootObserver.observe(mainSvg, { childList: true, subtree: true });
+
+function setLinkTarget() {
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
+    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');
+    allLinks.forEach(link => { isMobile ? link.removeAttribute('target') : link.setAttribute('target', '_blank'); });
+}
+setLinkTarget();
 </script>
 </body>
 </html>
