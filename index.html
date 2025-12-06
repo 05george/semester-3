@@ -68,49 +68,43 @@
     </g>
     <g transform="translate(599,0)">
       <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-    </g>
+</g>
 </g>
 
 <g transform="translate(1024,0)">
     <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
     <g transform="translate(100, 100)">
-        <a href="image2-link-example.pdf"><rect x="0" y="0" width="150" height="200" class="image-mapper-shape o"/></a>
-    </g>
+
 </g>
 
 <g transform="translate(2048,0)">
     <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
     <g transform="translate(300, 500)">
-        <a href="image3-link-example.pdf"><rect x="0" y="0" width="100" height="150" class="image-mapper-shape a"/></a>
-    </g>
+   
 </g>
 
 <g transform="translate(3072,0)">
     <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
     <g transform="translate(50, 1000)">
-        <a href="image4-link-example.pdf"><rect x="0" y="0" width="200" height="100" class="image-mapper-shape ipc"/></a>
-    </g>
+  
 </g>
 
 <g transform="translate(4096,0)">
     <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
     <g transform="translate(400, 100)">
-        <a href="image5-link-example.pdf"><rect x="0" y="0" width="120" height="180" class="image-mapper-shape q"/></a>
-    </g>
+   
 </g>
 
 <g transform="translate(5120,0)">
     <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
     <g transform="translate(50, 2000)">
-        <a href="image6-link-example.pdf"><rect x="0" y="0" width="100" height="100" class="image-mapper-shape v"/></a>
-    </g>
+ 
 </g>
 
 <g transform="translate(6144,0)">
     <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
     <g transform="translate(600, 300)">
-        <a href="image7-link-example.pdf"><rect x="0" y="0" width="80" height="250" class="image-mapper-shape o"/></a>
-    </g>
+
 </g>
 
 <g transform="translate(7168,0)">
@@ -127,27 +121,26 @@
 <g transform="translate(8192,0)">
     <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
     <g transform="translate(10, 10)">
-        <a href="image9-link-example.pdf"><rect x="0" y="0" width="100" height="200" class="image-mapper-shape a"/></a>
-    </g>
+
 </g>
 
 <g transform="translate(9216,0)">
     <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
     <g transform="translate(700, 1500)">
-        <a href="image10-link-example.pdf"><rect x="0" y="0" width="150" height="150" class="image-mapper-shape ipc"/></a>
-    </g>
+
 </g>
 
 <g transform="translate(10240,0)">
     <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
-    <a href="cvs-bio-1.pdf"><rect x="400" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+    <g transform="translate(400,0)">
+        <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+    </g>
 </g>
 
 <g transform="translate(11264,0)">
     <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
     <g transform="translate(100, 100)">
-        <a href="image12-link-example.pdf"><rect x="0" y="0" width="100" height="100" class="image-mapper-shape v"/></a>
-    </g>
+
 </g>
 </svg>
 <script>
@@ -155,7 +148,7 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 
-// حساب الإزاحة التراكمية لجميع <g> (مهم لتحديد الموضع المطلق)
+// حساب الإزاحة التراكمية لجميع <g>
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
     let current = element;
@@ -175,13 +168,14 @@ function getGroupImage(element) {
     let current = element;
     while (current && current.tagName !== 'svg') {
         if (current.tagName === 'g') {
-            const images = Array.from(current.children).filter(c => c.tagName === 'image' || c.getAttribute('xlink:href'));
+            // نبحث عن وسم <image> مباشرة داخل المجموعة <g> الحالية
+            const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
             if (images.length) {
                 const baseImage = images[0];
                 const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
                 const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
                 const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
-                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };
+                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
             }
         }
         current = current.parentNode;
@@ -198,16 +192,15 @@ function cleanupHover() {
     if(activeState.zoomPart) activeState.zoomPart.remove();
     const currentClip = document.getElementById(activeState.clipPathId);
     if(currentClip) currentClip.remove();
-    // إعادة تعيين الـ Rect (المستطيل) إلى وضعه الطبيعي قبل مسحه إذا كان موجوداً
-    if(activeState.rect.style.transformOrigin) activeState.rect.style.transformOrigin = ''; 
     Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
 }
 
 function attachHover(rect, i) {
     const clipPathId = `clip-${i}-${Date.now()}`;
-    const scale = 1.1; // نسبة التكبير
-    
+    const scale = 1.1;
     rect.setAttribute('data-index', i);
+    
+    // ربط أحداث التحويم (Hover Events)
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     rect.addEventListener('touchstart', startHover);
@@ -250,12 +243,15 @@ function attachHover(rect, i) {
         zoomPart.setAttribute('class','zoom-part');
         zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
         
-        // يجب أن تكون إحداثيات image هي 0,0 بالنسبة لنظام إحداثيات الـ SVG الكلي
-        // ولكن يجب أن نأخذ إزاحة المجموعة بعين الاعتبار لتحميل الصورة في مكانها الصحيح
-        const groupParent = rect.closest('g');
-        const groupTranslate = getCumulativeTranslate(groupParent);
-        zoomPart.setAttribute('x', groupTranslate.x * (groupParent.querySelector('image').getAttribute('width')/1024));
-        zoomPart.setAttribute('y', 0); // الصور كلها تبدأ من Y=0
+        // يجب أن نستخدم إزاحة المجموعة الرئيسية للصورة لتحديد موضع الـ zoomPart
+        const groupParentTransform = imageData.group.getAttribute('transform');
+        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const groupX = match ? parseFloat(match[1]) : 0;
+        const groupY = match ? parseFloat(match[2]) : 0;
+        
+        // تعيين إحداثيات الصورة المكبرة لتطابق إزاحة المجموعة الأصلية
+        zoomPart.setAttribute('x', groupX);
+        zoomPart.setAttribute('y', groupY); 
         
         zoomPart.style.opacity = 0;
         mainSvg.appendChild(zoomPart);
@@ -266,12 +262,12 @@ function attachHover(rect, i) {
         const centerY = absoluteY + height/2;
         
         // تطبيق التكبير على المستطيل نفسه
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; // الإحداثيات المحلية
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; // الإحداثيات المحلية للمستطيل
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
 
         // تطبيق التكبير على جزء الصورة المكبر
-        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`; // الإحداثيات المطلقة
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`; // الإحداثيات المطلقة في الـ SVG
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
 
@@ -290,6 +286,7 @@ function attachHover(rect, i) {
     }
 
     function stopHover(e) {
+        // التحقق من أننا نغادر المستطيل النشط
         const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
         if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
     }
@@ -301,7 +298,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
-// مراقبة المستطيلات الجديدة (إذا تم إضافتها ديناميكياً)
+// مراقبة المستطيلات الجديدة (للتحديثات الديناميكية)
 const rootObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
