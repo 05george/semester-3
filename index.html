@@ -159,10 +159,8 @@
 
  <g transform="translate(10240,0)">  11
       <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />  
-  
-<a href="rrs-patho-1.pdf"><rect x="400" y="703" width="115" height="380" class="image-mapper-shape"/></a>  
+      </g>  
 
-    </g>  
    <g transform="translate(11264,0)">  12
       <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />  
       </g>  
@@ -174,8 +172,7 @@
   const mainSvg = document.getElementById('main-svg');  
   const clipDefs = document.getElementById('clip-defs');  
   const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };  
-  // تم حذف: const groups = document.querySelectorAll('g'); 
-
+  
   function getTransformX(groupElement) {  
     if (!groupElement) return 0;
     const transformAttr = groupElement.getAttribute('transform');  
@@ -312,7 +309,16 @@
       attachHover(rect, i);  
   });  
 
-  // تم حذف: rootObserver
+  // تم إعادة هذا الجزء لضمان العمل الديناميكي على العناصر المضافة بعد تحميل الصفحة
+  const rootObserver = new MutationObserver(() => {  
+    document  
+      .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
+      .forEach((rect, i) => {  
+        rect.setAttribute('data-processed', 'true');  
+        attachHover(rect, i);  
+      });  
+  });  
+  rootObserver.observe(mainSvg, { childList: true, subtree: true });  
 
   function setLinkTarget() {  
     const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
