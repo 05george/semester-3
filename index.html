@@ -25,7 +25,7 @@
     min-height: 100svh;
     display: block;
     background: black;
-    width: 11264px; 
+    width: 12288px; 
   }
 
   .image-mapper-shape {
@@ -50,7 +50,7 @@
 </head>  
 <body>  
   <svg xmlns="http://www.w3.org/2000/svg"  
-    viewBox="0 0 11264 2454"  
+    viewBox="0 0 12288 2454"  
     preserveAspectRatio="xMinYMin meet"  
     id="main-svg">
     <defs id="clip-defs"></defs>
@@ -159,8 +159,8 @@
 
  <g transform="translate(10240,0)">  11
       <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />  
-           <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>  
-   </g>  
+         <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>   
+     </g>  
 
    <g transform="translate(11264,0)">  12
       <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />  
@@ -305,20 +305,36 @@
     }  
   }  
 
+  // ربط العناصر الموجودة عند التحميل
   document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {  
       rect.setAttribute('data-processed', 'true');  
       attachHover(rect, i);  
   });  
 
-  // تم إعادة هذا الجزء لضمان العمل الديناميكي على العناصر المضافة بعد تحميل الصفحة
-  const rootObserver = new MutationObserver(() => {  
-    document  
-      .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
-      .forEach((rect, i) => {  
-        rect.setAttribute('data-processed', 'true');  
-        attachHover(rect, i);  
+  // التعديل: آلية رصد محسنة
+  const rootObserver = new MutationObserver(mutations => {  
+    mutations.forEach(mutation => {  
+      mutation.addedNodes.forEach(node => {  
+        if (node.nodeType === 1) { // Node is an Element
+          // 1. تحقق من العنصر نفسه
+          if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+            attachHover(node, Date.now()); // استخدام timestamp كـ i مؤقت
+            node.setAttribute('data-processed', 'true');
+          }
+          
+          // 2. تحقق من أي مستطيلات تمت إضافتها كأطفال للعنصر المضاف (مثل إضافة مجموعة <g> كاملة)
+          if (node.querySelector) {
+             node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
+              attachHover(rect, Date.now());
+              rect.setAttribute('data-processed', 'true');
+            });
+          }
+        }
       });  
+    });  
   });  
+  
+  // ابدأ المراقبة على الـ SVG الرئيسية لكل تغييرات الأبناء
   rootObserver.observe(mainSvg, { childList: true, subtree: true });  
 
   function setLinkTarget() {  
