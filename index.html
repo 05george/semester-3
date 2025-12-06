@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,19 +14,21 @@
     background: black;
     overscroll-behavior: none; 
   }
+
   #scroll-container {
-    width: 100vw; 
+    width: 100vw;
     height: 100svh;
     overflow-x: auto;
     overflow-y: hidden;
   }
+
   #main-svg {
     height: 100svh;
-    min-height: 100svh;
-    display: block; 
+    display: block;
     background: black;
-    width: 12288px; 
+    width: 12288px; /* 12 صورة × 1024px */
   }
+
   .image-mapper-shape {
     fill: transparent;
     stroke: yellow;
@@ -34,11 +36,13 @@
     transform-origin: center center;
     transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
   }
+
   .q { stroke: red; }
   .v { stroke: blue; }
   .ipc { stroke: white; }
   .o { stroke: #80CBC4; }
   .a { stroke: #F48FB1; }
+
   .zoom-part {
     pointer-events: none;
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
@@ -54,6 +58,7 @@
         id="main-svg">
       <defs id="clip-defs"></defs>
 
+<!-- الصور والمستطيلات -->
 <g transform="translate(0,0)">
     <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
     <g transform="translate(254,0)">
@@ -71,24 +76,12 @@
     </g>
 </g>
 
-<g transform="translate(1024,0)">
-    <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
-</g>
-<g transform="translate(2048,0)">
-    <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
-</g>
-<g transform="translate(3072,0)">
-    <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
-</g>
-<g transform="translate(4096,0)">
-    <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
-</g>
-<g transform="translate(5120,0)">
-    <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
-</g>
-<g transform="translate(6144,0)">
-    <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
-</g>
+<g transform="translate(1024,0)"><image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" /></g>
+<g transform="translate(2048,0)"><image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" /></g>
+<g transform="translate(3072,0)"><image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" /></g>
+<g transform="translate(4096,0)"><image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" /></g>
+<g transform="translate(5120,0)"><image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" /></g>
+<g transform="translate(6144,0)"><image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" /></g>
 
 <g transform="translate(7168,0)">
     <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
@@ -101,12 +94,8 @@
     </g>
 </g>
 
-<g transform="translate(8192,0)">
-    <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
-</g>
-<g transform="translate(9216,0)">
-    <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
-</g>
+<g transform="translate(8192,0)"><image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" /></g>
+<g transform="translate(9216,0)"><image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" /></g>
 
 <g transform="translate(10240,0)">
     <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
@@ -115,33 +104,30 @@
     </g>
 </g>
 
-<g transform="translate(11264,0)">
-    <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
-</g>
-    </svg>
+<g transform="translate(11264,0)"><image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" /></g>
+</svg>
 </div>
 
 <script>
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
-const scrollContainer = document.getElementById('scroll-container'); 
+const scrollContainer = document.getElementById('scroll-container');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 
-const MAX_SCROLL_LEFT = 6 * 1024; 
+const totalWidthOfAllImages = 12 * 1024;
 
 scrollContainer.addEventListener('scroll', function() {
-    if (this.scrollLeft > MAX_SCROLL_LEFT) {
-        this.scrollLeft = MAX_SCROLL_LEFT;
-    }
+    const maxScroll = totalWidthOfAllImages - scrollContainer.clientWidth;
+    if (this.scrollLeft > maxScroll) this.scrollLeft = maxScroll;
 });
 
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
     let current = element;
     while (current && current.tagName !== 'svg') {
-        const transformAttr = current.getAttribute('transform');
-        if (transformAttr) {
-            const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+        const t = current.getAttribute('transform');
+        if (t) {
+            const match = t.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
             if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
         }
         current = current.parentNode;
@@ -156,10 +142,10 @@ function getGroupImage(element) {
             const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
             if (images.length) {
                 const baseImage = images[0];
-                const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
-                const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
-                const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
-                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
+                const src = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
+                const w = parseFloat(baseImage.getAttribute('width'));
+                const h = parseFloat(baseImage.getAttribute('height'));
+                if (!isNaN(w) && !isNaN(h)) return { src, width: w, height: h, group: current };
             }
         }
         current = current.parentNode;
@@ -223,8 +209,7 @@ function attachHover(rect, i) {
         zoomPart.setAttribute('class','zoom-part');
         zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-        const groupParentTransform = imageData.group.getAttribute('transform');
-        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const match = imageData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
         const groupX = match ? parseFloat(match[1]) : 0;
         const groupY = match ? parseFloat(match[2]) : 0;
 
