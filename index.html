@@ -8,26 +8,25 @@
   html, body {
     margin: 0;
     padding: 0;
-    width: 100vw;
+    /* تم حذف width: 100vw; هنا */
     height: 100svh;
-    overflow-x: auto; /* يسمح بالتمرير الأفقي */
+    overflow-x: auto; 
     overflow-y: hidden;
     background: black;
-    /* إضافة هذه الخاصية لمنع "الارتداد" (Bounce Effect) عند الوصول للحد الأقصى (12288px) */
     overscroll-behavior: none; 
   }
+  
   body {
     display: block;
-    width: auto;
+    width: fit-content; /* هام: لتقييد عرض الـ body بعرض الـ SVG (12288px) */
     height: 100svh;
   }
+  
   #main-svg {
     height: 100svh;
-    max-height: 100svh;
     min-height: 100svh;
-    display: block;
+    display: inline-block; /* هام: للسماح لـ fit-content بالعمل */
     background: black;
-    /* العرض الكلي للمحتوى (12 صورة * 1024 بكسل/صورة) */
     width: 12288px; 
   }
   .image-mapper-shape {
@@ -55,10 +54,6 @@
     preserveAspectRatio="xMinYMin meet"
     id="main-svg">
   <defs id="clip-defs"></defs>
-
----
-
-## 🖼️ محتوى SVG (الصور والمستطيلات الأصلية)
 
 <g transform="translate(0,0)">
     <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
@@ -186,7 +181,6 @@ function attachHover(rect, i) {
     const scale = 1.1;
     rect.setAttribute('data-index', i);
     
-    // ربط أحداث التحويم (Hover Events)
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     rect.addEventListener('touchstart', startHover);
@@ -203,7 +197,6 @@ function attachHover(rect, i) {
         const width = parseFloat(rect.getAttribute('width'));
         const height = parseFloat(rect.getAttribute('height'));
         
-        // حساب الإحداثيات المطلقة للمستطيل على الـ SVG الكلي
         const cumulative = getCumulativeTranslate(rect);
         const absoluteX = x + cumulative.x;
         const absoluteY = y + cumulative.y;
@@ -211,7 +204,6 @@ function attachHover(rect, i) {
         const imageData = getGroupImage(rect);
         if (!imageData) return;
 
-        // 1. إنشاء منطقة القص (ClipPath)
         let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
         clip.setAttribute('id', clipPathId);
         let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -221,7 +213,6 @@ function attachHover(rect, i) {
         clipRect.setAttribute('height', height);
         clipDefs.appendChild(clip).appendChild(clipRect);
 
-        // 2. إنشاء جزء الصورة المكبر (ZoomPart)
         const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
         zoomPart.setAttribute('href', imageData.src);
         zoomPart.setAttribute('width', imageData.width);
@@ -229,13 +220,11 @@ function attachHover(rect, i) {
         zoomPart.setAttribute('class','zoom-part');
         zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
         
-        // يجب أن نستخدم إزاحة المجموعة الرئيسية للصورة لتحديد موضع الـ zoomPart
         const groupParentTransform = imageData.group.getAttribute('transform');
         const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const groupX = match ? parseFloat(match[1]) : 0;
         const groupY = match ? parseFloat(match[2]) : 0;
         
-        // تعيين إحداثيات الصورة المكبرة لتطابق إزاحة المجموعة الأصلية
         zoomPart.setAttribute('x', groupX);
         zoomPart.setAttribute('y', groupY); 
         
@@ -243,21 +232,17 @@ function attachHover(rect, i) {
         mainSvg.appendChild(zoomPart);
         activeState.zoomPart = zoomPart;
 
-        // 3. تطبيق التحويلات (Scale)
         const centerX = absoluteX + width/2;
         const centerY = absoluteY + height/2;
         
-        // تطبيق التكبير على المستطيل نفسه
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; // الإحداثيات المحلية للمستطيل
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
 
-        // تطبيق التكبير على جزء الصورة المكبر
-        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`; // الإحداثيات المطلقة في الـ SVG
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
 
-        // 4. تشغيل رسوم الـ Glow المتحركة
         let hue = 0;
         let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
@@ -272,19 +257,16 @@ function attachHover(rect, i) {
     }
 
     function stopHover(e) {
-        // التحقق من أننا نغادر المستطيل النشط
         const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
         if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
     }
 }
 
-// ربط جميع المستطيلات الحالية
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     rect.setAttribute('data-processed', 'true');
     attachHover(rect, i);
 });
 
-// مراقبة المستطيلات الجديدة (للتحديثات الديناميكية)
 const rootObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
@@ -305,7 +287,6 @@ const rootObserver = new MutationObserver(mutations => {
 });
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-// ضبط فتح الروابط حسب الجهاز
 function setLinkTarget() {
     const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
     const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');
