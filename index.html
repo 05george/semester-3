@@ -7,22 +7,22 @@
   html, body {  
     margin: 0;  
     padding: 0;  
-    width: 100%; /* تم التعديل من 100vw */
+    width: 100%;  
     height: 100svh;  
-    overflow-x: auto;
-    overflow-y: hidden;  
+    overflow-x: auto; /* التمرير الأفقي على مستوى الصفحة */
+    overflow-y: hidden; /* 🌟 منع التمرير الرأسي */
     background: black;  
   }  
   body {
     display: block;
-    width: max-content; /* 🌟 التعديل 1: لضبط عرض الجسم على المحتوى الفعلي */
+    width: max-content; /* 🌟 يجعل الجسم يتمدد ليناسب عرض الـ SVG الفعلي */
     height: 100svh;
   }
 
   #main-svg {
-    height: calc(100svh - 17px); /* 🌟 التعديل 2: لتعويض ارتفاع شريط التمرير */
-    max-height: 100svh;
-    min-height: 100svh;
+    height: 2454px; /* 🌟 تحديد الارتفاع المطلوب (2454) وإلغاء محاولة تعويض شريط التمرير */
+    max-height: 2454px;
+    min-height: 2454px;
     display: block;
     background: black;
   }
