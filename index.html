@@ -7,37 +7,49 @@
   html, body {  
     margin: 0;  
     padding: 0;  
-    /* نستخدم 100% لملء العرض المتاح في المستعرض */
-    width: 100%; 
-    /* الارتفاع 100% من ارتفاع viewport (لأنه ثابت) */
+    width: 100vw;  
     height: 100svh;  
-    /* السماح بالتمرير الأفقي فقط عند الحاجة */
     overflow-x: auto;
-    /* منع التمرير الرأسي تمامًا لضمان عدم إخفاء الصورة */
     overflow-y: hidden;  
     background: black;  
   }  
   body {
     display: block;
-    /* تم إزالة width: auto; و height: 100svh; من body ليعتمد على html */
+    width: auto;
+    height: 100svh;
   }
 
   #main-svg {
-    /* هنا نضمن أن الـ SVG سيأخذ العرض الكلي الذي سيتم حسابه في JS */
-    width: auto; 
-    /* الارتفاع ثابت حسب طلبك */
     height: 100svh;
     max-height: 100svh;
     min-height: 100svh;
     display: block;
     background: black;
   }
-/* ... (بقية الـ CSS كما هي) ... */
+
+  .image-mapper-shape {
+    fill: transparent;
+    stroke: yellow;
+    stroke-width: 2px;
+    transform-origin: center center;
+    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
+  }
+  .q { stroke: red; }
+  .v { stroke: blue; }
+  .ipc {stroke: white;}
+  .o {stroke: #80CBC4;}
+  .a {stroke: #F48FB1;}
+  .zoom-part {
+    pointer-events: none;
+    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+    image-rendering: auto;
+  }
 </style>
 
 </head>  
 <body>  
   <svg xmlns="http://www.w3.org/2000/svg"  
+    viewBox="0 0 2048 2454"  
     preserveAspectRatio="xMinYMin meet"  
     id="main-svg">
     <defs id="clip-defs"></defs>
@@ -153,6 +165,7 @@
       </g>  
 
 
+
     </svg>  
 <script>  
   const mainSvg = document.getElementById('main-svg');  
@@ -161,21 +174,13 @@
   const groups = document.querySelectorAll('g'); 
 
   function setDynamicSvgWidth() {
-      // نحدد مجموعات الأسابيع (التي تحتوي على translate)
       const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
       const IMAGE_WIDTH = 1024; 
-      // حساب العرض الكلي بناءً على عدد مجموعات الأسابيع * 1024
       const totalWidth = weekGroups.length * IMAGE_WIDTH; 
-      
-      // تعيين عرض عنصر SVG ليكون مساوياً للعرض الكلي
-      // تم إزالة mainSvg.style.width = `${totalWidth}px`; والاعتماد على width: auto في CSS
-      
-      // تحديث viewBox لتضمين العرض الكلي وارتفاع 2454 الثابت
-      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); 
+      mainSvg.style.width = `${totalWidth}px`;
+      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); // تحديث viewBox
   }
   setDynamicSvgWidth();
-
-  /* ... (بقية دوال JavaScript) ... */
 
   function getTransformX(groupElement) {  
     if (!groupElement) return 0;
