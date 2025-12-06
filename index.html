@@ -25,6 +25,7 @@
     min-height: 100svh;
     display: block;
     background: black;
+    width: 12288px; 
   }
 
   .image-mapper-shape {
@@ -49,7 +50,7 @@
 </head>  
 <body>  
   <svg xmlns="http://www.w3.org/2000/svg"  
-    viewBox="0 0 2048 2454"  
+    viewBox="0 0 12288 2454"  
     preserveAspectRatio="xMinYMin meet"  
     id="main-svg">
     <defs id="clip-defs"></defs>
@@ -171,16 +172,7 @@
   const mainSvg = document.getElementById('main-svg');  
   const clipDefs = document.getElementById('clip-defs');  
   const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };  
-  const groups = document.querySelectorAll('g'); 
-
-  function setDynamicSvgWidth() {
-      const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
-      const IMAGE_WIDTH = 1024; 
-      const totalWidth = weekGroups.length * IMAGE_WIDTH; 
-      mainSvg.style.width = `${totalWidth}px`;
-      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); // تحديث viewBox
-  }
-  setDynamicSvgWidth();
+  // تم حذف: const groups = document.querySelectorAll('g'); 
 
   function getTransformX(groupElement) {  
     if (!groupElement) return 0;
@@ -318,15 +310,7 @@
       attachHover(rect, i);  
   });  
 
-  const rootObserver = new MutationObserver(() => {  
-    document  
-      .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
-      .forEach((rect, i) => {  
-        rect.setAttribute('data-processed', 'true');  
-        attachHover(rect, i);  
-      });  
-  });  
-  rootObserver.observe(mainSvg, { childList: true, subtree: true });  
+  // تم حذف: rootObserver
 
   function setLinkTarget() {  
     const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
@@ -339,3 +323,4 @@
   setLinkTarget();  
 </script>  
 </body>
+</html>
