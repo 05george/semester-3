@@ -7,7 +7,7 @@
   html, body {  
     margin: 0;  
     padding: 0;  
-    width: 100vw;  
+    width: 100%; /* تم التعديل من 100vw */
     height: 100svh;  
     overflow-x: auto;
     overflow-y: hidden;  
@@ -15,12 +15,12 @@
   }  
   body {
     display: block;
-    width: auto;
+    width: max-content; /* 🌟 التعديل 1: لضبط عرض الجسم على المحتوى الفعلي */
     height: 100svh;
   }
 
   #main-svg {
-    height: 100svh;
+    height: calc(100svh - 17px); /* 🌟 التعديل 2: لتعويض ارتفاع شريط التمرير */
     max-height: 100svh;
     min-height: 100svh;
     display: block;
@@ -155,7 +155,7 @@
    <g transform="translate(9216,0)">  10
       <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />  
       </g>  
-  
+
  <g transform="translate(10240,0)">  11
       <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />  
       </g>  
@@ -165,7 +165,7 @@
       </g>  
 
 
- 
+
     </svg>  
 <script>  
   const mainSvg = document.getElementById('main-svg');  
