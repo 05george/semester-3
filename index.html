@@ -1,33 +1,31 @@
-<!DOCTYPE html>  
-<html lang="ar">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<style>  
-  html, body {  
-    margin: 0;  
-    padding: 0;  
-    width: 100vw;  
-    height: 100svh;  
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100svh;
     overflow-x: auto;
-    overflow-y: hidden;  
-    background: black;  
-  }  
+    overflow-y: hidden;
+    background: black;
+  }
   body {
     display: block;
     width: auto;
     height: 100svh;
   }
-
   #main-svg {
     height: 100svh;
     max-height: 100svh;
     min-height: 100svh;
     display: block;
     background: black;
-    width: 12288px; 
+    width: 12288px;
   }
-
   .image-mapper-shape {
     fill: transparent;
     stroke: yellow;
@@ -37,159 +35,116 @@
   }
   .q { stroke: red; }
   .v { stroke: blue; }
-  .ipc {stroke: white;}
-  .o {stroke: #80CBC4;}
-  .a {stroke: #F48FB1;}
+  .ipc { stroke: white; }
+  .o { stroke: #80CBC4; }
+  .a { stroke: #F48FB1; }
   .zoom-part {
     pointer-events: none;
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
     image-rendering: auto;
   }
 </style>
-
-</head>  
-<body>  
-  <svg xmlns="http://www.w3.org/2000/svg"  
-    viewBox="0 0 12288 2454"  
-    preserveAspectRatio="xMinYMin meet"  
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 12288 2454"
+    preserveAspectRatio="xMinYMin meet"
     id="main-svg">
-    <defs id="clip-defs"></defs>
+  <defs id="clip-defs"></defs>
 
-    <g transform="translate(0,0)">  1
-      <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />  
-
-      <g transform="translate(254,0)"> الإثنين
-        <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>  
-        <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>  
-      </g>
-      <g transform="translate(484,0)"> الثلاثاء
-        <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>  
-      </g>
-      <g transform="translate(488,0)"> الأربع
-        <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>  
-      </g>
-      <g transform="translate(599,0)"> الخميس
-        <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>  
-      </g>
-    </g>  
-
-    <g transform="translate(1024,0)">  2
-      <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
-    </g>  
-
-    <g transform="translate(2048,0)">  3
-      <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />  
-      </g>  
-
-    <g transform="translate(3072,0)">  4
-      <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />  
-      </g>  
-
-   <g transform="translate(4096,0)">  5
-      <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />  
-      </g>  
-
-   <g transform="translate(5120,0)">  6
-      <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />  
-      </g>  
-
-   <g transform="translate(6144,0)">  7
-      <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />  
-      </g>  
-
-    <g transform="translate(7168,0)"> 8
-<image href="image/8.png" width="1024" height="2454" preserveAspectRatio="xMinYMin meet"/> <g transform="translate(368,0)"> الإثنين
-
-<a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>  
-<a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>  
-<a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>  
-<a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>  
-<a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>  
-</g> 
-<g transform="translate(598,0)"> الأربع
-<a href="rrs-physio-1.pdf"><rect x="0" y="366" width="114.5" height="315" class="image-mapper-shape"/></a> 
-<a href="rrs-physio-2.pdf"><rect x="0" y="1846" width="115" height="253.4" class="image-mapper-shape"/></a>  
-<a href="rrs-physio-q-1.pdf"><rect x="0" y="2100" width="115" height="127" class="image-mapper-shape q"/></a>
-</g>
-<g transform="translate(712.35,0)"> الخميس
-<a href="rrs-histo-1.pdf"><rect x="0" y="702" width="115" height="380" class="image-mapper-shape"/></a>  
-<a href="rrs-anatomy-2.pdf"><rect x="0" y="1465" width="115" height="380" class="image-mapper-shape"/></a>  
-</g>  
-</g>
-    <g transform="translate(8192,0)"> 9 
-<image href="image/9.png" width="1024" height="2454" preserveAspectRatio="xMinYMin meet"/> <g transform="translate(140,0)"> السبت
-<a href="https://drive.google.com/file/d/1vLk8z7AGqjlJZx1rvL_e7tQa8arC1qud/view?usp=sharing"><rect x="0" y="308.9191510221431" width="114.81010065105059" height="113.19699822367954" class="image-mapper-shape v"/></a>
-    <a href="pharma/1.pdf"><rect x="0" y="421.1304391087087" width="113.1443225155385" height="227.44459430799515" class="image-mapper-shape"/></a>
-    <a href="ipc/book.pdf"><rect x="0" y="876" width="115" height="349" class="image-mapper-shape ipc"/></a>  
-    <a href="ipc/q/9.pdf"><rect x="0" y="1225" width="57.5" height="121" class="image-mapper-shape q"/></a>  
-    <a href="ipc/a/9.pdf"><rect x="57.5" y="1225" width="57.5" height="121" class="image-mapper-shape a"/></a>  
-    <a href="#"><rect x="0" y="1810.383890491999" width="115.86350089581418" height="470.24169690909093" class="image-mapper-shape"/></a>
+  <!-- الصور مع المجموعات -->
+  <g transform="translate(0,0)">
+    <image x="0" y="0" xlink:href="image/1.png" width="1024" height="2454" />
+    <g transform="translate(254,0)">
+      <a href="cvs-physio-1.pdf"><rect x="0" y="423" width="114" height="467" class="image-mapper-shape"/></a>
+      <a href="cvs-histo-1.pdf"><rect x="-1" y="1403" width="114" height="438" class="image-mapper-shape"/></a>
     </g>
-
-<g transform="translate(255,0)"> الأحد
-</g>
-
-<g transform="translate(370,0)"> الإثنين
-    <a href="rrs-physio-3.pdf"><rect x="0" y="1369" width="115" height="450" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="422.291127376671" width="114.62348009508963" height="456.42753801636815" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="1812.0873755033645" width="113.932817717675" height="471.4497750874907" class="image-mapper-shape"/></a>
+    <g transform="translate(484,0)">
+      <a href="cvs-physio-2.pdf"><rect x="0" y="314" width="113" height="459" class="image-mapper-shape"/></a>
     </g>
-
-<g transform="translate(485,0)"> الثلاثاء
-<a href="#"><rect x="0" y="1121.2977744061197" width="113.83913151011649" height="347.86709572240375" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="1470.588390130531" width="112.62070957241832" height="340.4739051562792" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="1813.7791953060073" width="113.88100778674408" height="361.3670230551447" class="image-mapper-shape"/></a>
+    <g transform="translate(488,0)">
+      <a href="cvs-physio-3.pdf"><rect x="0" y="1838" width="108" height="441" class="image-mapper-shape"/></a>
     </g>
-
-<g transform="translate(600,0)"> الأربع
-<a href="#"><rect x="0" y="1469.190023234833" width="113.72594253172372" height="343.19918954424566" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="421.6499054346654" width="115.795514601224" height="457.44678562856114" class="image-mapper-shape"/></a>
+    <g transform="translate(599,0)">
+      <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
     </g>
+  </g>
 
-<g transform="translate(715,0)"> الخميس
-<a href="#"><rect x="0" y="422.2539445238651" width="114.39058602561886" height="340.47536330736926" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="877.494183014872" width="114.6383805765447" height="485.4349021955651" class="image-mapper-shape"/></a>
-    <a href="#"><rect x="0" y="1364.7360989492217" width="113.21139746569713" height="447.5422943469862" class="image-mapper-shape"/></a>
+  <g transform="translate(1024,0)">
+    <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(2048,0)">
+    <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(3072,0)">
+    <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(4096,0)">
+    <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(5120,0)">
+    <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(6144,0)">
+    <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
+  </g>
+
+  <g transform="translate(7168,0)">
+    <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
+    <g transform="translate(368,0)">
+      <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
+      <a href="rrs-patho-1.pdf"><rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape"/></a>
+      <a href="rrs-patho-q-1.pdf"><rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q"/></a>
+      <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
+      <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
     </g>
-</g> 
+  </g>
 
-   <g transform="translate(9216,0)">  10
-      <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />  
-      </g>  
+  <g transform="translate(8192,0)">
+    <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
+  </g>
 
- <g transform="translate(10240,0)">  11
-      <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />  
-         <a href="cvs-bio-1.pdf"><rect x="400" y="893" width="112" height="511" class="image-mapper-shape"/></a>   
-     </g>  
+  <g transform="translate(9216,0)">
+    <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
+  </g>
 
-   <g transform="translate(11264,0)">  12
-      <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />  
-      </g>  
+  <g transform="translate(10240,0)">
+    <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
+    <a href="cvs-bio-1.pdf"><rect x="400" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+  </g>
 
+  <g transform="translate(11264,0)">
+    <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
+  </g>
+</svg>
 
+<script>
+const mainSvg = document.getElementById('main-svg');
+const clipDefs = document.getElementById('clip-defs');
+const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 
-    </svg>  
-<script>  
-  const mainSvg = document.getElementById('main-svg');  
-  const clipDefs = document.getElementById('clip-defs');  
-  const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };  
-  
-  function getTransformX(groupElement) {  
-    if (!groupElement) return 0;
-    const transformAttr = groupElement.getAttribute('transform');  
-    if (!transformAttr) return 0;  
-    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
-    return match ? parseFloat(match[1]) : 0;  
-  } 
+// حساب الإزاحة التراكمية لجميع <g>
+function getCumulativeTranslate(element) {
+    let x = 0, y = 0;
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        const transformAttr = current.getAttribute('transform');
+        if (transformAttr) {
+            const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
+        }
+        current = current.parentNode;
+    }
+    return { x, y };
+}
 
-  function getTransformY(groupElement) {  
-    if (!groupElement) return 0;
-    const transformAttr = groupElement.getAttribute('transform');  
-    if (!transformAttr) return 0;  
-    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
-    return match ? parseFloat(match[2]) : 0;  
-  }
-  function getGroupImage(element) {
+// إيجاد صورة المجموعة الأعلى لأي مستطيل
+function getGroupImage(element) {
     let current = element;
     while (current && current.tagName !== 'svg') {
         const baseImage = current.querySelector('image');
@@ -197,162 +152,132 @@
             const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
             const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
             const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
-            if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) {
-                return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };
-            }
+            if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };
         }
         current = current.parentNode;
     }
     return null;
 }
 
-  function cleanupHover() {  
-    if (!activeState.rect) return;  
-    if(activeState.animationId) clearInterval(activeState.animationId);  
-    activeState.rect.style.transform = 'scale(1)';  
-    activeState.rect.style.filter = 'none';  
-    activeState.rect.style.strokeWidth = '2px'; 
-    if(activeState.zoomPart){ activeState.zoomPart.remove(); }  
-    const currentClip = document.getElementById(activeState.clipPathId);  
-    if(currentClip) currentClip.remove();  
-    activeState.rect = null;  
-    activeState.zoomPart = null;  
-    activeState.animationId = null;  
-    activeState.clipPathId = null;  
-  }
+function cleanupHover() {
+    if (!activeState.rect) return;
+    if(activeState.animationId) clearInterval(activeState.animationId);
+    activeState.rect.style.transform = 'scale(1)';
+    activeState.rect.style.filter = 'none';
+    activeState.rect.style.strokeWidth = '2px';
+    if(activeState.zoomPart) activeState.zoomPart.remove();
+    const currentClip = document.getElementById(activeState.clipPathId);
+    if(currentClip) currentClip.remove();
+    Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
+}
 
-  function attachHover(rect, i) {  
-    const anchor = rect.closest('a');  
-    const clipPathId = `clip-${i}-${Date.now()}`;  
-    const scale = 1.1;  
+function attachHover(rect, i) {
+    const anchor = rect.closest('a');
+    const clipPathId = `clip-${i}-${Date.now()}`;
+    const scale = 1.1;
+    rect.setAttribute('data-index', i);
+    rect.addEventListener('mouseover', startHover);
+    rect.addEventListener('mouseout', stopHover);
+    rect.addEventListener('touchstart', startHover);
+    rect.addEventListener('touchend', cleanupHover);
 
-    rect.setAttribute('data-index', i);  
-    rect.addEventListener('mouseover', startHover);  
-    rect.addEventListener('mouseout', stopHover);  
-    rect.addEventListener('touchstart', startHover);  
-    rect.addEventListener('touchend', cleanupHover);  
-    if (anchor) { anchor.removeEventListener('click', cleanupHover); }  
+    function startHover() {
+        if(activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
+        activeState.clipPathId = clipPathId;
 
-    function startHover() {  
-      if(activeState.rect === rect) return;  
-      cleanupHover();  
-      activeState.rect = rect;  
-      activeState.clipPathId = clipPathId;  
+        const x = parseFloat(rect.getAttribute('x'));
+        const y = parseFloat(rect.getAttribute('y'));
+        const width = parseFloat(rect.getAttribute('width'));
+        const height = parseFloat(rect.getAttribute('height'));
+        const cumulative = getCumulativeTranslate(rect);
+        const absoluteX = x + cumulative.x;
+        const absoluteY = y + cumulative.y;
+        const imageData = getGroupImage(rect);
+        if (!imageData) return;
 
-      const x = parseFloat(rect.getAttribute('x'));  
-      const y = parseFloat(rect.getAttribute('y'));  
-      const width = parseFloat(rect.getAttribute('width'));  
-      const height = parseFloat(rect.getAttribute('height'));
+        let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+        clip.setAttribute('id', clipPathId);
+        let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        clipRect.setAttribute('x', absoluteX);
+        clipRect.setAttribute('y', absoluteY);
+        clipRect.setAttribute('width', width);
+        clipRect.setAttribute('height', height);
+        clipDefs.appendChild(clip).appendChild(clipRect);
 
-      const dayGroup = rect.closest('g');
-      const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
+        const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
+        zoomPart.setAttribute('href', imageData.src);
+        zoomPart.setAttribute('width', imageData.width);
+        zoomPart.setAttribute('height', imageData.height);
+        zoomPart.setAttribute('class','zoom-part');
+        zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+        zoomPart.setAttribute('x', 0);
+        zoomPart.setAttribute('y', 0);
+        zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;
+        zoomPart.style.opacity = 0;
+        mainSvg.appendChild(zoomPart);
+        activeState.zoomPart = zoomPart;
 
-      const imageData = getGroupImage(weekGroup);
-      if (!imageData) return;  
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        rect.style.transform = `scale(${scale})`;
+        rect.style.strokeWidth = '4px';
+        zoomPart.style.transform = `scale(${scale})`;
+        zoomPart.style.opacity = 1;
 
-      const weekOffsetX = getTransformX(weekGroup);
-      const dayOffsetX = getTransformX(dayGroup);
-      const weekOffsetY = getTransformY(weekGroup);
-      const dayOffsetY = getTransformY(dayGroup);
-      const absoluteX = x + weekOffsetX + dayOffsetX;  
-      const absoluteY = y + weekOffsetY + dayOffsetY;  
+        let hue = 0;
+        let currentStrokeWidth = 4;
+        const animationId = setInterval(() => {
+            hue = (hue + 1) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
+            rect.style.filter = glow;
+            if(zoomPart) zoomPart.style.filter = glow;
+            currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
+            rect.style.strokeWidth = `${currentStrokeWidth}px`;
+        }, 100);
+        activeState.animationId = animationId;
+    }
 
-      let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');  
-      clip.setAttribute('id', clipPathId);  
-      let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');  
-      clipRect.setAttribute('x', absoluteX);  
-      clipRect.setAttribute('y', absoluteY);  
-      clipRect.setAttribute('width', width);  
-      clipRect.setAttribute('height', height);  
-      clipDefs.appendChild(clip).appendChild(clipRect);  
+    function stopHover(e) {
+        const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
+        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
+    }
+}
 
-      const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');  
-      zoomPart.setAttribute('href', imageData.src);  
-      zoomPart.setAttribute('width', imageData.width);  
-      zoomPart.setAttribute('height', imageData.height);  
-      zoomPart.setAttribute('class','zoom-part');  
-      zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+// ربط جميع المستطيلات الحالية
+document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
+    rect.setAttribute('data-processed', 'true');
+    attachHover(rect, i);
+});
 
-      zoomPart.setAttribute('x', weekOffsetX);  
-      zoomPart.setAttribute('y', weekOffsetY);
+// مراقبة المستطيلات الجديدة
+const rootObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+                if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+                    attachHover(node, Date.now());
+                    node.setAttribute('data-processed', 'true');
+                }
+                if (node.querySelector) {
+                    node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
+                        attachHover(rect, Date.now());
+                        rect.setAttribute('data-processed', 'true');
+                    });
+                }
+            }
+        });
+    });
+});
+rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-      zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
-      zoomPart.style.opacity = 0;  
-      mainSvg.appendChild(zoomPart);  
-      activeState.zoomPart = zoomPart; 
-
-      rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
-      rect.style.transform = `scale(${scale})`;  
-      rect.style.strokeWidth = '4px'; 
-
-      zoomPart.style.transform = `scale(${scale})`;  
-      zoomPart.style.opacity = 1;  
-
-      // تأثير الـ Glow والـ Animation
-      let hue = 0;  
-      let currentStrokeWidth = 4;
-      const animationId = setInterval(() => {  
-        hue = (hue + 1) % 360;  
-        const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;  
-        rect.style.filter = glow;  
-        if(zoomPart) zoomPart.style.filter = glow;  
-
-        currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
-        rect.style.strokeWidth = `${currentStrokeWidth}px`; 
-
-      }, 100);  
-      activeState.animationId = animationId;  
-    }  
-
-    function stopHover(e) {  
-      const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;  
-      if(targetRect === activeState.rect && e.type === 'mouseout'){  
-          cleanupHover();  
-      }  
-    }  
-  }  
-
-  // ربط العناصر الموجودة عند التحميل
-  document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {  
-      rect.setAttribute('data-processed', 'true');  
-      attachHover(rect, i);  
-  });  
-
-  // التعديل: آلية رصد محسنة
-  const rootObserver = new MutationObserver(mutations => {  
-    mutations.forEach(mutation => {  
-      mutation.addedNodes.forEach(node => {  
-        if (node.nodeType === 1) { // Node is an Element
-          // 1. تحقق من العنصر نفسه
-          if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
-            attachHover(node, Date.now()); // استخدام timestamp كـ i مؤقت
-            node.setAttribute('data-processed', 'true');
-          }
-          
-          // 2. تحقق من أي مستطيلات تمت إضافتها كأطفال للعنصر المضاف (مثل إضافة مجموعة <g> كاملة)
-          if (node.querySelector) {
-             node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
-              attachHover(rect, Date.now());
-              rect.setAttribute('data-processed', 'true');
-            });
-          }
-        }
-      });  
-    });  
-  });  
-  
-  // ابدأ المراقبة على الـ SVG الرئيسية لكل تغييرات الأبناء
-  rootObserver.observe(mainSvg, { childList: true, subtree: true });  
-
-  function setLinkTarget() {  
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
-    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');  
-    allLinks.forEach(link => {  
-      if (isMobile) { link.removeAttribute('target'); }   
-      else { link.setAttribute('target', '_blank'); }  
-    });  
-  }  
-  setLinkTarget();  
-</script>  
+// ضبط فتح الروابط حسب الجهاز
+function setLinkTarget() {
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
+    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');
+    allLinks.forEach(link => { isMobile ? link.removeAttribute('target') : link.setAttribute('target', '_blank'); });
+}
+setLinkTarget();
+</script>
 </body>
 </html>
