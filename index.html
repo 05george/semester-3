@@ -7,22 +7,22 @@
   html, body {  
     margin: 0;  
     padding: 0;  
-    width: 100%;  
+    width: 100vw;  
     height: 100svh;  
-    overflow-x: auto; /* التمرير الأفقي على مستوى الصفحة */
-    overflow-y: hidden; /* 🌟 منع التمرير الرأسي */
+    overflow-x: auto;
+    overflow-y: hidden;  
     background: black;  
   }  
   body {
     display: block;
-    width: max-content; /* 🌟 يجعل الجسم يتمدد ليناسب عرض الـ SVG الفعلي */
+    width: auto;
     height: 100svh;
   }
 
   #main-svg {
-    height: 2454px; /* 🌟 تحديد الارتفاع المطلوب (2454) وإلغاء محاولة تعويض شريط التمرير */
-    max-height: 2454px;
-    min-height: 2454px;
+    height: 100svh;
+    max-height: 100svh;
+    min-height: 100svh;
     display: block;
     background: black;
   }
@@ -163,48 +163,51 @@
    <g transform="translate(11264,0)">  12
       <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />  
       </g>  
-
-
-
     </svg>  
+
+
 <script>  
   const mainSvg = document.getElementById('main-svg');  
   const clipDefs = document.getElementById('clip-defs');  
   const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };  
   const groups = document.querySelectorAll('g'); 
 
+  /* ======= التعديل الوحيد المطلوب ======= */
   function setDynamicSvgWidth() {
-      const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
-      const IMAGE_WIDTH = 1024; 
-      const totalWidth = weekGroups.length * IMAGE_WIDTH; 
+      const images = document.querySelectorAll('svg > g[transform*="translate"] > image');
+      const IMAGE_WIDTH = 1024;
+      const IMAGE_HEIGHT = 2454;
+
+      const totalImages = images.length;
+      const totalWidth = totalImages * IMAGE_WIDTH;
+
       mainSvg.style.width = `${totalWidth}px`;
-      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); // تحديث viewBox
+      mainSvg.style.height = `${IMAGE_HEIGHT}px`;
+      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${IMAGE_HEIGHT}`);
   }
   setDynamicSvgWidth();
+  /* ====================================== */
 
   function getTransformX(groupElement) {  
-    if (!groupElement) return 0;
-    const transformAttr = groupElement.getAttribute('transform');  
-    if (!transformAttr) return 0;  
-    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    const transformAttr = groupElement?.getAttribute('transform');  
+    const match = transformAttr?.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
     return match ? parseFloat(match[1]) : 0;  
   } 
 
   function getTransformY(groupElement) {  
-    if (!groupElement) return 0;
-    const transformAttr = groupElement.getAttribute('transform');  
-    if (!transformAttr) return 0;  
-    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    const transformAttr = groupElement?.getAttribute('transform');  
+    const match = transformAttr?.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
     return match ? parseFloat(match[2]) : 0;  
   }
+
   function getGroupImage(parentGroup) { 
     const baseImage = parentGroup.querySelector('image');  
     if (!baseImage) return null;  
-    const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');  
-    const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));  
-    const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));  
-    if (isNaN(IMAGE_WIDTH) || isNaN(IMAGE_HEIGHT)) return null;  
-    return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };  
+    return {
+      src: baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href'),
+      width: parseFloat(baseImage.getAttribute('width')),
+      height: parseFloat(baseImage.getAttribute('height'))
+    };
   } 
 
   function cleanupHover() {  
@@ -213,9 +216,8 @@
     activeState.rect.style.transform = 'scale(1)';  
     activeState.rect.style.filter = 'none';  
     activeState.rect.style.strokeWidth = '2px'; 
-    if(activeState.zoomPart){ activeState.zoomPart.remove(); }  
-    const currentClip = document.getElementById(activeState.clipPathId);  
-    if(currentClip) currentClip.remove();  
+    activeState.zoomPart?.remove();  
+    document.getElementById(activeState.clipPathId)?.remove();  
     activeState.rect = null;  
     activeState.zoomPart = null;  
     activeState.animationId = null;  
@@ -223,7 +225,6 @@
   }
 
   function attachHover(rect, i) {  
-    const anchor = rect.closest('a');  
     const clipPathId = `clip-${i}-${Date.now()}`;  
     const scale = 1.1;  
 
@@ -232,7 +233,6 @@
     rect.addEventListener('mouseout', stopHover);  
     rect.addEventListener('touchstart', startHover);  
     rect.addEventListener('touchend', cleanupHover);  
-    if (anchor) { anchor.removeEventListener('click', cleanupHover); }  
 
     function startHover() {  
       if(activeState.rect === rect) return;  
@@ -240,23 +240,18 @@
       activeState.rect = rect;  
       activeState.clipPathId = clipPathId;  
 
-      const x = parseFloat(rect.getAttribute('x'));  
-      const y = parseFloat(rect.getAttribute('y'));  
-      const width = parseFloat(rect.getAttribute('width'));  
-      const height = parseFloat(rect.getAttribute('height'));
+      const x = +rect.getAttribute('x');  
+      const y = +rect.getAttribute('y');  
+      const width = +rect.getAttribute('width');  
+      const height = +rect.getAttribute('height');
 
       const dayGroup = rect.closest('g');
       const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
-
       const imageData = getGroupImage(weekGroup);
       if (!imageData) return;  
 
-      const weekOffsetX = getTransformX(weekGroup);
-      const dayOffsetX = getTransformX(dayGroup);
-      const weekOffsetY = getTransformY(weekGroup);
-      const dayOffsetY = getTransformY(dayGroup);
-      const absoluteX = x + weekOffsetX + dayOffsetX;  
-      const absoluteY = y + weekOffsetY + dayOffsetY;  
+      const absoluteX = x + getTransformX(weekGroup) + getTransformX(dayGroup);  
+      const absoluteY = y + getTransformY(weekGroup) + getTransformY(dayGroup);  
 
       let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');  
       clip.setAttribute('id', clipPathId);  
@@ -266,50 +261,40 @@
       clipRect.setAttribute('width', width);  
       clipRect.setAttribute('height', height);  
       clipDefs.appendChild(clip).appendChild(clipRect);  
-
+      
       const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');  
       zoomPart.setAttribute('href', imageData.src);  
       zoomPart.setAttribute('width', imageData.width);  
       zoomPart.setAttribute('height', imageData.height);  
       zoomPart.setAttribute('class','zoom-part');  
       zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
-
-      zoomPart.setAttribute('x', weekOffsetX);  
-      zoomPart.setAttribute('y', weekOffsetY);
-
+      zoomPart.setAttribute('x', getTransformX(weekGroup));  
+      zoomPart.setAttribute('y', getTransformY(weekGroup));
       zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
       zoomPart.style.opacity = 0;  
       mainSvg.appendChild(zoomPart);  
       activeState.zoomPart = zoomPart; 
 
-      rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
+      rect.style.transformOrigin = `${x+width/2}px ${y+height/2}px`; 
       rect.style.transform = `scale(${scale})`;  
       rect.style.strokeWidth = '4px'; 
-
       zoomPart.style.transform = `scale(${scale})`;  
       zoomPart.style.opacity = 1;  
 
-      // تأثير الـ Glow والـ Animation
       let hue = 0;  
       let currentStrokeWidth = 4;
-      const animationId = setInterval(() => {  
+      activeState.animationId = setInterval(() => {  
         hue = (hue + 1) % 360;  
         const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;  
         rect.style.filter = glow;  
-        if(zoomPart) zoomPart.style.filter = glow;  
-
-        currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
+        zoomPart.style.filter = glow;  
+        currentStrokeWidth = (currentStrokeWidth === 4 ? 3.5 : 4);
         rect.style.strokeWidth = `${currentStrokeWidth}px`; 
-
       }, 100);  
-      activeState.animationId = animationId;  
     }  
 
     function stopHover(e) {  
-      const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;  
-      if(targetRect === activeState.rect && e.type === 'mouseout'){  
-          cleanupHover();  
-      }  
+      if(e.type === 'mouseout' && e.target === activeState.rect) cleanupHover();
     }  
   }  
 
@@ -329,13 +314,13 @@
   rootObserver.observe(mainSvg, { childList: true, subtree: true });  
 
   function setLinkTarget() {  
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
-    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');  
-    allLinks.forEach(link => {  
-      if (isMobile) { link.removeAttribute('target'); }   
-      else { link.setAttribute('target', '_blank'); }  
+    const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.innerWidth < 800;  
+    document.querySelectorAll('a[href]').forEach(link => {  
+      if (isMobile) link.removeAttribute('target');  
+      else link.setAttribute('target', '_blank');  
     });  
   }  
   setLinkTarget();  
 </script>  
 </body>
+</html>
