@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive SVG Viewer</title>
 <style>
   html, body {
     margin: 0;
@@ -24,7 +25,8 @@
     min-height: 100svh;
     display: block;
     background: black;
-    width: 12288px;
+    /* العرض الكلي: 12 صورة * 1024 بكسل/صورة */
+    width: 12288px; 
   }
   .image-mapper-shape {
     fill: transparent;
@@ -67,33 +69,51 @@
     <g transform="translate(599,0)">
       <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
     </g>
-  </g>
+</g>
 
-  <g transform="translate(1024,0)">
+<g transform="translate(1024,0)">
     <image x="0" y="0" xlink:href="image/2.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(100, 100)">
+        <a href="image2-link-example.pdf"><rect x="0" y="0" width="150" height="200" class="image-mapper-shape o"/></a>
+    </g>
+</g>
 
-  <g transform="translate(2048,0)">
+<g transform="translate(2048,0)">
     <image x="0" y="0" xlink:href="image/3.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(300, 500)">
+        <a href="image3-link-example.pdf"><rect x="0" y="0" width="100" height="150" class="image-mapper-shape a"/></a>
+    </g>
+</g>
 
-  <g transform="translate(3072,0)">
+<g transform="translate(3072,0)">
     <image x="0" y="0" xlink:href="image/4.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(50, 1000)">
+        <a href="image4-link-example.pdf"><rect x="0" y="0" width="200" height="100" class="image-mapper-shape ipc"/></a>
+    </g>
+</g>
 
-  <g transform="translate(4096,0)">
+<g transform="translate(4096,0)">
     <image x="0" y="0" xlink:href="image/5.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(400, 100)">
+        <a href="image5-link-example.pdf"><rect x="0" y="0" width="120" height="180" class="image-mapper-shape q"/></a>
+    </g>
+</g>
 
-  <g transform="translate(5120,0)">
+<g transform="translate(5120,0)">
     <image x="0" y="0" xlink:href="image/6.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(50, 2000)">
+        <a href="image6-link-example.pdf"><rect x="0" y="0" width="100" height="100" class="image-mapper-shape v"/></a>
+    </g>
+</g>
 
-  <g transform="translate(6144,0)">
+<g transform="translate(6144,0)">
     <image x="0" y="0" xlink:href="image/7.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(600, 300)">
+        <a href="image7-link-example.pdf"><rect x="0" y="0" width="80" height="250" class="image-mapper-shape o"/></a>
+    </g>
+</g>
 
-  <g transform="translate(7168,0)">
+<g transform="translate(7168,0)">
     <image x="0" y="0" xlink:href="image/8.png" width="1024" height="2454" />
     <g transform="translate(368,0)">
       <a href="rrs-micro-1.pdf"><rect x="0" y="703" width="115" height="380" class="image-mapper-shape"/></a>
@@ -102,32 +122,40 @@
       <a href="rrs-physio-2.pdf"><rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape"/></a>
       <a href="rrs-anatomy-1.pdf"><rect x="0" y="1845" width="115" height="380" class="image-mapper-shape"/></a>
     </g>
-  </g>
+</g>
 
-  <g transform="translate(8192,0)">
+<g transform="translate(8192,0)">
     <image x="0" y="0" xlink:href="image/9.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(10, 10)">
+        <a href="image9-link-example.pdf"><rect x="0" y="0" width="100" height="200" class="image-mapper-shape a"/></a>
+    </g>
+</g>
 
-  <g transform="translate(9216,0)">
+<g transform="translate(9216,0)">
     <image x="0" y="0" xlink:href="image/10.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(700, 1500)">
+        <a href="image10-link-example.pdf"><rect x="0" y="0" width="150" height="150" class="image-mapper-shape ipc"/></a>
+    </g>
+</g>
 
-  <g transform="translate(10240,0)">
+<g transform="translate(10240,0)">
     <image x="0" y="0" xlink:href="image/11.png" width="1024" height="2454" />
-  <g transform="translate(400,0)">
-    <a href="cvs-bio-1.pdf"><rect x="0" y="893" width="112" height="511" class="image-mapper-shape"/></a>
-  </g>
+    <a href="cvs-bio-1.pdf"><rect x="400" y="893" width="112" height="511" class="image-mapper-shape"/></a>
+</g>
 
-  <g transform="translate(11264,0)">
+<g transform="translate(11264,0)">
     <image x="0" y="0" xlink:href="image/12.png" width="1024" height="2454" />
-  </g>
+    <g transform="translate(100, 100)">
+        <a href="image12-link-example.pdf"><rect x="0" y="0" width="100" height="100" class="image-mapper-shape v"/></a>
+    </g>
+</g>
 </svg>
 <script>
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = document.getElementById('clip-defs');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 
-// حساب الإزاحة التراكمية لجميع <g>
+// حساب الإزاحة التراكمية لجميع <g> (مهم لتحديد الموضع المطلق)
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
     let current = element;
@@ -142,12 +170,12 @@ function getCumulativeTranslate(element) {
     return { x, y };
 }
 
-// إيجاد صورة المجموعة الأعلى لأي مستطيل (ديناميكي لجميع الصور)
+// إيجاد صورة المجموعة الأعلى لأي مستطيل
 function getGroupImage(element) {
     let current = element;
     while (current && current.tagName !== 'svg') {
         if (current.tagName === 'g') {
-            const images = Array.from(current.children).filter(c => c.tagName === 'image');
+            const images = Array.from(current.children).filter(c => c.tagName === 'image' || c.getAttribute('xlink:href'));
             if (images.length) {
                 const baseImage = images[0];
                 const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
@@ -170,12 +198,15 @@ function cleanupHover() {
     if(activeState.zoomPart) activeState.zoomPart.remove();
     const currentClip = document.getElementById(activeState.clipPathId);
     if(currentClip) currentClip.remove();
+    // إعادة تعيين الـ Rect (المستطيل) إلى وضعه الطبيعي قبل مسحه إذا كان موجوداً
+    if(activeState.rect.style.transformOrigin) activeState.rect.style.transformOrigin = ''; 
     Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
 }
 
 function attachHover(rect, i) {
     const clipPathId = `clip-${i}-${Date.now()}`;
-    const scale = 1.1;
+    const scale = 1.1; // نسبة التكبير
+    
     rect.setAttribute('data-index', i);
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
@@ -192,12 +223,16 @@ function attachHover(rect, i) {
         const y = parseFloat(rect.getAttribute('y'));
         const width = parseFloat(rect.getAttribute('width'));
         const height = parseFloat(rect.getAttribute('height'));
+        
+        // حساب الإحداثيات المطلقة للمستطيل على الـ SVG الكلي
         const cumulative = getCumulativeTranslate(rect);
         const absoluteX = x + cumulative.x;
         const absoluteY = y + cumulative.y;
+        
         const imageData = getGroupImage(rect);
         if (!imageData) return;
 
+        // 1. إنشاء منطقة القص (ClipPath)
         let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
         clip.setAttribute('id', clipPathId);
         let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -207,25 +242,40 @@ function attachHover(rect, i) {
         clipRect.setAttribute('height', height);
         clipDefs.appendChild(clip).appendChild(clipRect);
 
+        // 2. إنشاء جزء الصورة المكبر (ZoomPart)
         const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
         zoomPart.setAttribute('href', imageData.src);
         zoomPart.setAttribute('width', imageData.width);
         zoomPart.setAttribute('height', imageData.height);
         zoomPart.setAttribute('class','zoom-part');
         zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
-        zoomPart.setAttribute('x', 0);
-        zoomPart.setAttribute('y', 0);
-        zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;
+        
+        // يجب أن تكون إحداثيات image هي 0,0 بالنسبة لنظام إحداثيات الـ SVG الكلي
+        // ولكن يجب أن نأخذ إزاحة المجموعة بعين الاعتبار لتحميل الصورة في مكانها الصحيح
+        const groupParent = rect.closest('g');
+        const groupTranslate = getCumulativeTranslate(groupParent);
+        zoomPart.setAttribute('x', groupTranslate.x * (groupParent.querySelector('image').getAttribute('width')/1024));
+        zoomPart.setAttribute('y', 0); // الصور كلها تبدأ من Y=0
+        
         zoomPart.style.opacity = 0;
         mainSvg.appendChild(zoomPart);
         activeState.zoomPart = zoomPart;
 
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        // 3. تطبيق التحويلات (Scale)
+        const centerX = absoluteX + width/2;
+        const centerY = absoluteY + height/2;
+        
+        // تطبيق التكبير على المستطيل نفسه
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; // الإحداثيات المحلية
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
+
+        // تطبيق التكبير على جزء الصورة المكبر
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`; // الإحداثيات المطلقة
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
 
+        // 4. تشغيل رسوم الـ Glow المتحركة
         let hue = 0;
         let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
@@ -251,7 +301,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
-// مراقبة المستطيلات الجديدة
+// مراقبة المستطيلات الجديدة (إذا تم إضافتها ديناميكياً)
 const rootObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
