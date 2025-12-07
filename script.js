@@ -1,8 +1,8 @@
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
-// لم نعد نحتاج لـ zoomPart أو clipPathId في activeState
-const activeState = { rect: null, animationId: null }; 
+// activeState عادت لاحتواء zoomPart و clipPathId
+const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null }; 
 const MAX_SCROLL_LEFT = 6 * 1024;
 const SCALE_FACTOR = 1.1; // عامل التكبير
 
@@ -26,25 +26,44 @@ function getCumulativeTranslate(element) {
     return { x, y };
 }
 
-// ⚠️ لم نعد نحتاج إلى دالة getGroupImage ⚠️
+function getGroupImage(element) {
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        if (current.tagName === 'g') {
+            const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
+            if (images.length) {
+                const baseImage = images[0];
+                const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
+                const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
+                const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
+
+                // التحميل المسبق لضمان أن الصورة جاهزة في الذاكرة
+                let preloader = new Image();
+                preloader.src = IMAGE_SRC;
+
+                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
+            }
+        }
+        current = current.parentNode;
+    }
+    return null;
+}
 
 function cleanupHover() {
     if (!activeState.rect) return;
     if(activeState.animationId) clearInterval(activeState.animationId);
-    
-    // إعادة الـ SVG لحالته الأصلية وإلغاء الزوم
-    mainSvg.style.transform = 'translate(0, 0) scale(1)';
-
-    // إزالة التوهج من المستطيل
+    activeState.rect.style.transform = 'scale(1) translateZ(0)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
-    
-    // لم نعد بحاجة إلى إزالة zoomPart أو clipPath
-    
-    Object.assign(activeState, { rect:null, animationId:null });
+    if(activeState.zoomPart) activeState.zoomPart.remove();
+    const currentClip = document.getElementById(activeState.clipPathId);
+    if(currentClip) currentClip.remove();
+    Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
 }
 
 function attachHover(rect, i) {
+    const clipPathId = `clip-${i}-${Date.now()}`;
+    const scale = SCALE_FACTOR;
     rect.setAttribute('data-index', i);
 
     rect.addEventListener('mouseover', startHover);
@@ -56,6 +75,7 @@ function attachHover(rect, i) {
         if(activeState.rect === rect) return;
         cleanupHover();
         activeState.rect = rect;
+        activeState.clipPathId = clipPathId;
 
         const x = parseFloat(rect.getAttribute('x'));
         const y = parseFloat(rect.getAttribute('y'));
@@ -66,56 +86,60 @@ function attachHover(rect, i) {
         const absoluteX = x + cumulative.x;
         const absoluteY = y + cumulative.y;
 
-        // حساب مركز المستطيل (بالإحداثيات المطلقة داخل الـ SVG)
-        const rectCenterX = absoluteX + width / 2;
-        const rectCenterY = absoluteY + height / 2;
-        
-        // حساب إزاحة التحريك (Translation)
-        // نريد أن يكون مركز الـ SVG الجديد (بعد التكبير) هو مكان مركز المستطيل الحالي
-        // لكن يجب أن نأخذ في الاعتبار تحريك حاوية الـ Scroll (scrollContainer)
+        const imageData = getGroupImage(rect);
+        if (!imageData) return;
 
-        const svgWidth = mainSvg.viewBox.baseVal.width;
-        const svgHeight = mainSvg.viewBox.baseVal.height;
-        const viewportWidth = scrollContainer.clientWidth;
-        const viewportHeight = scrollContainer.clientHeight;
-        
-        // نسبة التكبير الحالية للـ SVG نسبةً لحجمه الأصلي في ViewBox
-        const currentSvgScaleX = viewportWidth / svgWidth;
-        const currentSvgScaleY = viewportHeight / svgHeight;
+        let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+        clip.setAttribute('id', clipPathId);
+        let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        clipRect.setAttribute('x', absoluteX);
+        clipRect.setAttribute('y', absoluteY);
+        clipRect.setAttribute('width', width);
+        clipRect.setAttribute('height', height);
+        // نستخدم defs الـ SVG الموجودة بالفعل
+        clipDefs.appendChild(clip).appendChild(clipRect);
 
-        // نحسب المركز المرئي الحالي للمستطيل بالنسبة لـ Viewport (أو حاوية الـ scroll)
-        // يجب أن نأخذ scrollLeft في الحسبان
-        const scrollOffset = scrollContainer.scrollLeft;
-        
-        // النقطة التي يجب أن يكون عندها الـ SVG (بالإحداثيات الأصلية قبل التكبير)
-        // هذا يتطلب رياضيات معقدة قليلاً لتحديد التحريك المضاد لمركز المستطيل
+        const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
+        zoomPart.setAttribute('href', imageData.src);
+        zoomPart.setAttribute('width', imageData.width);
+        zoomPart.setAttribute('height', imageData.height);
+        zoomPart.setAttribute('class','zoom-part');
+        zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-        // حساب المسافة التي يجب أن يتحركها الـ SVG ليكون مركز المستطيل في مركز الشاشة المرئية تقريباً
-        const targetX = rectCenterX;
-        const targetY = rectCenterY;
-        
-        // X = (targetX * SCALE_FACTOR) - (ViewportWidth / 2) 
-        // Y = (targetY * SCALE_FACTOR) - (ViewportHeight / 2)
+        const groupParentTransform = imageData.group.getAttribute('transform');
+        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const groupX = match ? parseFloat(match[1]) : 0;
+        const groupY = match ? parseFloat(match[2]) : 0;
 
-        // سنقوم بتبسيط الحساب للتركيز على إبقاء المستطيل مرئياً (بدلاً من وضعه في المنتصف تماماً)
-        // التحريك = - (مركز المستطيل المطلق * (عامل التكبير - 1)) + (Offset لتعديل موضع العرض)
-        
-        const offsetX = (rectCenterX * (SCALE_FACTOR - 1));
-        const offsetY = (rectCenterY * (SCALE_FACTOR - 1));
-        
-        // التحريك المضاد (Negative Translation) للـ SVG الرئيسي
-        mainSvg.style.transform = `scale(${SCALE_FACTOR}) translate(-${offsetX}px, -${offsetY}px) translateZ(0)`;
+        zoomPart.setAttribute('x', groupX);
+        zoomPart.setAttribute('y', groupY);
 
-        // تحديد المستطيل نفسه
+        zoomPart.style.opacity = 0;
+        mainSvg.appendChild(zoomPart);
+        activeState.zoomPart = zoomPart;
+
+        const centerX = absoluteX + width/2;
+        const centerY = absoluteY + height/2;
+
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        rect.style.transform = `scale(${scale}) translateZ(0)`; // تثبيت GPU
         rect.style.strokeWidth = '4px';
 
-        // تأثير التوهج للحالة النشطة
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+        zoomPart.style.transform = `scale(${scale}) translateZ(0)`; 
+        zoomPart.style.opacity = 1;
+
         let hue = 0;
         let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
             hue = (hue + 1) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
-            rect.style.filter = glow;
+            // يجب دمج التوهج مع فلتر الجودة
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%)) url(#highQualityFilter)`; 
+            rect.style.filter = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
+            
+            // في zoomPart نستخدم الفلتر المدمج
+            if(zoomPart) zoomPart.style.filter = `url(#highQualityFilter) drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
+            
             currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
             rect.style.strokeWidth = `${currentStrokeWidth}px`;
         }, 100);
