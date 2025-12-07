@@ -63,7 +63,7 @@ function attachHover(rect, i) {
     rect.addEventListener('mouseout', stopHover);
     rect.addEventListener('touchstart', startHover);
     rect.addEventListener('touchend', cleanupHover);
-
+    
     function startHover() {
         if(activeState.rect === rect) return;
         cleanupHover();
@@ -165,9 +165,24 @@ const rootObserver = new MutationObserver(mutations => {
 });
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-function setLinkTarget() {
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');
-    allLinks.forEach(link => { isMobile ? link.removeAttribute('target') : link.setAttribute('target', '_blank'); });
+function handleRectClick(event) {
+    const targetRect = event.target.closest('.image-mapper-shape');
+
+    if (targetRect) {
+        const href = targetRect.getAttribute('data-href');
+        
+        if (href && href !== '#') {
+            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
+            
+            if (isMobile) {
+                window.location.href = href;
+            } else {
+                window.open(href, '_blank');
+            }
+            
+            event.preventDefault();
+        }
+    }
 }
-setLinkTarget();
+
+mainSvg.addEventListener('click', handleRectClick);
