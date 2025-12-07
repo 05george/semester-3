@@ -60,7 +60,7 @@
 * "translate(7168,0)"> 
 * <image href="image/8.png" 
 * width="1024" height="2454"/>
-    دة مثال علي صورة
+* دة مثال علي صورة
 ### 3. ▶️ التشغيل
 
 ببساطة، افتح ملف **`index.html`** باستخدام أي متصفح ويب حديث (مثل Chrome, Firefox, Edge).
