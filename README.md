@@ -6,7 +6,11 @@
 
 * **عرض SVG تفاعلي:** يوفر خريطة مرئية دجدول المنهج مع مربع قابل للنقر مكان معاد المحاضرة يحمل رابط ملف pdf للمحاضرات.
 *ألوان المربعات القابلة للنقر*
-*ألوان المربعات القابلة للنقر*
+* <span style="color: #FFD700;">الأصفر:</span> للمحاضرات
+* <span style="color: red;">الأحمر:</span> للأسئلة
+* <span style="color: #FF69B4;">الوردي:</span> للاجابات
+* <span style="color: white; background-color: #333333; padding: 2px;">الأبيض:</span> للمحاضرات الغير أساسيه في GPA 
+* <span style="color: blue;">الأزرق:</span> للفيديوهات الشرح
 * <span style="color: yellow;">Yellow:</span> For lectures
 * <span style="color: red;">Red:</span> For questions
 * <span style="color: pink;">Pink:</span> For answers
