@@ -2,14 +2,12 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
-// تم تحديد أقصى سحب ليكون بعد آخر صورة مرئية بالكامل + 1024 إضافية لتغطية آخر مجموعة 
-const MAX_SCROLL_LEFT = 11 * 1024; // (12 صورة * 1024) - عرض الشاشة 
+const MAX_SCROLL_LEFT = 6 * 1024;
 
 scrollContainer.addEventListener('scroll', function() {
-    // تم حذف هذا القيد لأننا نريد للمستخدم أن يسحب حتى نهاية الجدول
-    // if (this.scrollLeft > MAX_SCROLL_LEFT) {
-    //     this.scrollLeft = MAX_SCROLL_LEFT;
-    // }
+    if (this.scrollLeft > MAX_SCROLL_LEFT) {
+        this.scrollLeft = MAX_SCROLL_LEFT;
+    }
 });
 
 function getCumulativeTranslate(element) {
@@ -50,10 +48,6 @@ function cleanupHover() {
     activeState.rect.style.transform = 'scale(1)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
-    // نعيد Stroke color الأصلي بناءً على الفئة
-    const strokeClass = Array.from(activeState.rect.classList).find(cls => ['q', 'v', 'ipc', 'a', 's', 'l'].includes(cls));
-    activeState.rect.style.stroke = strokeClass ? getComputedStyle(document.documentElement).getPropertyValue(`--${strokeClass}-color`) : 'transparent';
-    
     if(activeState.zoomPart) activeState.zoomPart.remove();
     const currentClip = document.getElementById(activeState.clipPathId);
     if(currentClip) currentClip.remove();
@@ -126,17 +120,12 @@ function attachHover(rect, i) {
         zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
-        
-        // إظهار الحدود الأصلية للمستطيل التفاعلي
-        const originalStroke = getComputedStyle(rect).getPropertyValue('stroke');
-        rect.style.stroke = originalStroke; 
 
         let hue = 0;
         let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
             hue = (hue + 1) % 360;
-            // يتم استخدام Glow أصفر فقط للتأكيد على التفاعل
-            const glow = `drop-shadow(0 0 8px yellow) drop-shadow(0 0 14px #FFD700)`;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
             rect.style.filter = glow;
             if(zoomPart) zoomPart.style.filter = glow;
             currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
@@ -181,16 +170,16 @@ function handleRectClick(event) {
 
     if (targetRect) {
         const href = targetRect.getAttribute('data-href');
-        
+
         if (href && href !== '#') {
             const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-            
+
             if (isMobile) {
                 window.location.href = href;
             } else {
                 window.open(href, '_blank');
             }
-            
+
             event.preventDefault();
         }
     }
