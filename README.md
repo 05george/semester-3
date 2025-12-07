@@ -8,7 +8,7 @@
 *ألوان المربعات القابلة للنقر*
 * **🟡** المحاضرات : <span style="color: yellow;">أصفر</span>
 * **🔴** الأسئلة : <span style="color: red;">أحمر</span>
-* **🟣** الإجابات : <span style="color: pink;">وردي</span>
+* **🟣** الإجابات : <span style="color: pink;">بنفسجي</span>
 * **⚪️** محاضرات غير أساسية : <span style="color: white; background-color: #333333; padding: 2px;">أبيض</span>
 * **🔵** فيديوهات الشرح : <span style="color: blue;">أزرق</span>
 * **🟢** سكاشن العملي : <span style="color: green;">أخضر</span>
