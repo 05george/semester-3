@@ -2,13 +2,7 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
-const MAX_SCROLL_LEFT = 6 * 1024;
-
-scrollContainer.addEventListener('scroll', function() {
-    if (this.scrollLeft > MAX_SCROLL_LEFT) {
-        this.scrollLeft = MAX_SCROLL_LEFT;
-    }
-});
+const MAX_SCROLL_LEFT = mainSvg.viewBox.baseVal.width - scrollContainer.clientWidth;
 
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
