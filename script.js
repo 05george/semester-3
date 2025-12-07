@@ -4,10 +4,9 @@ const scrollContainer = document.querySelector('div');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
 const MAX_SCROLL_LEFT = 6 * 1024;
 
+// منع التمرير الزائد
 scrollContainer.addEventListener('scroll', function() {
-    if (this.scrollLeft > MAX_SCROLL_LEFT) {
-        this.scrollLeft = MAX_SCROLL_LEFT;
-    }
+    if (this.scrollLeft > MAX_SCROLL_LEFT) this.scrollLeft = MAX_SCROLL_LEFT;
 });
 
 function getCumulativeTranslate(element) {
@@ -59,10 +58,9 @@ function attachHover(rect, i) {
     const scale = 1.1;
     rect.setAttribute('data-index', i);
 
-    rect.addEventListener('mouseover', startHover);
-    rect.addEventListener('mouseout', stopHover);
-    rect.addEventListener('touchstart', startHover);
-    rect.addEventListener('touchend', cleanupHover);
+    // دمج جميع الأحداث مع الدوال نفسها
+    ['mouseover','touchstart'].forEach(evt => rect.addEventListener(evt, startHover));
+    ['mouseout','touchend'].forEach(evt => rect.addEventListener(evt, cleanupHover));
 
     function startHover() {
         if(activeState.rect === rect) return;
@@ -133,11 +131,6 @@ function attachHover(rect, i) {
         }, 100);
         activeState.animationId = animationId;
     }
-
-    function stopHover(e) {
-        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
-        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
-    }
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
@@ -167,22 +160,14 @@ rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
 function handleRectClick(event) {
     const targetRect = event.target.closest('.image-mapper-shape');
-
     if (targetRect) {
         const href = targetRect.getAttribute('data-href');
-
         if (href && href !== '#') {
-            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-
-            if (isMobile) {
-                window.location.href = href;
-            } else {
-                window.open(href, '_blank');
-            }
-
+            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isMobile) window.location.href = href;
+            else window.open(href, '_blank');
             event.preventDefault();
         }
     }
 }
-
 mainSvg.addEventListener('click', handleRectClick);
