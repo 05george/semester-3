@@ -1,36 +1,34 @@
-<html>
-<head>
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100svh;
+<style>  
+  html, body {  
+    margin: 0;  
+    padding: 0;  
+    width: 100vw;  
+    height: 100svh;  
     overflow-x: auto;
-    overflow-y: hidden;
-    background: black;
-}
-body {
- display: block;
- width: auto; 
- height: 100%;
-}
-#main-svg {
-    height: 100%;
+    overflow-y: hidden;  
+    background: black;  
+  }  
+  body {
+    display: block;
+    width: auto;
+    height: 100svh;
+  }
+
+  #main-svg {
+    height: 100svh;
+    max-height: 100svh;
+    min-height: 100svh;
     display: block;
     background: black;
-    width: auto;
-}
-.image-mapper-shape {
+  }
+
+  .image-mapper-shape {
     fill: transparent;
     stroke: transparent;
     stroke-width: 2px;
     transform-origin: center center;
-    /* إعادة transform لخاصية transition */
-    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease; 
-    cursor: pointer; 
-    /* إضافة تحويل لتفعيل تسريع الـ GPU على العنصر الأساسي */
-    transform: translateZ(0); 
-}
+    transition: transform 0.3s ease, stroke-width 0.3s ease; 
+  }
 .q { stroke: red; }         /*أسئلة🔴*/
 .v { stroke: blue; }    /*فيديو شرح🔵*/
 .ipc { stroke: white; } /*مواد أخري⚪️*/
@@ -38,24 +36,31 @@ body {
 .s { stroke: green; } /*سكاشن العملي🟢*/
 .l { stroke: yellow; }   /*محاضرات🟡*/ 
 
-.zoom-part {
-    pointer-events: none;
-    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-    
-    /* التعديل لحل مشكلة الوضوح على الكمبيوتر: جرب هذه أولاً */
-    image-rendering: -webkit-optimize-contrast; 
-    /* خيار احتياطي إضافي */
-    image-rendering: high-quality;
-}
-</style>
-</head>
-<body>
-<div>
+  @keyframes hue-rotation {
+    from { filter: drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(0deg); }
+    to { filter: drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(360deg); }
+  }
 
-<svg xmlns="http://www.w3.org/2000/svg"
-viewBox="0 0 12288 2454"
-preserveAspectRatio="xMinYMin slice"
-id="main-svg"> <defs></defs>
+  .image-mapper-shape.active-glow {
+    animation: hue-rotation 5s linear infinite; 
+    stroke-width: 4px !important; 
+  }
+
+  .zoom-part {
+    pointer-events: none;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease; 
+    image-rendering: high-quality;
+    image-rendering: -webkit-optimize-contrast; 
+  }
+</style>
+
+</head>  
+<body>  
+  <svg xmlns="http://www.w3.org/2000/svg"  
+    preserveAspectRatio="xMinYMin meet"  
+    id="main-svg">
+    <defs id="clip-defs"></defs>
 
 <g transform="translate(0,0)"> <!--الاسبوع الأول-->
         <image x="0" y="0" href="image/1.png" width="1024" height="2454" />
