@@ -50,7 +50,8 @@ function getGroupImage(element) {
 function cleanupHover() {
     if (!activeState.rect) return;
     if(activeState.animationId) clearInterval(activeState.animationId);
-    activeState.rect.style.transform = 'scale(1)';
+    // تأكد من أننا نستخدم translateZ(0) في كلتا الحالتين
+    activeState.rect.style.transform = 'scale(1) translateZ(0)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
     if(activeState.zoomPart) activeState.zoomPart.remove();
@@ -119,11 +120,11 @@ function attachHover(rect, i) {
         const centerY = absoluteY + height/2;
 
         rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
-        rect.style.transform = `scale(${scale})`;
+        // إعادة إضافة translateZ(0) إلى العنصر الأصلي أيضًا
+        rect.style.transform = `scale(${scale}) translateZ(0)`;
         rect.style.strokeWidth = '4px';
 
         zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-        // دمج التكبير مع تسريع الـ GPU لحل مشكلة توقف التفاعل على الهاتف
         zoomPart.style.transform = `scale(${scale}) translateZ(0)`; 
         zoomPart.style.opacity = 1;
 
