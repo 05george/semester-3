@@ -25,7 +25,7 @@ function getGroupImage(element) {
             const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
             if (images.length) {
                 const baseImage = images[0];
-                const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
+                const IMAGE_SRC = baseImage.getAttribute('href');
                 const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
                 const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
                 if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
