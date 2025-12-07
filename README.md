@@ -39,10 +39,15 @@
 
 class="image-mapper-shape l" data-href="rrs-histo-1.pdf"/>
 * الابعاد (rect) تجيبها من موقع زي دة
-*Image Map Generator - Fla-shop.com https://share.google/QFfIjr3qO5BklTSg9
+* Image Map Generator - Fla-shop.com https://share.google/QFfIjr3qO5BklTSg9
 * أسم الملف (data-href) لازم يكون نفس المرفوع علي جيت هاب و لو هو جوة مجلد تكتب قبله اسم المجلد و سلاش
-*(class) تكتب image-mapper-shape و بعدين تختار اخصار لون من القائمة دي 
-*
+* (class) تكتب image-mapper-shape و بعدين تختار اخصار لون من القائمة دي
+* .q { stroke: red; }         أسئلة🔴
+* .v { stroke: blue; }    فيديو شرح🔵
+* .ipc { stroke: white; } مواد أخري⚪️
+* .a { stroke: purple; }     إجابات🟣 
+* .s { stroke: green; } سكاشن العملي🟢
+* .l { stroke: yellow; }   محاضرات🟡 
 ### 3. ▶️ التشغيل
 
 ببساطة، افتح ملف **`index.html`** باستخدام أي متصفح ويب حديث (مثل Chrome, Firefox, Edge).
