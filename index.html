@@ -38,7 +38,8 @@ body {
 .zoom-part {
     pointer-events: none;
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-    image-rendering: auto;
+    /* التعديل: استخدام crisp-edges أو -webkit-optimize-contrast لتحسين وضوح الـ PNG المكبرة */
+    image-rendering: crisp-edges;
 }
 </style>
 </head>
