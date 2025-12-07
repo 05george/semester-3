@@ -34,7 +34,8 @@ function getGroupImage(element) {
                 const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
                 const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
                 const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
-                
+
+                // التحميل المسبق لضمان أن الصورة جاهزة في الذاكرة
                 let preloader = new Image();
                 preloader.src = IMAGE_SRC;
 
@@ -122,7 +123,7 @@ function attachHover(rect, i) {
         rect.style.strokeWidth = '4px';
 
         zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-    
+        // دمج التكبير مع تسريع الـ GPU لحل مشكلة توقف التفاعل على الهاتف
         zoomPart.style.transform = `scale(${scale}) translateZ(0)`; 
         zoomPart.style.opacity = 1;
 
