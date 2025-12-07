@@ -1,4 +1,3 @@
-<script>
 const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
@@ -71,27 +70,31 @@ function attachHover(rect, i) {
         activeState.rect = rect;
         activeState.clipPathId = clipPathId;
 
-        const x = parseFloat(rect.getAttribute('x'));
-        const y = parseFloat(rect.getAttribute('y'));
-        const width = parseFloat(rect.getAttribute('width'));
-        const height = parseFloat(rect.getAttribute('height'));
+        const bbox = rect.getBoundingClientRect();
+        const svgRect = mainSvg.getBoundingClientRect();
+        const centerX = bbox.left + bbox.width/2 - svgRect.left;
+        const centerY = bbox.top + bbox.height/2 - svgRect.top;
 
         const cumulative = getCumulativeTranslate(rect);
-        const absoluteX = x + cumulative.x;
-        const absoluteY = y + cumulative.y;
+        const x = parseFloat(rect.getAttribute('x')) + cumulative.x;
+        const y = parseFloat(rect.getAttribute('y')) + cumulative.y;
+        const width = parseFloat(rect.getAttribute('width'));
+        const height = parseFloat(rect.getAttribute('height'));
 
         const imageData = getGroupImage(rect);
         if (!imageData) return;
 
+        // Clip-path
         let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
         clip.setAttribute('id', clipPathId);
         let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-        clipRect.setAttribute('x', absoluteX);
-        clipRect.setAttribute('y', absoluteY);
+        clipRect.setAttribute('x', x);
+        clipRect.setAttribute('y', y);
         clipRect.setAttribute('width', width);
         clipRect.setAttribute('height', height);
         clipDefs.appendChild(clip).appendChild(clipRect);
 
+        // Zoom image
         const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
         zoomPart.setAttribute('href', imageData.src);
         zoomPart.setAttribute('width', imageData.width);
@@ -99,11 +102,10 @@ function attachHover(rect, i) {
         zoomPart.setAttribute('class','zoom-part');
         zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-        const groupParentTransform = imageData.group.getAttribute('transform');
-        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const groupTransform = imageData.group.getAttribute('transform');
+        const match = groupTransform ? groupTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const groupX = match ? parseFloat(match[1]) : 0;
         const groupY = match ? parseFloat(match[2]) : 0;
-
         zoomPart.setAttribute('x', groupX);
         zoomPart.setAttribute('y', groupY);
 
@@ -111,10 +113,8 @@ function attachHover(rect, i) {
         mainSvg.appendChild(zoomPart);
         activeState.zoomPart = zoomPart;
 
-        const centerX = absoluteX + width/2;
-        const centerY = absoluteY + height/2;
-
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        // Transform
+        rect.style.transformOrigin = `${centerX}px ${centerY}px`;
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
 
@@ -122,6 +122,7 @@ function attachHover(rect, i) {
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
 
+        // Glow animation
         let hue = 0;
         let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
@@ -136,8 +137,7 @@ function attachHover(rect, i) {
     }
 
     function stopHover(e) {
-        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
-        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
+        if(e && e.type === 'mouseout') cleanupHover();
     }
 }
 
@@ -146,6 +146,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
+// Observe dynamically added rects
 const rootObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
@@ -166,25 +167,16 @@ const rootObserver = new MutationObserver(mutations => {
 });
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-function handleRectClick(event) {
+// Click handler
+mainSvg.addEventListener('click', event => {
     const targetRect = event.target.closest('.image-mapper-shape');
-
     if (targetRect) {
         const href = targetRect.getAttribute('data-href');
-
         if (href && href !== '#') {
-            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-
-            if (isMobile) {
-                window.location.href = href;
-            } else {
-                window.open(href, '_blank');
-            }
-
+            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (isMobile) window.location.href = href;
+            else window.open(href, '_blank');
             event.preventDefault();
         }
     }
-}
-
-mainSvg.addEventListener('click', handleRectClick); 
-</script>
+});
