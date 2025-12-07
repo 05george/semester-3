@@ -1,3 +1,5 @@
+< {
+     
 <html>
 <head>
 <style>
@@ -18,7 +20,8 @@ body {
     height: 100%;
     display: block;
     background: black;
-    width: auto;
+    /* ✅ تمت إضافة عرض الـ viewBox لضمان المقياس الصحيح عند استخدام preserveAspectRatio="none" */
+    width: 12288px; 
 }
 .image-mapper-shape {
     fill: transparent;
@@ -47,8 +50,7 @@ body {
 
 <svg xmlns="http://www.w3.org/2000/svg"
 viewBox="0 0 12288 2454"
-preserveAspectRatio="xMinYMin slice"
-id="main-svg"> <defs></defs>
+preserveAspectRatio="none"  id="main-svg"> <defs></defs>
 
 <g transform="translate(0,0)"> <!--الاسبوع الأول-->
         <image x="0" y="0" href="image/1.png" width="1024" height="2454" />
