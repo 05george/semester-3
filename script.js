@@ -1,200 +1,163 @@
-const mainSvg = document.getElementById('main-svg');
-const clipDefs = mainSvg.querySelector('defs');
-const scrollContainer = document.querySelector('div');
-// activeState عادت لاحتواء zoomPart و clipPathId
-const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null }; 
-const MAX_SCROLL_LEFT = 6 * 1024;
-const SCALE_FACTOR = 1.1; // عامل التكبير
+const mainSvg = document.getElementById('main-svg');  
+  const clipDefs = document.getElementById('clip-defs');  
+  const activeState = { rect: null, zoomPart: null, clipPathId: null }; 
 
-scrollContainer.addEventListener('scroll', function() {
-    if (this.scrollLeft > MAX_SCROLL_LEFT) {
-        this.scrollLeft = MAX_SCROLL_LEFT;
-    }
-});
+  function setDynamicSvgWidth() {
+      const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
+      const IMAGE_WIDTH = 1024; 
+      const totalWidth = weekGroups.length * IMAGE_WIDTH; 
+      mainSvg.style.width = `${totalWidth}px`;
+      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); 
+  }
+  setDynamicSvgWidth();
 
-function getCumulativeTranslate(element) {
-    let x = 0, y = 0;
-    let current = element;
-    while (current && current.tagName !== 'svg') {
-        const transformAttr = current.getAttribute('transform');
-        if (transformAttr) {
-            const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-            if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
-        }
-        current = current.parentNode;
-    }
-    return { x, y };
-}
+  function getTransformX(groupElement) {  
+    if (!groupElement) return 0;
+    const transformAttr = groupElement.getAttribute('transform');  
+    if (!transformAttr) return 0;  
+    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    return match ? parseFloat(match[1]) : 0;  
+  } 
 
-function getGroupImage(element) {
-    let current = element;
-    while (current && current.tagName !== 'svg') {
-        if (current.tagName === 'g') {
-            const images = Array.from(current.children).filter(c => c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href')));
-            if (images.length) {
-                const baseImage = images[0];
-                const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');
-                const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
-                const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
+  function getTransformY(groupElement) {  
+    if (!groupElement) return 0;
+    const transformAttr = groupElement.getAttribute('transform');  
+    if (!transformAttr) return 0;  
+    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    return match ? parseFloat(match[2]) : 0;  
+  }
 
-                // التحميل المسبق لضمان أن الصورة جاهزة في الذاكرة
-                let preloader = new Image();
-                preloader.src = IMAGE_SRC;
+  function getGroupImage(parentGroup) { 
+    const baseImage = parentGroup.querySelector('image'); 
+    if (!baseImage) return null;  
+    const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');  
+    const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));  
+    const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));  
+    if (isNaN(IMAGE_WIDTH) || isNaN(IMAGE_HEIGHT)) return null;  
+    return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };  
+  } 
 
-                if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
-            }
-        }
-        current = current.parentNode;
-    }
-    return null;
-}
+  function cleanupHover() {  
+    if (!activeState.rect) return;  
 
-function cleanupHover() {
-    if (!activeState.rect) return;
-    if(activeState.animationId) clearInterval(activeState.animationId);
-    activeState.rect.style.transform = 'scale(1) translateZ(0)';
-    activeState.rect.style.filter = 'none';
-    activeState.rect.style.strokeWidth = '2px';
-    if(activeState.zoomPart) activeState.zoomPart.remove();
-    const currentClip = document.getElementById(activeState.clipPathId);
-    if(currentClip) currentClip.remove();
-    Object.assign(activeState, { rect:null, zoomPart:null, animationId:null, clipPathId:null });
-}
+    activeState.rect.style.transform = 'scale(1)';  
+    activeState.rect.classList.remove('active-glow'); 
+    activeState.rect.style.strokeWidth = '2px'; 
 
-function attachHover(rect, i) {
-    const clipPathId = `clip-${i}-${Date.now()}`;
-    const scale = SCALE_FACTOR;
-    rect.setAttribute('data-index', i);
+    if(activeState.zoomPart){ 
+        activeState.zoomPart.style.filter = 'none'; 
+        activeState.zoomPart.remove(); 
+    }  
+    const currentClip = document.getElementById(activeState.clipPathId);  
+    if(currentClip) currentClip.remove();  
+    activeState.rect = null;  
+    activeState.zoomPart = null;  
+    activeState.clipPathId = null;  
+  }
 
-    rect.addEventListener('mouseover', startHover);
-    rect.addEventListener('mouseout', stopHover);
-    rect.addEventListener('touchstart', startHover);
-    rect.addEventListener('touchend', cleanupHover);
+  function attachHover(rect, i) {  
+    const anchor = rect.closest('a');  
+    const clipPathId = `clip-${i}-${Date.now()}`;  
+    const scale = 1.1;  
 
-    function startHover() {
-        if(activeState.rect === rect) return;
-        cleanupHover();
-        activeState.rect = rect;
-        activeState.clipPathId = clipPathId;
+    rect.setAttribute('data-index', i);  
+    rect.addEventListener('mouseover', startHover);  
+    rect.addEventListener('mouseout', stopHover);  
+    rect.addEventListener('touchstart', startHover);  
 
-        const x = parseFloat(rect.getAttribute('x'));
-        const y = parseFloat(rect.getAttribute('y'));
-        const width = parseFloat(rect.getAttribute('width'));
-        const height = parseFloat(rect.getAttribute('height'));
+    rect.addEventListener('touchend', (e) => {
+        cleanupHover(); 
+    }); 
+    if (anchor) { anchor.removeEventListener('click', cleanupHover); }  
 
-        const cumulative = getCumulativeTranslate(rect);
-        const absoluteX = x + cumulative.x;
-        const absoluteY = y + cumulative.y;
+    function startHover() {  
+      if(activeState.rect === rect) return;  
+      cleanupHover();  
+      activeState.rect = rect;  
+      activeState.clipPathId = clipPathId;  
 
-        const imageData = getGroupImage(rect);
-        if (!imageData) return;
+      const x = parseFloat(rect.getAttribute('x'));  
+      const y = parseFloat(rect.getAttribute('y'));  
+      const width = parseFloat(rect.getAttribute('width'));  
+      const height = parseFloat(rect.getAttribute('height'));
 
-        let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
-        clip.setAttribute('id', clipPathId);
-        let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-        clipRect.setAttribute('x', absoluteX);
-        clipRect.setAttribute('y', absoluteY);
-        clipRect.setAttribute('width', width);
-        clipRect.setAttribute('height', height);
-        // نستخدم defs الـ SVG الموجودة بالفعل
-        clipDefs.appendChild(clip).appendChild(clipRect);
+      const dayGroup = rect.closest('g[transform]'); 
+      const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
 
-        const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
-        zoomPart.setAttribute('href', imageData.src);
-        zoomPart.setAttribute('width', imageData.width);
-        zoomPart.setAttribute('height', imageData.height);
-        zoomPart.setAttribute('class','zoom-part');
-        zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+      const imageData = getGroupImage(weekGroup);
+      if (!imageData) return;  
 
-        const groupParentTransform = imageData.group.getAttribute('transform');
-        const match = groupParentTransform ? groupParentTransform.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
-        const groupX = match ? parseFloat(match[1]) : 0;
-        const groupY = match ? parseFloat(match[2]) : 0;
+      const weekOffsetX = getTransformX(weekGroup);
+      const dayOffsetX = getTransformX(dayGroup);
+      const weekOffsetY = getTransformY(weekGroup);
+      const dayOffsetY = getTransformY(dayGroup);
+      const absoluteX = x + weekOffsetX + dayOffsetX;  
+      const absoluteY = y + weekOffsetY + dayOffsetY;  
 
-        zoomPart.setAttribute('x', groupX);
-        zoomPart.setAttribute('y', groupY);
+      let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');  
+      clip.setAttribute('id', clipPathId);  
+      let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');  
+      clipRect.setAttribute('x', absoluteX);  
+      clipRect.setAttribute('y', absoluteY);  
+      clipRect.setAttribute('width', width);  
+      clipRect.setAttribute('height', height);  
+      clipDefs.appendChild(clip).appendChild(clipRect);  
 
-        zoomPart.style.opacity = 0;
-        mainSvg.appendChild(zoomPart);
-        activeState.zoomPart = zoomPart;
+      const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');  
+      zoomPart.setAttribute('href', imageData.src);  
+      zoomPart.setAttribute('width', imageData.width);  
+      zoomPart.setAttribute('height', imageData.height);  
+      zoomPart.setAttribute('class','zoom-part');  
+      zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-        const centerX = absoluteX + width/2;
-        const centerY = absoluteY + height/2;
+      zoomPart.setAttribute('x', weekOffsetX);  
+      zoomPart.setAttribute('y', weekOffsetY);
 
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
-        rect.style.transform = `scale(${scale}) translateZ(0)`; // تثبيت GPU
-        rect.style.strokeWidth = '4px';
+      zoomPart.style.filter = 'drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5))';
 
-        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-        zoomPart.style.transform = `scale(${scale}) translateZ(0)`; 
-        zoomPart.style.opacity = 1;
+      zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
+      zoomPart.style.opacity = 0;  
+      mainSvg.appendChild(zoomPart);  
+      activeState.zoomPart = zoomPart; 
 
-        let hue = 0;
-        let currentStrokeWidth = 4;
-        const animationId = setInterval(() => {
-            hue = (hue + 1) % 360;
-            // يجب دمج التوهج مع فلتر الجودة
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%)) url(#highQualityFilter)`; 
-            rect.style.filter = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
-            
-            // في zoomPart نستخدم الفلتر المدمج
-            if(zoomPart) zoomPart.style.filter = `url(#highQualityFilter) drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
-            
-            currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
-            rect.style.strokeWidth = `${currentStrokeWidth}px`;
-        }, 100);
-        activeState.animationId = animationId;
-    }
+      rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
+      rect.style.transform = `scale(${scale})`;  
 
-    function stopHover(e) {
-        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
-        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
-    }
-}
+      rect.classList.add('active-glow'); 
 
-document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
-    rect.setAttribute('data-processed', 'true');
-    attachHover(rect, i);
-});
+      zoomPart.style.transform = `scale(${scale})`;  
+      zoomPart.style.opacity = 1;  
+    }  
 
-const rootObserver = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-            if (node.nodeType === 1) {
-                if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
-                    attachHover(node, Date.now());
-                    node.setAttribute('data-processed', 'true');
-                }
-                if (node.querySelector) {
-                    node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
-                        attachHover(rect, Date.now());
-                        rect.setAttribute('data-processed', 'true');
-                    });
-                }
-            }
-        });
-    });
-});
-rootObserver.observe(mainSvg, { childList: true, subtree: true });
+    function stopHover(e) {  
+      const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;  
+      if(targetRect === activeState.rect && e.type === 'mouseout'){  
+          cleanupHover();  
+      }  
+    }  
+  }  
 
-function handleRectClick(event) {
-    const targetRect = event.target.closest('.image-mapper-shape');
+  document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {  
+      rect.setAttribute('data-processed', 'true');  
+      attachHover(rect, i);  
+  });  
 
-    if (targetRect) {
-        const href = targetRect.getAttribute('data-href');
+  const rootObserver = new MutationObserver(() => {  
+    document  
+      .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
+      .forEach((rect, i) => {  
+        rect.setAttribute('data-processed', 'true');  
+        attachHover(rect, i);  
+      });  
+  });  
+  rootObserver.observe(mainSvg, { childList: true, subtree: true });  
 
-        if (href && href !== '#') {
-            const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-
-            if (isMobile) {
-                window.location.href = href;
-            } else {
-                window.open(href, '_blank');
-            }
-
-            event.preventDefault();
-        }
-    }
-}
-
-mainSvg.addEventListener('click', handleRectClick);
+  function setLinkTarget() {  
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
+    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');  
+    allLinks.forEach(link => {  
+      if (isMobile) { link.removeAttribute('target'); }   
+      else { link.setAttribute('target', '_blank'); }  
+    });  
+  }  
+  setLinkTarget();
