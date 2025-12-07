@@ -10,7 +10,7 @@
 * <span style="color: yellow;">Yellow:</span> For lectures
 * <span style="color: red;">Red:</span> For questions
 * <span style="color: pink;">Pink:</span> For answers
-* <span style="color: white; background-color: #333333; padding: 2px;">White:</span> For non-essential GPA lectures (تم وضع خلفية داكنة لتظهر الكتابة البيضاء بوضوح)
+* <span style="color: white; background-color: #333333; padding: 2px;">White:</span> For non-essential GPA lectures
 * <span style="color: blue;">Blue:</span> For explanation videos
 * **تأثير التكبير/التوهج:** عند وضع مؤشر الماوس على أي مستطيل، يتم تكبير الجزء المعني من الخريطة مع إضاءة ديناميكية لتمييز المنطقة.
 * **وصول مباشر للمحتوى:** النقر على أي منطقة تفاعلية يفتح ملف PDF أو رابط الفيديو المرتبط بها مباشرة.
