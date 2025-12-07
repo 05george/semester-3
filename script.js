@@ -1,20 +1,3 @@
-<style>
-/* 1. إضافة تنسيقات CSS لتحسين جودة العرض والتكبير */
-.zoom-part {
-    /* الخصائص الحالية لضمان أن الصورة المكبرة تكون فوق باقي العناصر */
-    pointer-events: none;
-    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
-    
-    /* === التعديلات لتحسين الجودة والاستقرار على اللابتوب === */
-    /* يجبر المتصفح على استخدام أعلى جودة عند إعادة الرسم */
-    image-rendering: high-quality;
-    /* يدفع التكبير إلى معالج الرسوميات لتحسين الأداء والوضوح */
-    transform: translateZ(0); 
-    /* --------------------------------------------------- */
-}
-</style>
-
-<script>
 Const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
@@ -52,10 +35,9 @@ function getGroupImage(element) {
                 const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));
                 const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));
                 
-                // === إضافة تحميل مسبق للصورة لضمان توفرها بشكل فوري ===
+                // التحميل المسبق لضمان أن الصورة جاهزة في الذاكرة
                 let preloader = new Image();
                 preloader.src = IMAGE_SRC;
-                // ====================================================
 
                 if (!isNaN(IMAGE_WIDTH) && !isNaN(IMAGE_HEIGHT)) return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT, group: current };
             }
@@ -141,12 +123,9 @@ function attachHover(rect, i) {
         rect.style.strokeWidth = '4px';
 
         zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-        zoomPart.style.transform = `scale(${scale})`;
+        // دمج التكبير مع تسريع الـ GPU لحل مشكلة توقف التفاعل على الهاتف
+        zoomPart.style.transform = `scale(${scale}) translateZ(0)`; 
         zoomPart.style.opacity = 1;
-        
-        // === تطبيق خاصية GPU Acceleration مباشرة بعد إنشاء العنصر ===
-        zoomPart.style.transform += ' translateZ(0)';
-        // =========================================================
 
         let hue = 0;
         let currentStrokeWidth = 4;
@@ -213,4 +192,3 @@ function handleRectClick(event) {
 }
 
 mainSvg.addEventListener('click', handleRectClick);
-</script>
