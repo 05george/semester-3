@@ -25,9 +25,10 @@ body {
     stroke: transparent;
     stroke-width: 2px;
     transform-origin: center center;
-    transform
+    /* إعادة transform لخاصية transition */
     transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease; 
-    cursor: pointer;
+    cursor: pointer; 
+    /* إضافة تحويل لتفعيل تسريع الـ GPU على العنصر الأساسي */
     transform: translateZ(0); 
 }
 .q { stroke: red; }         /*أسئلة🔴*/
@@ -40,7 +41,11 @@ body {
 .zoom-part {
     pointer-events: none;
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-    image-rendering: crisp-edges;
+    
+    /* التعديل لحل مشكلة الوضوح على الكمبيوتر: جرب هذه أولاً */
+    image-rendering: -webkit-optimize-contrast; 
+    /* خيار احتياطي إضافي */
+    image-rendering: high-quality;
 }
 </style>
 </head>
