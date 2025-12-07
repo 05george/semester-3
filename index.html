@@ -31,15 +31,9 @@
 .ipc { stroke: white; } /*مواد أخري⚪️*/
 .a { stroke: purple; }     /*إجابات🟣*/ 
 .s { stroke: green; } /*سكاشن العملي🟢*/
-.l { stroke: yellow; }   /*محاضرات🟡*/ 
+.l { stroke: yellow; }   /*محاضرات🟡*/
 
-  @keyframes hue-rotation {
-    from { filter: drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(0deg); }
-    to { filter: drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(360deg); }
-  }
-
-  .image-mapper-shape.active-glow {
-    animation: hue-rotation 5s linear infinite; 
+  .image-mapper-shape.active-glow { 
     stroke-width: 4px !important; 
   }
 
