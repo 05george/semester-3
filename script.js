@@ -171,4 +171,3 @@ function setLinkTarget() {
     allLinks.forEach(link => { isMobile ? link.removeAttribute('target') : link.setAttribute('target', '_blank'); });
 }
 setLinkTarget();
-</script>
