@@ -33,10 +33,10 @@
     ```
 
 ### 2. 📂 هيكل المجلدات
-*شكل المستطيل في كود (svg)
-*بيكون كده
-*<rect x="0" y="702" width="115" height="380"
-
+* شكل المستطيل في كود
+* svg
+* بيكون كده
+* <rect x="0" y="702" width="115" height="380"
 class="image-mapper-shape l" data-href="rrs-histo-1.pdf"/>
 * الابعاد (rect) تجيبها من موقع زي دة
 * Image Map Generator - Fla-shop.com https://share.google/QFfIjr3qO5BklTSg9
