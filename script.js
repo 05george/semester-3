@@ -50,7 +50,7 @@ function getGroupImage(element) {
 function cleanupHover() {
     if (!activeState.rect) return;
     if(activeState.animationId) clearInterval(activeState.animationId);
-    // تأكد من أننا نستخدم translateZ(0) في كلتا الحالتين
+    // تثبيت الـ scale(1) مع translateZ(0)
     activeState.rect.style.transform = 'scale(1) translateZ(0)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
@@ -120,7 +120,7 @@ function attachHover(rect, i) {
         const centerY = absoluteY + height/2;
 
         rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
-        // إعادة إضافة translateZ(0) إلى العنصر الأصلي أيضًا
+        // تثبيت الـ scale مع translateZ(0)
         rect.style.transform = `scale(${scale}) translateZ(0)`;
         rect.style.strokeWidth = '4px';
 
