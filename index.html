@@ -25,7 +25,10 @@ body {
     stroke: transparent;
     stroke-width: 2px;
     transform-origin: center center;
-    cursor: pointer; 
+    transform
+    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease; 
+    cursor: pointer;
+    transform: translateZ(0); 
 }
 .q { stroke: red; }         /*أسئلة🔴*/
 .v { stroke: blue; }    /*فيديو شرح🔵*/
