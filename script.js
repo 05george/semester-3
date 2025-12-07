@@ -42,7 +42,8 @@ const mainSvg = document.getElementById('main-svg');
 
     activeState.rect.style.transform = 'scale(1)';  
     activeState.rect.classList.remove('active-glow'); 
-    activeState.rect.style.strokeWidth = '2px'; 
+    activeState.rect.style.strokeWidth = '2px';
+    activeState.rect.style.filter = 'none'; 
 
     if(activeState.zoomPart){ 
         activeState.zoomPart.style.filter = 'none'; 
@@ -80,7 +81,10 @@ const mainSvg = document.getElementById('main-svg');
       const y = parseFloat(rect.getAttribute('y'));  
       const width = parseFloat(rect.getAttribute('width'));  
       const height = parseFloat(rect.getAttribute('height'));
-
+      
+      const randomHue = Math.floor(Math.random() * 360); 
+      const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
+      
       const dayGroup = rect.closest('g[transform]'); 
       const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
 
@@ -113,7 +117,7 @@ const mainSvg = document.getElementById('main-svg');
       zoomPart.setAttribute('x', weekOffsetX);  
       zoomPart.setAttribute('y', weekOffsetY);
 
-      zoomPart.style.filter = 'drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5))';
+      zoomPart.style.filter = randomGlowFilter;
 
       zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
       zoomPart.style.opacity = 0;  
@@ -123,7 +127,8 @@ const mainSvg = document.getElementById('main-svg');
       rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
       rect.style.transform = `scale(${scale})`;  
 
-      rect.classList.add('active-glow'); 
+      rect.classList.remove('active-glow'); 
+      rect.style.filter = randomGlowFilter;
 
       zoomPart.style.transform = `scale(${scale})`;  
       zoomPart.style.opacity = 1;  
@@ -160,4 +165,4 @@ const mainSvg = document.getElementById('main-svg');
       else { link.setAttribute('target', '_blank'); }  
     });  
   }  
-  setLinkTarget();
+  setLinkTarget(); 
