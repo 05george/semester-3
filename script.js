@@ -1,200 +1,169 @@
 const mainSvg = document.getElementById('main-svg');  
-const clipDefs = document.getElementById('clip-defs');  
-// إضافة intervalId لتخزين المؤقت و currentHue لتتبع التدرج اللوني
-const activeState = { rect: null, zoomPart: null, clipPathId: null, intervalId: null, currentHue: 0 }; 
+  const clipDefs = document.getElementById('clip-defs');  
+  const activeState = { rect: null, zoomPart: null, clipPathId: null }; 
 
-function setDynamicSvgWidth() {
-    const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
-    const IMAGE_WIDTH = 1024; 
-    const totalWidth = weekGroups.length * IMAGE_WIDTH; 
-    mainSvg.style.width = `${totalWidth}px`;
-    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); 
-}
-setDynamicSvgWidth();
+  function setDynamicSvgWidth() {
+      const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
+      const IMAGE_WIDTH = 1024; 
+      const totalWidth = weekGroups.length * IMAGE_WIDTH; 
+      mainSvg.style.width = `${totalWidth}px`;
+      mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); 
+  }
+  setDynamicSvgWidth();
 
-function getTransformX(groupElement) {  
-  if (!groupElement) return 0;
-  const transformAttr = groupElement.getAttribute('transform');  
-  if (!transformAttr) return 0;  
-  const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
-  return match ? parseFloat(match[1]) : 0;  
-} 
+  function getTransformX(groupElement) {  
+    if (!groupElement) return 0;
+    const transformAttr = groupElement.getAttribute('transform');  
+    if (!transformAttr) return 0;  
+    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    return match ? parseFloat(match[1]) : 0;  
+  } 
 
-function getTransformY(groupElement) {  
-  if (!groupElement) return 0;
-  const transformAttr = groupElement.getAttribute('transform');  
-  if (!transformAttr) return 0;  
-  const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
-  return match ? parseFloat(match[2]) : 0;  
-}
-
-function getGroupImage(parentGroup) { 
-  const baseImage = parentGroup.querySelector('image'); 
-  if (!baseImage) return null;  
-  const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');  
-  const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));  
-  const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));  
-  if (isNaN(IMAGE_WIDTH) || isNaN(IMAGE_HEIGHT)) return null;  
-  return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };  
-} 
-
-function cleanupHover() {  
-  if (!activeState.rect) return;  
-
-  // إيقاف المؤقت (Interval)
-  if (activeState.intervalId) {
-      clearInterval(activeState.intervalId);
-      activeState.intervalId = null;
+  function getTransformY(groupElement) {  
+    if (!groupElement) return 0;
+    const transformAttr = groupElement.getAttribute('transform');  
+    if (!transformAttr) return 0;  
+    const match = transformAttr.match(/translate\s*\(([\d\.-]+)\s*,\s*([\d\.-]+)\s*\)/);  
+    return match ? parseFloat(match[2]) : 0;  
   }
 
-  activeState.rect.style.transform = 'scale(1)';  
-  activeState.rect.classList.remove('active-glow'); 
-  activeState.rect.style.strokeWidth = '2px';
-  activeState.rect.style.filter = 'none'; 
- 
-  if(activeState.zoomPart){ 
-      activeState.zoomPart.style.filter = 'none'; 
-      activeState.zoomPart.remove(); 
-  }  
-  const currentClip = document.getElementById(activeState.clipPathId);  
-  if(currentClip) currentClip.remove();  
-  activeState.rect = null;  
-  activeState.zoomPart = null;  
-  activeState.clipPathId = null;  
-  activeState.currentHue = 0; // إعادة تعيين قيمة Hue
-}
+  function getGroupImage(parentGroup) { 
+    const baseImage = parentGroup.querySelector('image'); 
+    if (!baseImage) return null;  
+    const IMAGE_SRC = baseImage.getAttribute('href') || baseImage.getAttribute('xlink:href');  
+    const IMAGE_WIDTH = parseFloat(baseImage.getAttribute('width'));  
+    const IMAGE_HEIGHT = parseFloat(baseImage.getAttribute('height'));  
+    if (isNaN(IMAGE_WIDTH) || isNaN(IMAGE_HEIGHT)) return null;  
+    return { src: IMAGE_SRC, width: IMAGE_WIDTH, height: IMAGE_HEIGHT };  
+  } 
 
-/**
- * يطبق فلتر glow بتدرج لوني محدد (hue) لانتقال لوني ناعم.
- */
-function updateGlow(rect, zoomPart, hue) {
-    // استخدام فلتر drop-shadow مع hue-rotate بقيمة الـ hue الممررة
-    const smoothGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${hue}deg)`;
+  function cleanupHover() {  
+    if (!activeState.rect) return;  
 
-    if (rect) rect.style.filter = smoothGlowFilter;
-    if (zoomPart) zoomPart.style.filter = smoothGlowFilter;
-}
+    activeState.rect.style.transform = 'scale(1)';  
+    activeState.rect.classList.remove('active-glow'); 
+    activeState.rect.style.strokeWidth = '2px';
+    activeState.rect.style.filter = 'none'; 
+    activeState.rect.style.stroke = ''; 
 
-function attachHover(rect, i) {  
-  const anchor = rect.closest('a');  
-  const clipPathId = `clip-${i}-${Date.now()}`;  
-  const scale = 1.1;  
+    if(activeState.zoomPart){ 
+        activeState.zoomPart.style.filter = 'none'; 
+        activeState.zoomPart.remove(); 
+    }  
+    const currentClip = document.getElementById(activeState.clipPathId);  
+    if(currentClip) currentClip.remove();  
+    activeState.rect = null;  
+    activeState.zoomPart = null;  
+    activeState.clipPathId = null;  
+  }
 
-  rect.setAttribute('data-index', i);  
-  rect.addEventListener('mouseover', startHover);  
-  rect.addEventListener('mouseout', stopHover);  
-  rect.addEventListener('touchstart', startHover);  
+  function attachHover(rect, i) {  
+    const anchor = rect.closest('a');  
+    const clipPathId = `clip-${i}-${Date.now()}`;  
+    const scale = 1.1;  
 
-  rect.addEventListener('touchend', (e) => {
-      cleanupHover(); 
-  }); 
-  if (anchor) { anchor.removeEventListener('click', cleanupHover); }  
+    rect.setAttribute('data-index', i);  
+    rect.addEventListener('mouseover', startHover);  
+    rect.addEventListener('mouseout', stopHover);  
+    rect.addEventListener('touchstart', startHover);  
 
-  function startHover() {  
-    if(activeState.rect === rect) return;  
-    cleanupHover();  
-    activeState.rect = rect;  
-    activeState.clipPathId = clipPathId;  
+    rect.addEventListener('touchend', (e) => {
+        cleanupHover(); 
+    }); 
+    if (anchor) { anchor.removeEventListener('click', cleanupHover); }  
 
-    // التحقق من نوع الجهاز لضبط سرعة الحركة 
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
-    
-    // للهاتف: أسرع (2.5 درجة كل 40 مللي ثانية). للكمبيوتر: أبطأ (1 درجة كل 100 مللي ثانية).
-    const HUE_INCREMENT = isMobile ? 2.5 : 1; 
-    const INTERVAL_TIME = isMobile ? 40 : 100; 
-    
-    const x = parseFloat(rect.getAttribute('x'));  
-    const y = parseFloat(rect.getAttribute('y'));  
-    const width = parseFloat(rect.getAttribute('width'));  
-    const height = parseFloat(rect.getAttribute('height'));
+    function startHover() {  
+      if(activeState.rect === rect) return;  
+      cleanupHover();  
+      activeState.rect = rect;  
+      activeState.clipPathId = clipPathId;  
 
-    const dayGroup = rect.closest('g[transform]'); 
-    const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
+      const x = parseFloat(rect.getAttribute('x'));  
+      const y = parseFloat(rect.getAttribute('y'));  
+      const width = parseFloat(rect.getAttribute('width'));  
+      const height = parseFloat(rect.getAttribute('height'));
+      
+      const randomHue = Math.floor(Math.random() * 360); 
+      const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
 
-    const imageData = getGroupImage(weekGroup);
-    if (!imageData) return;  
+      const dayGroup = rect.closest('g[transform]'); 
+      const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
 
-    const weekOffsetX = getTransformX(weekGroup);
-    const dayOffsetX = getTransformX(dayGroup);
-    const weekOffsetY = getTransformY(weekGroup);
-    const dayOffsetY = getTransformY(dayGroup);
-    const absoluteX = x + weekOffsetX + dayOffsetX;  
-    const absoluteY = y + weekOffsetY + dayOffsetY;  
+      const imageData = getGroupImage(weekGroup);
+      if (!imageData) return;  
 
-    let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');  
-    clip.setAttribute('id', clipPathId);  
-    let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');  
-    clipRect.setAttribute('x', absoluteX);  
-    clipRect.setAttribute('y', absoluteY);  
-    clipRect.setAttribute('width', width);  
-    clipRect.setAttribute('height', height);  
-    clipDefs.appendChild(clip).appendChild(clipRect);  
+      const weekOffsetX = getTransformX(weekGroup);
+      const dayOffsetX = getTransformX(dayGroup);
+      const weekOffsetY = getTransformY(weekGroup);
+      const dayOffsetY = getTransformY(dayGroup);
+      const absoluteX = x + weekOffsetX + dayOffsetX;  
+      const absoluteY = y + weekOffsetY + dayOffsetY;  
 
-    const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');  
-    zoomPart.setAttribute('href', imageData.src);  
-    zoomPart.setAttribute('width', imageData.width);  
-    zoomPart.setAttribute('height', imageData.height);  
-    zoomPart.setAttribute('class','zoom-part');  
-    zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+      let clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');  
+      clip.setAttribute('id', clipPathId);  
+      let clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');  
+      clipRect.setAttribute('x', absoluteX);  
+      clipRect.setAttribute('y', absoluteY);  
+      clipRect.setAttribute('width', width);  
+      clipRect.setAttribute('height', height);  
+      clipDefs.appendChild(clip).appendChild(clipRect);  
 
-    zoomPart.setAttribute('x', weekOffsetX);  
-    zoomPart.setAttribute('y', weekOffsetY);
+      const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');  
+      zoomPart.setAttribute('href', imageData.src);  
+      zoomPart.setAttribute('width', imageData.width);  
+      zoomPart.setAttribute('height', imageData.height);  
+      zoomPart.setAttribute('class','zoom-part');  
+      zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-    activeState.currentHue = 0; // ابدأ من درجة الصفر
+      zoomPart.setAttribute('x', weekOffsetX);  
+      zoomPart.setAttribute('y', weekOffsetY);
 
-    // تطبيق الفلتر لأول مرة
-    updateGlow(rect, zoomPart, activeState.currentHue); 
+      zoomPart.style.filter = randomGlowFilter;
 
-    zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
-    zoomPart.style.opacity = 0;  
-    mainSvg.appendChild(zoomPart);  
-    activeState.zoomPart = zoomPart; 
+      zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
+      zoomPart.style.opacity = 0;  
+      mainSvg.appendChild(zoomPart);  
+      activeState.zoomPart = zoomPart; 
 
-    rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
-    rect.style.transform = `scale(${scale})`;  
+      rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`; 
+      rect.style.transform = `scale(${scale})`;  
 
-    rect.classList.remove('active-glow'); 
+      rect.classList.remove('active-glow'); 
+      rect.style.filter = randomGlowFilter;
 
-    zoomPart.style.transform = `scale(${scale})`;  
-    zoomPart.style.opacity = 1;  
+      zoomPart.style.transform = `scale(${scale})`;  
+      zoomPart.style.opacity = 1;  
+    }  
 
-    // بدء المؤقت باستخدام السرعات المحددة
-    activeState.intervalId = setInterval(() => {
-        // الزيادة بقيمة تتغير حسب الجهاز
-        activeState.currentHue = (activeState.currentHue + HUE_INCREMENT) % 360; 
-        updateGlow(rect, zoomPart, activeState.currentHue);
-    }, INTERVAL_TIME); 
-  }  
-
-  function stopHover(e) {  
-    const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;  
-    if(targetRect === activeState.rect && e.type === 'mouseout'){  
-        cleanupHover();  
+    function stopHover(e) {  
+      const targetRect = e ? (e.target.tagName === 'rect' ? e.target : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;  
+      if(targetRect === activeState.rect && e.type === 'mouseout'){  
+          cleanupHover();  
+      }  
     }  
   }  
-}  
 
-document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {  
-    rect.setAttribute('data-processed', 'true');  
-    attachHover(rect, i);  
-});  
-
-const rootObserver = new MutationObserver(() => {  
-  document  
-    .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
-    .forEach((rect, i) => {  
+  document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {  
       rect.setAttribute('data-processed', 'true');  
       attachHover(rect, i);  
-    });  
-});  
-rootObserver.observe(mainSvg, { childList: true, subtree: true });  
-
-function setLinkTarget() {  
-  const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
-  const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');  
-  allLinks.forEach(link => {  
-    if (isMobile) { link.removeAttribute('target'); }   
-    else { link.setAttribute('target', '_blank'); }  
   });  
-}  
-setLinkTarget();
+
+  const rootObserver = new MutationObserver(() => {  
+    document  
+      .querySelectorAll('rect.image-mapper-shape:not([data-processed])')  
+      .forEach((rect, i) => {  
+        rect.setAttribute('data-processed', 'true');  
+        attachHover(rect, i);  
+      });  
+  });  
+  rootObserver.observe(mainSvg, { childList: true, subtree: true });  
+
+  function setLinkTarget() {  
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);  
+    const allLinks = document.querySelectorAll('a[xlink\\:href], a[href]');  
+    allLinks.forEach(link => {  
+      if (isMobile) { link.removeAttribute('target'); }   
+      else { link.setAttribute('target', '_blank'); }  
+    });  
+  }  
+  setLinkTarget();
