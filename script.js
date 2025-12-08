@@ -1,6 +1,13 @@
 const mainSvg = document.getElementById('main-svg');
-const clipDefs = mainSvg.querySelector('defs');
-const scrollContainer = document.querySelector('div');
+let clipDefs = mainSvg.querySelector('defs');
+
+// لو الـ <defs> مش موجوده ننشئه
+if (!clipDefs) {
+    clipDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    mainSvg.prepend(clipDefs);
+}
+
+const scrollContainer = document.body;
 
 const activeState = {
     rect: null,
@@ -9,16 +16,16 @@ const activeState = {
     clipPathId: null
 };
 
-const MAX_SCROLL_LEFT = 6 * 1024;
+const MAX_SCROLL_LEFT = 12288 - window.innerWidth;
 
-// منع التمرير الزيادة
+// منع التمرير الزائد
 scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > MAX_SCROLL_LEFT) {
         this.scrollLeft = MAX_SCROLL_LEFT;
     }
 });
 
-// جمع التحويلات (translate)
+// جمع تحولات translate
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
     let current = element;
@@ -34,20 +41,21 @@ function getCumulativeTranslate(element) {
         }
         current = current.parentNode;
     }
-
     return { x, y };
 }
 
-// جلب بيانات الصورة الخاصة بالـ group
+// الحصول على صورة الـ group
 function getGroupImage(element) {
     let current = element;
+
     while (current && current.tagName !== 'svg') {
         if (current.tagName === 'g') {
-            const images = [...current.children].filter(c =>
-                c.tagName === 'image' && (c.getAttribute('href') || c.getAttribute('xlink:href'))
+            const imgs = [...current.children].filter(c =>
+                c.tagName === 'image' &&
+                (c.getAttribute('href') || c.getAttribute('xlink:href'))
             );
-            if (images.length) {
-                const img = images[0];
+            if (imgs.length) {
+                const img = imgs[0];
                 return {
                     src: img.getAttribute('href') || img.getAttribute('xlink:href'),
                     width: parseFloat(img.getAttribute('width')),
@@ -61,7 +69,7 @@ function getGroupImage(element) {
     return null;
 }
 
-// تنظيف المؤثرات السابقة
+// مسح تأثيرات الهوفر القديمة
 function cleanupHover() {
     if (!activeState.rect) return;
 
@@ -84,7 +92,7 @@ function cleanupHover() {
     });
 }
 
-// تركيب الهوفر على كل Rect
+// تركيب الهوفر على أي rect
 function attachHover(rect, index) {
     const clipPathId = `clip-${index}-${Date.now()}`;
     rect.setAttribute('data-index', index);
@@ -165,13 +173,13 @@ function attachHover(rect, index) {
     }
 }
 
-// تركيب الهوفر على العناصر الأساسية
+// تطبيق الهوفر على كل rect موجود
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     rect.setAttribute('data-processed', 'true');
     attachHover(rect, i);
 });
 
-// رصد العناصر الجديدة (لو الصور بتتغير دايناميك)
+// رصد أي rect جديد
 new MutationObserver(muts => {
     for (const m of muts)
         for (const n of m.addedNodes)
