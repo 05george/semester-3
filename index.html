@@ -36,13 +36,15 @@
     stroke-width: 4px !important; 
   }
 
-  .zoom-part {
+    .zoom-part {
     pointer-events: none;
     opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease; 
-    image-rendering: high-quality;
+    image-rendering: pixelated; 
+    image-rendering: crisp-edges;
     image-rendering: -webkit-optimize-contrast; 
   }
+
 </style>
 <body>  
   <svg xmlns="http://www.w3.org/2000/svg"  
