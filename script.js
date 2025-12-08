@@ -185,4 +185,4 @@ function handleRectClick(event) {
     }
 }
 
-mainSvg.addEventListener('click', handleRectClick);  رل و
+mainSvg.addEventListener('click', handleRectClick);
