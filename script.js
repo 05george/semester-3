@@ -151,12 +151,12 @@ function attachHover(rect, i) {
     zoomPart.style.transform = `scale(${scale})`;  
     zoomPart.style.opacity = 1;  
 
-    // بدء المؤقت لتغيير الوهج بشكل مستمر وتدريجي
+    // بدء المؤقت لتغيير الوهج بشكل مستمر وببطء
     activeState.intervalId = setInterval(() => {
-        // زيادة قيمة الـ Hue تدريجياً، ونستخدم % 360 للعودة إلى الصفر بعد 360 درجة
-        activeState.currentHue = (activeState.currentHue + 5) % 360; 
+        // زيادة قيمة الـ Hue بدرجة واحدة فقط
+        activeState.currentHue = (activeState.currentHue + 1) % 360; 
         updateGlow(rect, zoomPart, activeState.currentHue);
-    }, 50); 
+    }, 100); // زمن التحديث 100ms
   }  
 
   function stopHover(e) {  
