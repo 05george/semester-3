@@ -1,6 +1,7 @@
 const mainSvg = document.getElementById('main-svg');  
   const clipDefs = document.getElementById('clip-defs');  
-  const activeState = { rect: null, zoomPart: null, clipPathId: null }; 
+  // إضافة intervalId لتخزين المؤقت
+  const activeState = { rect: null, zoomPart: null, clipPathId: null, intervalId: null }; 
 
   function setDynamicSvgWidth() {
       const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
@@ -40,6 +41,12 @@ const mainSvg = document.getElementById('main-svg');
   function cleanupHover() {  
     if (!activeState.rect) return;  
 
+    // إيقاف المؤقت (Interval)
+    if (activeState.intervalId) {
+        clearInterval(activeState.intervalId);
+        activeState.intervalId = null;
+    }
+
     activeState.rect.style.transform = 'scale(1)';  
     activeState.rect.classList.remove('active-glow'); 
     activeState.rect.style.strokeWidth = '2px';
@@ -55,6 +62,14 @@ const mainSvg = document.getElementById('main-svg');
     activeState.rect = null;  
     activeState.zoomPart = null;  
     activeState.clipPathId = null;  
+  }
+
+  function updateGlow(rect, zoomPart) {
+      const randomHue = Math.floor(Math.random() * 360); 
+      const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
+      
+      if (rect) rect.style.filter = randomGlowFilter;
+      if (zoomPart) zoomPart.style.filter = randomGlowFilter;
   }
 
   function attachHover(rect, i) {  
@@ -83,9 +98,6 @@ const mainSvg = document.getElementById('main-svg');
       const width = parseFloat(rect.getAttribute('width'));  
       const height = parseFloat(rect.getAttribute('height'));
       
-      const randomHue = Math.floor(Math.random() * 360); 
-      const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
-
       const dayGroup = rect.closest('g[transform]'); 
       const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
 
@@ -118,7 +130,8 @@ const mainSvg = document.getElementById('main-svg');
       zoomPart.setAttribute('x', weekOffsetX);  
       zoomPart.setAttribute('y', weekOffsetY);
 
-      zoomPart.style.filter = randomGlowFilter;
+      // تطبيق الفلتر لأول مرة
+      updateGlow(rect, zoomPart); 
 
       zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
       zoomPart.style.opacity = 0;  
@@ -129,10 +142,14 @@ const mainSvg = document.getElementById('main-svg');
       rect.style.transform = `scale(${scale})`;  
 
       rect.classList.remove('active-glow'); 
-      rect.style.filter = randomGlowFilter;
 
       zoomPart.style.transform = `scale(${scale})`;  
       zoomPart.style.opacity = 1;  
+      
+      // بدء المؤقت لتغيير الوهج بشكل مستمر (كل 100 ميلي ثانية)
+      activeState.intervalId = setInterval(() => {
+          updateGlow(rect, zoomPart);
+      }, 100); 
     }  
 
     function stopHover(e) {  
