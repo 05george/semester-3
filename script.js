@@ -96,6 +96,13 @@ function attachHover(rect, i) {
     activeState.rect = rect;  
     activeState.clipPathId = clipPathId;  
 
+    // التحقق من نوع الجهاز لضبط سرعة الحركة 
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0) || (window.innerWidth < 800);
+    
+    // للهاتف: أسرع (2.5 درجة كل 40 مللي ثانية). للكمبيوتر: أبطأ (1 درجة كل 100 مللي ثانية).
+    const HUE_INCREMENT = isMobile ? 2.5 : 1; 
+    const INTERVAL_TIME = isMobile ? 40 : 100; 
+    
     const x = parseFloat(rect.getAttribute('x'));  
     const y = parseFloat(rect.getAttribute('y'));  
     const width = parseFloat(rect.getAttribute('width'));  
@@ -151,12 +158,12 @@ function attachHover(rect, i) {
     zoomPart.style.transform = `scale(${scale})`;  
     zoomPart.style.opacity = 1;  
 
-    // بدء المؤقت لتغيير الوهج بشكل مستمر وببطء
+    // بدء المؤقت باستخدام السرعات المحددة
     activeState.intervalId = setInterval(() => {
-        // زيادة قيمة الـ Hue بدرجة واحدة فقط
-        activeState.currentHue = (activeState.currentHue + 1) % 360; 
+        // الزيادة بقيمة تتغير حسب الجهاز
+        activeState.currentHue = (activeState.currentHue + HUE_INCREMENT) % 360; 
         updateGlow(rect, zoomPart, activeState.currentHue);
-    }, 100); // زمن التحديث 100ms
+    }, INTERVAL_TIME); 
   }  
 
   function stopHover(e) {  
