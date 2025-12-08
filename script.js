@@ -59,13 +59,14 @@ function attachHover(rect, i) {
     const scale = 1.1;
     rect.setAttribute('data-index', i);
 
-    // استخدام pointerenter/leave لسلوك Hover موحد
-    rect.addEventListener('pointerenter', startHover);
-    rect.addEventListener('pointerleave', stopHover);
+    rect.addEventListener('mouseover', startHover);
+    rect.addEventListener('mouseout', stopHover);
+    rect.addEventListener('touchstart', startHover);
+    rect.addEventListener('touchend', cleanupHover);
 
     function startHover() {
         if(activeState.rect === rect) return;
-        cleanupHover(); 
+        cleanupHover();
         activeState.rect = rect;
         activeState.clipPathId = clipPathId;
 
@@ -114,29 +115,28 @@ function attachHover(rect, i) {
 
         rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
         rect.style.transform = `scale(${scale})`;
-        // تم تثبيت عرض الإطار عند 4 بكسل (بدلاً من النبض)
-        rect.style.strokeWidth = '4px'; 
+        rect.style.strokeWidth = '4px';
 
         zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
         zoomPart.style.transform = `scale(${scale})`;
         zoomPart.style.opacity = 1;
 
         let hue = 0;
-        // ❌ تمت إزالة currentStrokeWidth ومنطق النبض
+        let currentStrokeWidth = 4;
         const animationId = setInterval(() => {
             hue = (hue + 1) % 360;
             const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
             rect.style.filter = glow;
             if(zoomPart) zoomPart.style.filter = glow;
-        // ❌ تم إزالة: rect.style.strokeWidth = `${currentStrokeWidth}px`;
+            currentStrokeWidth = (currentStrokeWidth === 4) ? 3.5 : 4;
+            rect.style.strokeWidth = `${currentStrokeWidth}px`;
         }, 100);
         activeState.animationId = animationId;
     }
 
     function stopHover(e) {
-        if (activeState.rect === rect) {
-            cleanupHover();
-        }
+        const targetRect = e ? (e.target.tagName === 'rect' ? e.target.closest('rect') : e.target.closest('a')?.querySelector('.image-mapper-shape')) : rect;
+        if(targetRect === activeState.rect && e.type === 'mouseout') cleanupHover();
     }
 }
 
@@ -185,4 +185,4 @@ function handleRectClick(event) {
     }
 }
 
-mainSvg.addEventListener('click', handleRectClick);
+mainSvg.addEventListener('click', handleRectClick);  رل و
