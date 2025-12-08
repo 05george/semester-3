@@ -59,10 +59,8 @@ function attachHover(rect, i) {
     const scale = 1.1;
     rect.setAttribute('data-index', i);
 
-    rect.addEventListener('mouseover', startHover);
-    rect.addEventListener('mouseout', stopHover);
-    rect.addEventListener('touchstart', startHover);
-    rect.addEventListener('touchend', cleanupHover);
+    rect.addEventListener('pointerdown', startHover);
+    rect.addEventListener('pointerup', cleanupHover);
 
     function startHover() {
         if(activeState.rect === rect) return;
