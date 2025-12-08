@@ -7,7 +7,6 @@ const mainSvg = document.getElementById('main-svg');
       const IMAGE_WIDTH = 1024; 
       const totalWidth = weekGroups.length * IMAGE_WIDTH; 
       mainSvg.style.width = `${totalWidth}px`;
-      // تعيين viewBox ديناميكياً باستخدام الارتفاع الثابت للصورة (2454)
       mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`); 
   }
   setDynamicSvgWidth();
