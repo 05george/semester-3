@@ -1,7 +1,7 @@
 const mainSvg = document.getElementById('main-svg');  
 const clipDefs = document.getElementById('clip-defs');  
-// إضافة intervalId لتخزين المؤقت
-const activeState = { rect: null, zoomPart: null, clipPathId: null, intervalId: null }; 
+// إضافة intervalId لتخزين المؤقت و currentHue لتتبع التدرج اللوني
+const activeState = { rect: null, zoomPart: null, clipPathId: null, intervalId: null, currentHue: 0 }; 
 
 function setDynamicSvgWidth() {
     const weekGroups = document.querySelectorAll('svg > g[transform*="translate"]');
@@ -51,7 +51,6 @@ function cleanupHover() {
   activeState.rect.classList.remove('active-glow'); 
   activeState.rect.style.strokeWidth = '2px';
   activeState.rect.style.filter = 'none'; 
-  // تم إزالة السطر: activeState.rect.style.stroke = ''; للحفاظ على لون stroke الأصلي
  
   if(activeState.zoomPart){ 
       activeState.zoomPart.style.filter = 'none'; 
@@ -62,18 +61,18 @@ function cleanupHover() {
   activeState.rect = null;  
   activeState.zoomPart = null;  
   activeState.clipPathId = null;  
+  activeState.currentHue = 0; // إعادة تعيين قيمة Hue
 }
 
 /**
- * يطبق فلتر glow بـ hue-rotate عشوائي لتغيير لون الوهج
+ * يطبق فلتر glow بتدرج لوني محدد (hue) لانتقال لوني ناعم.
  */
-function updateGlow(rect, zoomPart) {
-    const randomHue = Math.floor(Math.random() * 360); 
-    // استخدام فلتر drop-shadow مع hue-rotate لتغيير اللون
-    const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
+function updateGlow(rect, zoomPart, hue) {
+    // استخدام فلتر drop-shadow مع hue-rotate بقيمة الـ hue الممررة
+    const smoothGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${hue}deg)`;
 
-    if (rect) rect.style.filter = randomGlowFilter;
-    if (zoomPart) zoomPart.style.filter = randomGlowFilter;
+    if (rect) rect.style.filter = smoothGlowFilter;
+    if (zoomPart) zoomPart.style.filter = smoothGlowFilter;
 }
 
 function attachHover(rect, i) {  
@@ -134,8 +133,10 @@ function attachHover(rect, i) {
     zoomPart.setAttribute('x', weekOffsetX);  
     zoomPart.setAttribute('y', weekOffsetY);
 
+    activeState.currentHue = 0; // ابدأ من درجة الصفر
+
     // تطبيق الفلتر لأول مرة
-    updateGlow(rect, zoomPart); 
+    updateGlow(rect, zoomPart, activeState.currentHue); 
 
     zoomPart.style.transformOrigin = `${absoluteX + width/2}px ${absoluteY + height/2}px`;  
     zoomPart.style.opacity = 0;  
@@ -150,10 +151,12 @@ function attachHover(rect, i) {
     zoomPart.style.transform = `scale(${scale})`;  
     zoomPart.style.opacity = 1;  
 
-    // بدء المؤقت لتغيير الوهج بشكل مستمر (كل 100 ميلي ثانية)
+    // بدء المؤقت لتغيير الوهج بشكل مستمر وتدريجي
     activeState.intervalId = setInterval(() => {
-        updateGlow(rect, zoomPart);
-    }, 100); 
+        // زيادة قيمة الـ Hue تدريجياً، ونستخدم % 360 للعودة إلى الصفر بعد 360 درجة
+        activeState.currentHue = (activeState.currentHue + 5) % 360; 
+        updateGlow(rect, zoomPart, activeState.currentHue);
+    }, 50); 
   }  
 
   function stopHover(e) {  
