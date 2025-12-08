@@ -44,6 +44,7 @@ const mainSvg = document.getElementById('main-svg');
     activeState.rect.classList.remove('active-glow'); 
     activeState.rect.style.strokeWidth = '2px';
     activeState.rect.style.filter = 'none'; 
+    activeState.rect.style.stroke = ''; 
 
     if(activeState.zoomPart){ 
         activeState.zoomPart.style.filter = 'none'; 
@@ -84,7 +85,7 @@ const mainSvg = document.getElementById('main-svg');
       
       const randomHue = Math.floor(Math.random() * 360); 
       const randomGlowFilter = `drop-shadow(0 0 10px yellow) drop-shadow(0 0 6px rgba(255, 255, 0, 0.5)) hue-rotate(${randomHue}deg)`;
-      
+
       const dayGroup = rect.closest('g[transform]'); 
       const weekGroup = rect.closest('svg > g[transform*="translate"]'); 
 
