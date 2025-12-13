@@ -23,22 +23,7 @@
 
 لتشغيل هذا المشروع، لا تحتاج إلى أي أدوات برمجية معقدة. يكفي متصفح ويب حديث.
 
-<p align="center">
-  <a href="https://github.com/05george/semester-3/archive/refs/heads/main.zip"
-     style="
-       display: inline-block;
-       padding: 14px 28px;
-       font-size: 18px;
-       font-weight: bold;
-       color: #000;
-       background: linear-gradient(135deg, #FFD700, #FFA500);
-       border-radius: 10px;
-       text-decoration: none;
-       box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-     ">
-    ⬇️ تحميل المشروع (ZIP)
-  </a>
-</p>
+[![Download ZIP](https://img.shields.io/badge/⬇️_Download-ZIP-yellow?style=for-the-badge)](https://github.com/05george/semester-3/archive/refs/heads/main.zip)
 
 ### 2. 📂 هيكل المجلدات
 * index.html هو الملف الأساسي الذي يحمل الأكواد
