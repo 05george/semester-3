@@ -213,3 +213,21 @@ function handleRectClick(event) {
 }
 
 mainSvg.addEventListener('click', handleRectClick);
+function downloadFile(file) {
+    const a = document.createElement('a');
+    a.href = file;
+    a.download = file.split('/').pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function copyFullLink(file) {
+    const basePath = location.origin + location.pathname.replace(/\/[^/]*$/, '/');
+    const fullUrl = basePath + file;
+    navigator.clipboard.writeText(fullUrl);
+}
+
+function isExternalLink(url) {
+    return /^https?:\/\//i.test(url);
+}
