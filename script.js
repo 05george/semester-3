@@ -213,3 +213,14 @@ function handleRectClick(event) {
 }
 
 mainSvg.addEventListener('click', handleRectClick);
+<button onclick="downloadFile('rrs-histo-1.pdf')">تحميل</button>
+
+<script>
+function downloadFile(file) {
+  const a = document.createElement('a');
+  a.href = file;
+  a.download = file.split('/').pop();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
