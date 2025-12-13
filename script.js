@@ -2,10 +2,30 @@ const mainSvg = document.getElementById('main-svg');
 const clipDefs = mainSvg.querySelector('defs');
 const scrollContainer = document.querySelector('div');
 const activeState = { rect: null, zoomPart: null, animationId: null, clipPathId: null };
-const MAX_SCROLL_LEFT = 6 * 1024;
+function updateDynamicSizes() {
+    const images = mainSvg.querySelectorAll('image');
+    if (!images.length) return;
+
+    const firstImage = images[0];
+    const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
+    const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+
+    const totalWidth = images.length * imageWidth;
+
+    mainSvg.setAttribute(
+        'viewBox',
+        `0 0 ${totalWidth} ${imageHeight}`
+    );
+
+    window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
+}
+
+updateDynamicSizes();
 
 scrollContainer.addEventListener('scroll', function () {
-    if (this.scrollLeft > MAX_SCROLL_LEFT) this.scrollLeft = MAX_SCROLL_LEFT;
+    if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
+    this.scrollLeft = window.MAX_SCROLL_LEFT;
+}
 });
 
 function getCumulativeTranslate(element) {
