@@ -20,7 +20,7 @@ body {
 #scroll-container { 
     width: 100%;
     height: 100%;
-    overflow-x: auto;
+    overflow-x: auto; 
     overflow-y: hidden;
 }
 #loading-overlay {
@@ -42,7 +42,7 @@ body {
     height: 100svh;
     display: block;
     background: black;
-    width: max-content;
+    width: max-content; 
     opacity: 0; 
     transition: opacity 0.5s ease;
 }
@@ -51,7 +51,7 @@ body {
     stroke: transparent;
     stroke-width: 2px;
     transform-origin: center center;
-    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
+    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease; 
     cursor: pointer; 
 }
 .q { stroke: red; }                
@@ -97,9 +97,7 @@ body {
 </g>
 
 <g transform="translate(2048,0)">
-    <image data-src="image/3.png" width="1024" height="2454" />
-    <rect class="lazy-loading-overlay" data-loading-week="3" fill="#333" x="0" y="0" width="1024" height="2454" opacity="0.9" />
-    <text class="lazy-loading-text" data-loading-week="3" x="512" y="1227" font-size="60" fill="white" text-anchor="middle">Loading</text>
+    <image href="image/3.png" width="1024" height="2454" />
 </g>
 
 <g transform="translate(3072,0)">
