@@ -259,7 +259,7 @@ function attachHover(rect, i) {
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-    const href = rect.getAttribute('data-href') || '';
+    const href = rect.getAttribute('href') || '';
 
     const fileName = href.split('/').pop().split('#')[0] || '';  
     const textContent = fileName;  
