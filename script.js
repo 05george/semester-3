@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+Document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container'); 
@@ -22,6 +22,7 @@ const activeState = {
 };
 
 const loadingQueue = new Set();
+let totalWidth = 0; // تم تعريفها هنا لاستخدامها في حساب Scroll Max
 
 function debounce(func, delay) {
     let timeoutId;
@@ -37,9 +38,8 @@ function updateDynamicSizes() {
     const images = mainSvg.querySelectorAll('image');
     if (!images.length) return;
     const totalWeeks = mainSvg.querySelectorAll('g').length; 
-    const totalWidth = totalWeeks * IMAGE_WIDTH;
+    totalWidth = totalWeeks * IMAGE_WIDTH;
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`);
-    window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
 }
 updateDynamicSizes();
 
@@ -50,8 +50,11 @@ const debouncedCleanupHover = debounce(() => {
 function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const src = imgElement.getAttribute('data-src');
     if (!src) return;
-    const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
-    const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
+    
+    const g = imgElement.closest('g'); // البحث داخل المجموعة الحالية
+    const overlay = g ? g.querySelector('.lazy-loading-overlay') : null;
+    const text = g ? g.querySelector('.lazy-loading-text') : null;
+    
     if (loadingQueue.has(weekNumber)) return;
 
     loadingQueue.add(weekNumber); 
@@ -93,7 +96,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
 
 function checkLazyLoad() {
     const scrollLeft = scrollContainer.scrollLeft;
-    const viewportWidth = window.innerWidth;
+    const viewportWidth = scrollContainer.clientWidth;
     const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
 
     lazyImages.forEach(img => {
@@ -102,6 +105,7 @@ function checkLazyLoad() {
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
         const LOAD_THRESHOLD = viewportWidth * 3;
+        
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
             const weekNumber = Math.round(imageX / IMAGE_WIDTH) + 1;
             lazyLoadImageWithProgress(img, weekNumber);
@@ -112,7 +116,12 @@ function checkLazyLoad() {
 const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 scrollContainer.addEventListener('scroll', function () {
-    if (this.scrollLeft > window.MAX_SCROLL_LEFT) this.scrollLeft = window.MAX_SCROLL_LEFT;
+    const viewportWidth = scrollContainer.clientWidth;
+    window.MAX_SCROLL_LEFT = totalWidth - viewportWidth;
+
+    if (totalWidth > 0 && this.scrollLeft > window.MAX_SCROLL_LEFT) {
+        this.scrollLeft = window.MAX_SCROLL_LEFT;
+    }
 
     if (activeState.rect && !isTouchDevice) debouncedCleanupHover();
     if (activeState.rect && isTouchDevice) {
@@ -307,5 +316,7 @@ function finishLoading() {
     }
     mainSvg.style.opacity = '1';
 }
+
+window.addEventListener('load', finishLoading);
 
 });
