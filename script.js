@@ -39,7 +39,6 @@ function updateDynamicSizes() {
     const totalWidth = totalWeeks * IMAGE_WIDTH;
     
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`);
-    // 🆕 هنا استخدمنا عرض الـSVG كله (totalWidth) ناقص عرض الشاشة (innerWidth)
     window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
 }
 
@@ -56,7 +55,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
     
-    if (loadingQueue.has(weekNumber) || imgElement.getAttribute('href')) return; // لا تحمل لو لسه بيحمل أو اتحمل
+    if (loadingQueue.has(weekNumber) || imgElement.getAttribute('href')) return;
 
     loadingQueue.add(weekNumber); 
     imgElement.setAttribute('data-loading', 'true');
@@ -98,7 +97,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
         } else {
             if (text) text.textContent = 'Failed';
             if (overlay) overlay.style.fill = 'red';
-            imgElement.setAttribute('data-src', src); // لو فشل رجّع الـdata-src عشان ممكن يحاول تاني
+            imgElement.setAttribute('data-src', src);
         }
     };
     
@@ -106,7 +105,6 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
 }
 
 function checkLazyLoad() {
-    // 🆕 نستخدم scrollLeft من scrollContainer مباشرة
     const scrollLeft = scrollContainer.scrollLeft; 
     const viewportWidth = window.innerWidth;
     
@@ -118,10 +116,8 @@ function checkLazyLoad() {
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
         
-        // 🆕 تم زيادة مسافة الأمان إلى 3 شاشات عشان نضمن التحميل
         const LOAD_THRESHOLD = viewportWidth * 3; 
         
-        // الشرط اللي بيقرر متى يبدأ التحميل:
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
             const weekNumber = (imageX / IMAGE_WIDTH) + 1;
             
@@ -136,7 +132,6 @@ const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 
 scrollContainer.addEventListener('scroll', function () {
-    // 🆕 تم التأكد من أن التحديث ده بيتم لـscrollContainer عشان يشتغل صح
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
     }
@@ -155,7 +150,7 @@ scrollContainer.addEventListener('scroll', function () {
     debouncedCheckLazyLoad();
 });
 
-// 🆕 نضمن تشغيلها فوراً في البداية عشان تحمل الأسبوع الثالث والرابع (بما إن الأول والتاني محملين)
+// 🆕 نضمن تشغيلها فوراً في البداية 
 setTimeout(checkLazyLoad, 100); 
 
 
@@ -181,7 +176,7 @@ function getGroupImage(element) {
             if (images.length) {
                 const baseImage = images[0];
                 const imageSource = baseImage.getAttribute('href'); 
-                if (!imageSource) return null; // ده الشرط اللي بيمنع الـZoom لو الصورة لسه محملتش
+                if (!imageSource) return null;
 
                 return {
                     src: imageSource,
@@ -201,7 +196,6 @@ function cleanupHover() {
     if (activeState.animationId) clearInterval(activeState.animationId);
     activeState.rect.style.transform = 'scale(1)';
     activeState.rect.style.filter = 'none';
-    // 🆕 رجع الـstroke-width لـ2px والـstroke لـtransparent أو حسب الـclass
     activeState.rect.style.strokeWidth = '2px';
     activeState.rect.style.stroke = ''; 
     if (activeState.zoomPart) activeState.zoomPart.remove();
@@ -232,9 +226,7 @@ function startHover() {
     const imageSourceHref = imageElement.getAttribute('href');
     const imageDataSource = imageElement.getAttribute('data-src');
 
-    // 🆕 الحل: إذا الصورة لسه ما اتحملتش (عندها data-src و ماعندهاش href)، شغل الـLazy Load واخرج
     if (!imageSourceHref && imageDataSource) {
-        // حساب رقم الأسبوع لتشغيل التحميل
         const transformAttr = g.getAttribute('transform');
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
@@ -243,15 +235,13 @@ function startHover() {
         if (weekNumber !== null) {
             lazyLoadImageWithProgress(imageElement, weekNumber);
         }
-        // إشارة بصرية أن المستطيل قيد التحميل
         rect.style.stroke = 'orange'; 
         rect.style.strokeWidth = '4px';
         return; 
     }
     
-    // الآن نكمل باقي كود الزووم العادي
     const imageData = getGroupImage(rect);  
-    if (!imageData) return; // هيرجع null لو مفيش href (بعد محاولة التحميل فوق)
+    if (!imageData) return;
     
     const i = rect.getAttribute('data-index') || Date.now();  
     const clipPathId = `clip-${i}-${Date.now()}`;  
@@ -344,7 +334,7 @@ function stopHover() {
 }
 
 function handleLinkOpen(event) {
-    const href = event.currentTarget.getAttribute('href') || event.currentTarget.getAttribute('data-href'); // 🆕 استخدام data-href لو مفيش href مباشر
+    const href = event.currentTarget.getAttribute('data-href') || event.currentTarget.getAttribute('href') || ''; 
     if (href && href !== '#') {
         window.open(href, '_blank');
         event.preventDefault();
@@ -373,10 +363,8 @@ function attachHover(rect, i) {
         const timeElapsed = Date.now() - activeState.touchStartTime;  
 
         if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) {   
-            // 🆕 هنا نتأكد ان الصورة مش بتحمل
             const imageElement = this.closest('g').querySelector('image');
             if (imageElement && imageElement.hasAttribute('data-src') && !imageElement.hasAttribute('href')) {
-                // لو الصورة لسه ما اتحملتش، شغل التحميل وماتفتحش اللينك
                 startHover.call(this); 
             } else {
                 handleLinkOpen(event);   
@@ -388,7 +376,6 @@ function attachHover(rect, i) {
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-    // 🆕 استخدام data-href بدل href عشان اللينك يكون مصدر التكست
     const href = rect.getAttribute('data-href') || rect.getAttribute('href') || ''; 
 
     const fileName = href.split('/').pop().split('#')[0] || '';  
@@ -426,7 +413,6 @@ function finishLoading() {
         loadingOverlay.style.opacity = '0';
         setTimeout(() => {
             loadingOverlay.style.display = 'none';
-            // 🆕 تحديث الـMAX_SCROLL_LEFT هنا بعد انتهاء التحميل عشان يتأكد من العرض
             updateDynamicSizes(); 
         }, 500);
     }
@@ -463,35 +449,9 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-const mainSvgImages = document.querySelectorAll('#main-svg image[href]');
-const totalImagesToLoad = mainSvgImages.length; 
-let loadedImagesCount = 0;
+// ❌ تم حذف الـLogic القديم الذي كان يعتمد على عدّ الصور الأولية
 
-function checkAllImagesLoaded() {
-    loadedImagesCount++;
-    const percentage = Math.round((loadedImagesCount / totalImagesToLoad) * 100);
-
-    if (loadingOverlay) {
-        loadingOverlay.textContent = `Loading Map... ${percentage}%`;
-    }
-
-    if (loadedImagesCount === totalImagesToLoad) {
-        finishLoading();
-    }
-}
-
-mainSvgImages.forEach(img => {
-    img.addEventListener('load', checkAllImagesLoaded, { once: true });
-
-    if (img.complete || img.naturalWidth > 0) {
-        checkAllImagesLoaded();
-    }
-});
-
-if (totalImagesToLoad === 0) {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(finishLoading, 100);
-    });
-}
+// 🆕 الحل البديل: تشغيل finishLoading بعد وقت قصير لضمان إزالة شاشة التحميل
+setTimeout(finishLoading, 1500); // 1.5 ثانية انتظار
 
 });
