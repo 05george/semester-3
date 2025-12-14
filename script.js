@@ -67,11 +67,16 @@ function cleanupHover() {
     if (!activeState.rect) return;
     if (activeState.animationId) clearInterval(activeState.animationId);
     
-    // إزالة الـ filter فقط من الـ rect عشان يرجع لحالته الطبيعية لو كان معمول له hover
-    activeState.rect.style.filter = 'none';
-    activeState.rect.style.transform = 'scale(1)';
-    activeState.rect.style.strokeWidth = '2px';
+    // إزالة الـ scale من النص الأساسي عشان يرجع طبيعي
+    const baseText = activeState.rect.parentNode.querySelector('text');
+    if (baseText) {
+        baseText.style.transform = 'scale(1)';
+        baseText.style.filter = 'none';
+    }
 
+    activeState.rect.style.transform = 'scale(1)';
+    activeState.rect.style.filter = 'none';
+    activeState.rect.style.strokeWidth = '2px';
     if (activeState.zoomPart) activeState.zoomPart.remove();
     if (activeState.zoomText) activeState.zoomText.remove();
     const currentClip = document.getElementById(activeState.clipPathId);
@@ -80,7 +85,6 @@ function cleanupHover() {
 }
 
 function startHover() {
-    // هذه الدالة الآن مخصصة لـ Mouseover فقط
     const rect = this;
     if (activeState.rect === rect) return;
     cleanupHover();
@@ -149,67 +153,64 @@ function startHover() {
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
 
-    // النص الأصلي هو اللي بيظهر، عشان كده مش بنعمل له clone
     const baseText = rect.parentNode.querySelector('text');
     if (baseText) {
-        // ممكن نعمل تحسين هنا: نكبر النص الأصلي
+        // نكبر النص الأساسي ونحط عليه الـ glow
         baseText.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
         baseText.style.transform = `scale(${scale})`;
-        activeState.zoomText = baseText; // عشان نحط عليه الـ glow في الـ animation
+        activeState.zoomText = baseText;
     }
 }
 
 function stopHover() {
-    // هذه الدالة الآن مخصصة لـ Mouseout فقط
-    if (activeState.rect === this) {
-        // إزالة الـ scale من النص الأساسي عشان يرجع طبيعي
-        if (activeState.zoomText) {
-            activeState.zoomText.style.transform = 'scale(1)';
-            activeState.zoomText.style.filter = 'none';
-        }
-        setTimeout(cleanupHover, 50);
-    }
+    if (activeState.rect === this) setTimeout(cleanupHover, 50);
 }
 
-// ⭐⭐ الدالة الجديدة لفتح الروابط على الضغط (Click/Touch) ⭐⭐
-function handleClick(e) {
-    const rect = e.currentTarget;
+// دالة منفصلة لفتح الرابط
+function openLink(rect) {
     const href = rect.getAttribute('data-href');
-    
-    // لو فيه رابط، افتحه
     if (href && href !== '#') {
-        e.preventDefault(); 
-        e.stopPropagation(); // منع تداخل الأحداث
         window.open(href, '_blank');
+        return true;
     }
-    // لو مفيش رابط أو الـ Touch مش بيفتح حاجة، ممكن نعمل حاجة هنا لو عايز
+    return false;
 }
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
     
-    // 1. Hover/Zoom على الماوس فقط
+    // 1. سلوك الـ Hover/Zoom على الماوس
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     
-    // 2. فتح الرابط على ضغطة الماوس (Click) أو اللمس (Touch)
-    rect.addEventListener('click', handleClick); 
-    rect.addEventListener('touchstart', handleClick); // عشان نضمن فتح الرابط باللمس
-
-    // 3. لإلغاء سلوك الـ Touchstart الافتراضي اللي ممكن يعيق الـ click
-    rect.addEventListener('touchstart', (e) => {
-        // ممكن نعمل هنا startHover مؤقت عشان يدي شكل الـ glow
-        // بس الأفضل نعتمد على الـ CSS للـ active state
-        e.currentTarget.style.filter = 'drop-shadow(0 0 8px white)';
+    // 2. سلوك الـ Hover/Zoom على اللمس (Touch)
+    // عند اللمس، بنشغل الـ Zoom/Glow زي ما طلبت بالظبط
+    rect.addEventListener('touchstart', function(e) {
+        // بنمنع الـ Scroll عشان الـ Touch يبقى مخصص للـ Hover/Click
+        e.preventDefault(); 
+        startHover.call(this);
     });
 
-    // 4. لإلغاء سلوك الـ Touchend الافتراضي
-    rect.addEventListener('touchend', (e) => {
-        e.currentTarget.style.filter = 'none';
+    // عند رفع اللمس، يا إما نفتح الرابط أو نشيل الـ Hover
+    rect.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        
+        // المحاولة لفتح الرابط
+        const linkOpened = openLink(this);
+
+        // لو الرابط اتفتح، أو مش عايزينه يفضل يعمل Hover، بنشيل الـ Zoom/Glow
+        // بنشيله بعد مدة بسيطة (50ms) عشان العين متلاحظش اختفاء النص بسرعة
+        setTimeout(cleanupHover, 50);
     });
+
+    // 3. فتح الرابط على ضغطة الماوس (Click) - وده عشان الماوس برضه يفتح الروابط
+    rect.addEventListener('click', function(e) {
+        openLink(this);
+    });
+
 }
 
-// ... (الكود الخاص بإنشاء النصوص) ...
+// إضافة النصوص الأصلية لكل Rect
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
     const fileName = href.split('/').pop().split('#')[0] || '';
@@ -229,7 +230,8 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-    text.style.transition = 'transform 0.3s ease, filter 0.3s ease'; // إضافة transition
+    // مهم جداً: إضافة الـ transition عشان الـ zoom على النص يكون سلس
+    text.style.transition = 'transform 0.3s ease, filter 0.3s ease'; 
     rect.parentNode.appendChild(text);
 });
 
