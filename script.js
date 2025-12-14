@@ -1,17 +1,35 @@
 window.onload = function() {
 
 const mainSvg = document.getElementById('main-svg');
-const scrollContainer = document.getElementById('scroll-container');
-const loadingOverlay = document.getElementById('loading-overlay');
+const scrollContainer = document.getElementById('scroll-container'); 
 const clipDefs = mainSvg.querySelector('defs');
+const loadingOverlay = document.getElementById('loading-overlay'); 
+const loadingText = document.getElementById('loading-text');
+
+const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300; 
 
 const activeState = {
     rect: null,
     zoomPart: null,
     zoomText: null,
+    baseText: null,
     animationId: null,
-    clipPathId: null
+    clipPathId: null,
+    initialScrollLeft: 0,
+    isScrolling: false, 
+    touchStartTime: 0 
 };
+
+function debounce(func, delay) {
+    let timeoutId;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(context, args), delay);
+    };
+}
 
 function updateDynamicSizes() {
     const images = mainSvg.querySelectorAll('image');
@@ -26,9 +44,27 @@ function updateDynamicSizes() {
 
 updateDynamicSizes();
 
+
+const debouncedCleanupHover = debounce(function() {
+    if (activeState.rect) {
+        cleanupHover();
+    }
+}, 50); 
+
 scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
+    }
+    
+    if (activeState.rect && !isTouchDevice) {
+        debouncedCleanupHover();
+    }
+    
+    if (activeState.rect && isTouchDevice) {
+        if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) { 
+             activeState.isScrolling = true;
+             cleanupHover(); 
+        }
     }
 });
 
@@ -74,9 +110,15 @@ function cleanupHover() {
     activeState.rect.style.strokeWidth = '2px';
     if (activeState.zoomPart) activeState.zoomPart.remove();
     if (activeState.zoomText) activeState.zoomText.remove();
+
+    if (activeState.baseText) {
+        activeState.baseText.style.opacity = '1';
+    }
+
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, animationId: null, clipPathId: null });
+    
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
 function startHover() {
@@ -147,12 +189,21 @@ function startHover() {
         zoomPart.style.filter = glow;
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
+    
+    let baseText = rect.nextElementSibling;
+    if (baseText && !baseText.matches('text.rect-label')) {
+        baseText = null;
+    }
 
-    const baseText = rect.parentNode.querySelector('text');
     if (baseText) {
+        baseText.style.opacity = '0';
+        activeState.baseText = baseText;
+
         const zoomText = baseText.cloneNode(true);
         const baseFont = parseFloat(baseText.style.fontSize);
-        zoomText.style.fontSize = (baseFont * 2) + 'px';
+
+        zoomText.style.fontSize = (baseFont * 2) + 'px'; 
+
         zoomText.style.fill = 'white';
         zoomText.style.pointerEvents = 'none';
         zoomText.style.userSelect = 'none';
@@ -166,27 +217,63 @@ function startHover() {
 }
 
 function stopHover() {
-    if (activeState.rect === this) setTimeout(cleanupHover, 50);
+    if (activeState.rect === this) cleanupHover();
 }
+
+function handleLinkOpen(event) {
+    const href = event.currentTarget.getAttribute('data-href');
+    if (href && href !== '#') {
+        window.open(href, '_blank');
+        event.preventDefault();
+        event.stopPropagation();
+    }
+}
+
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
-    rect.addEventListener('mouseover', startHover);
-    rect.addEventListener('mouseout', stopHover);
-    rect.addEventListener('touchstart', startHover);
-    rect.addEventListener('touchend', cleanupHover);
+    
+    if (!isTouchDevice) {
+        rect.addEventListener('mouseover', startHover);
+        rect.addEventListener('mouseout', stopHover);
+        rect.addEventListener('click', handleLinkOpen); 
+    }
+
+    rect.addEventListener('touchstart', function(event) {
+        activeState.touchStartTime = Date.now(); 
+        activeState.initialScrollLeft = scrollContainer.scrollLeft;
+        activeState.isScrolling = false;
+        
+        if (!isTouchDevice) startHover.call(this);
+    });
+
+    rect.addEventListener('touchend', function(event) {
+        const timeElapsed = Date.now() - activeState.touchStartTime;
+
+        if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) { 
+            handleLinkOpen(event); 
+        }
+
+        cleanupHover(); 
+    });
 }
 
-// ======== تحميل الصور الحقيقي ========
 const svgImages = Array.from(mainSvg.querySelectorAll('image'));
 const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
 let loadedCount = 0;
 const totalCount = urls.length;
 
 function updateLoader() {
-    const percent = Math.round((loadedCount/totalCount)*100);
-    const displayedPercent = [0,25,50,75,100].reduce((prev, curr) => curr <= percent ? curr : prev, 0);
-    if (loadingOverlay) loadingOverlay.textContent = `Loading Map... ${displayedPercent}%`;
+    const percent = Math.round((loadedCount / totalCount) * 100);
+    const displayedPercent = [0, 25, 50, 75, 100].reduce((prev, curr) => curr <= percent ? curr : prev, 0);
+    if (loadingText) loadingText.textContent = `Loading Map... ${displayedPercent}%`;
+}
+
+function finishLoading() {
+    if (loadingOverlay) {
+        loadingOverlay.style.opacity = 0;
+        setTimeout(() => { loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; }, 300);
+    }
 }
 
 urls.forEach((url, index) => {
@@ -195,9 +282,7 @@ urls.forEach((url, index) => {
         loadedCount++;
         updateLoader();
         if (loadedCount === totalCount) {
-            loadingOverlay.style.opacity = 0;
-            setTimeout(()=>{loadingOverlay.style.display='none'; mainSvg.style.opacity=1;}, 300);
-            // بعد تحميل كل الصور، نعطيهم href داخل SVG
+            finishLoading();
             svgImages.forEach((svgImg, i) => {
                 svgImg.setAttribute('href', urls[i]);
             });
@@ -206,47 +291,58 @@ urls.forEach((url, index) => {
     img.src = url;
 });
 
-// attach hover بعد تحميل الصور
-document.querySelectorAll('rect.image-mapper-shape').forEach((rect,i)=>{
-    const href = rect.getAttribute('href') || '';
+
+document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
+    const href = rect.getAttribute('data-href') || '';
+    
     const fileName = href.split('/').pop().split('#')[0] || '';
+    const textContent = fileName;
+    
     const rectWidth = parseFloat(rect.getAttribute('width'));
     const rectX = parseFloat(rect.getAttribute('x'));
     const rectY = parseFloat(rect.getAttribute('y'));
-    const minFont = 8, maxFont = 16;
-    let fontSize = Math.max(minFont, Math.min(maxFont, rectWidth*0.12));
-    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x', rectX + rectWidth/2);
+    const minFont = 8;
+    const maxFont = 16;
+    const scaleFactor = 0.12;
+    let fontSize = rectWidth * scaleFactor;
+    fontSize = Math.max(minFont, Math.min(maxFont, fontSize));
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', rectX + rectWidth / 2);
     text.setAttribute('y', rectY + fontSize + 6);
-    text.setAttribute('text-anchor','middle');
-    text.textContent = fileName;
-    text.style.fontSize = fontSize+'px';
-    text.style.fill='white';
-    text.style.pointerEvents='none';
-    rect.parentNode.appendChild(text);
-    attachHover(rect,i);
+    text.setAttribute('text-anchor', 'middle');
+    text.textContent = textContent;
+    text.style.fontSize = fontSize + 'px';
+    text.style.fill = 'white';
+    text.style.pointerEvents = 'none';
+    
+    text.setAttribute('class', 'rect-label');
+    rect.parentNode.insertBefore(text, rect.nextSibling);
 });
 
-// MutationObserver للحفاظ على ديناميكية rects
+document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
+    rect.setAttribute('data-processed', 'true');
+    attachHover(rect, i);
+});
+
 const rootObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
-            if(node.nodeType===1){
-                if(node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')){
-                    attachHover(node,Date.now());
-                    node.setAttribute('data-processed','true');
+            if (node.nodeType === 1) {
+                if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+                    attachHover(node, Date.now());
+                    node.setAttribute('data-processed', 'true');
                 }
-                if(node.querySelector){
+                if (node.querySelector) {
                     node.querySelectorAll('rect.image-mapper-shape:not([data-processed])')
-                    .forEach(rect=>{
-                        attachHover(rect,Date.now());
-                        rect.setAttribute('data-processed','true');
-                    });
+                        .forEach(rect => {
+                            attachHover(rect, Date.now());
+                            rect.setAttribute('data-processed', 'true');
+                        });
                 }
             }
         });
     });
 });
-rootObserver.observe(mainSvg,{childList:true,subtree:true});
+rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
 };
