@@ -36,11 +36,9 @@ function updateDynamicSizes() {
     const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
     const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
     
-    // حساب إجمالي العرض للـ viewBox
     const totalWidth = images.length * imageWidth;
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
     
-    // عشان نحدد أقصى سكرول ممكن (ملاحظة: window.innerWidth لازم تكون متاحة)
     window.MAX_SCROLL_LEFT = totalWidth - (window.innerWidth || document.documentElement.clientWidth); 
 }
 
@@ -52,11 +50,15 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
-// 🆕 الدالة الجديدة والمبسطة لتحميل الصورة بدون XHR
+// الدالة المبسطة لتحميل الصورة (تعتمد على المتصفح وتزيل شاشة التحميل)
 function lazyLoadImage(imgElement) {
+    // لو الصورة بدأت تحميل خلاص، متعملش حاجة
+    if (imgElement.hasAttribute('data-loading') || imgElement.getAttribute('href')) {
+        return;
+    }
+    
     const src = imgElement.getAttribute('data-src');
     
-    // تحديد رقم الأسبوع للـ Overlay
     const g = imgElement.closest('g');
     const transformAttr = g.getAttribute('transform');
     const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
@@ -97,24 +99,35 @@ function lazyLoadImage(imgElement) {
 function checkLazyLoad() {
     const scrollLeft = scrollContainer.scrollLeft;
     const viewportWidth = window.innerWidth;
-
-    // البحث عن الصور التي لم يتم تحميلها بعد وليس قيد التحميل
     const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
-
+    
+    // قيمة عتبة التحميل العاجل (الصور الظاهرة + شاشة إضافية)
+    const HIGH_PRIORITY_THRESHOLD = viewportWidth * 2; 
+    
+    // --- 1. التحميل العاجل (High Priority) ---
+    // تحميل الصور القريبة جدًا من الشاشة أولاً
     lazyImages.forEach(img => {
         const g = img.closest('g');
         const transformAttr = g.getAttribute('transform');
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
 
-        // LOAD_THRESHOLD: زودت مسافة التحميل لضمان تحميل مسبق قبل الوصول
-        const LOAD_THRESHOLD = 3072; // زيادة عن 2048 لضمان التحميل المسبق
-
-        if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
-             // 🆕 استدعاء الدالة الجديدة المبسطة
+        // الشرط: لو إحداثيات الصورة أقل من نهاية الرؤية + منطقة تحميل عاجل
+        if (imageX < scrollLeft + viewportWidth + HIGH_PRIORITY_THRESHOLD) {
              lazyLoadImage(img);
         }
     });
+    
+    // --- 2. التحميل التدريجي في الخلفية (Low Priority / Eager Load) ---
+    // يبدأ تحميل باقي الصور بمجرد تحريك بسيط للشاشة (بعد أول صورتين)
+    const LOW_PRIORITY_SCROLL_TRIGGER = 5; 
+    
+    if (scrollLeft > LOW_PRIORITY_SCROLL_TRIGGER) {
+        lazyImages.forEach(img => {
+            // تحميل باقي الصور اللي لسه مابدأت
+             lazyLoadImage(img);
+        });
+    }
 }
 
 
@@ -162,7 +175,6 @@ function getGroupImage(element) {
             if (images.length) {
                 const baseImage = images[0];
                 const imageSource = baseImage.getAttribute('href'); 
-                // نرجع الـ imageSource بس لو موجودة عشان نضمن إن الصورة اتحملت
                 if (!imageSource) return null;
 
                 return {
@@ -205,7 +217,6 @@ function startHover() {
     activeState.rect = rect;
 
     const imageElement = rect.closest('g').querySelector('image');
-    // تأكد إن الصورة اتحملت فعليًا قبل ما تعمل الزووم
     if (!imageElement || !imageElement.getAttribute('href')) {
         return; 
     }
@@ -415,12 +426,11 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-// تعديل بسيط على آلية التحقق من التحميل الأولي
-// للتأكد من حساب الـ MAX_SCROLL_LEFT بشكل صحيح بعد الـ DOMContentLoaded
 const handleInitialLoad = () => {
-    updateDynamicSizes(); // تحديث الأبعاد بعد التأكد من وجود كل شيء
+    updateDynamicSizes(); 
     
-    const mainSvgImages = document.querySelectorAll('#main-svg image[href]:not([data-src])'); // فقط الصور اللي ليها href مباشرة
+    // الصور اللي ليها href مباشرة في الـ HTML (أول صورتين غالبًا)
+    const mainSvgImages = document.querySelectorAll('#main-svg image[href]:not([data-src])'); 
     const totalImagesToLoad = mainSvgImages.length; 
     let loadedImagesCount = 0;
 
@@ -438,7 +448,6 @@ const handleInitialLoad = () => {
     }
 
     if (totalImagesToLoad === 0) {
-        // لو مفيش صور محملة مباشرة (عشان متفشلش)
         setTimeout(finishLoading, 100);
     } else {
         mainSvgImages.forEach(img => {
