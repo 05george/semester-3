@@ -1,6 +1,11 @@
 const mainSvg = document.getElementById('main-svg');
+const scrollContainer = document.getElementById('scroll-container'); // تعديل: استخدام id محدد
 const clipDefs = mainSvg.querySelector('defs');
-const scrollContainer = document.querySelector('div');
+const loadingOverlay = document.getElementById('loading-overlay'); // عنصر شاشة التحميل
+
+// 2. فصل أحداث اللمس والماوس
+const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300; // مدة الضغط القصوى لفتحه كرابط
 
 const activeState = {
     rect: null,
@@ -10,8 +15,20 @@ const activeState = {
     animationId: null,
     clipPathId: null,
     initialScrollLeft: 0,
-    isScrolling: false
+    isScrolling: false,
+    touchStartTime: 0 // لتسجيل وقت بداية اللمس
 };
+
+// 1. دالة Debounce لتحسين أداء السكرول
+function debounce(func, delay) {
+    let timeoutId;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(context, args), delay);
+    };
+}
 
 function updateDynamicSizes() {
     const images = mainSvg.querySelectorAll('image');
@@ -26,19 +43,31 @@ function updateDynamicSizes() {
 
 updateDynamicSizes();
 
+
+// دالة لتنفيذ الـ Cleanup فورا، ويتم استدعائها بالـ Debounce
+const debouncedCleanupHover = debounce(function() {
+    if (activeState.rect) {
+        cleanupHover();
+    }
+}, 50); // تأخير بسيط 50ms لضمان عدم الإفراط في تشغيلها
+
 scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
     }
     
-    // أول ما يحصل سكرول، نوقف الـ Hover فورا عشان نلغي فتح الرابط بالغلط
-    if (activeState.rect) {
-        cleanupHover();
-    }
-    
-    // نرفع Flag السحب لو فيه حركة سكرول فعلية حصلت
-    if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 2) { 
-        activeState.isScrolling = true;
+    // 1. استخدام Debounce لـ cleanupHover
+    if (!isTouchDevice) {
+        // لو ماوس: نستخدم الـ debounce لإنهاء الـ hover ببطء عند السكرول
+        debouncedCleanupHover();
+    } else {
+        // لو لمس: نرفع flag الـ isScrolling فورا عشان نمنع فتح الرابط في touchend
+        if (activeState.rect) {
+            cleanupHover(); // نقفل الزوم فورا لو كان شغال
+        }
+        if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) { // قيمة أكبر لضمان الحركة المقصودة
+             activeState.isScrolling = true;
+        }
     }
 });
 
@@ -92,8 +121,7 @@ function cleanupHover() {
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
     
-    // تصفير كل الـ Flags
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false });
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
 function startHover() {
@@ -207,31 +235,40 @@ function handleLinkOpen(event) {
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
-    rect.addEventListener('mouseover', startHover);
-    rect.addEventListener('mouseout', stopHover);
     
+    if (!isTouchDevice) {
+        // 2. تفعيل الهوفر للماوس فقط
+        rect.addEventListener('mouseover', startHover);
+        rect.addEventListener('mouseout', stopHover);
+        rect.addEventListener('click', handleLinkOpen); 
+    }
+
+    // تفعيل أحداث اللمس (للموبايل والتابلت)
     rect.addEventListener('touchstart', function(event) {
-        startHover.call(this);
+        activeState.touchStartTime = Date.now(); // تسجيل وقت الضغط
         activeState.initialScrollLeft = scrollContainer.scrollLeft;
-        activeState.isScrolling = false; // نبدأ من False
+        activeState.isScrolling = false;
+        
+        // لو جهاز لمس: مفيش داعي للـ Hover/Zoom عشان بيعمل مشاكل
+        if (!isTouchDevice) startHover.call(this);
     });
 
     rect.addEventListener('touchend', function(event) {
-        // نفتح الرابط فقط لو مفيش أي سحب أفقي حصل
-        if (activeState.isScrolling === false) { 
+        const timeElapsed = Date.now() - activeState.touchStartTime;
+
+        // 2.4. الشرط: لو مفيش سحب حصل، والوقت كان ضغطة سريعة (Tap)
+        if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) { 
             handleLinkOpen(event); 
         }
 
         cleanupHover(); 
     });
-
-    rect.addEventListener('click', handleLinkOpen); 
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
     
-    // تم حذف خاصية data-title ونعتمد فقط على اسم الملف في الرابط
+    // إزالة data-title: نعتمد فقط على اسم الملف في الرابط
     const fileName = href.split('/').pop().split('#')[0] || '';
     const textContent = fileName;
     
@@ -261,23 +298,45 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
+// 3. التحكم في شاشة التحميل (Loading State)
+// بعد ما كل الـ rects تتعالج، نخفي شاشة التحميل ونظهر الـ SVG
+function finishLoading() {
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    mainSvg.style.opacity = '1'; 
+}
+
+// نستخدم MutationObserver عشان نضمن إن أي عناصر جديدة بتضاف بتتعالج
 const rootObserver = new MutationObserver(mutations => {
+    let newRectsFound = false;
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
             if (node.nodeType === 1) {
                 if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
                     attachHover(node, Date.now());
                     node.setAttribute('data-processed', 'true');
+                    newRectsFound = true;
                 }
                 if (node.querySelector) {
                     node.querySelectorAll('rect.image-mapper-shape:not([data-processed])')
                         .forEach(rect => {
                             attachHover(rect, Date.now());
                             rect.setAttribute('data-processed', 'true');
+                            newRectsFound = true;
                         });
                 }
             }
         });
     });
+
+    if (newRectsFound) {
+        // لو فيه عناصر جديدة اتعالجت، ندي فرصة للعناصر تتحمل وننهي التحميل
+        setTimeout(finishLoading, 100); 
+    }
 });
+
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
+
+// لو مفيش عناصر اتعالجت بعد 500ms، نعتبره خلص تحميل ونخفي الشاشة (Fallback)
+setTimeout(finishLoading, 500); 
