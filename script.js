@@ -13,11 +13,9 @@ const activeState = {
 function updateDynamicSizes() {
     const images = mainSvg.querySelectorAll('image');
     if (!images.length) return;
-
     const firstImage = images[0];
     const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
     const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
-
     const totalWidth = images.length * imageWidth;
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
     window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
@@ -38,10 +36,7 @@ function getCumulativeTranslate(element) {
         const transformAttr = current.getAttribute('transform');
         if (transformAttr) {
             const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-            if (match) {
-                x += parseFloat(match[1]);
-                y += parseFloat(match[2]);
-            }
+            if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
         }
         current = current.parentNode;
     }
@@ -70,32 +65,20 @@ function getGroupImage(element) {
 
 function cleanupHover() {
     if (!activeState.rect) return;
-
     if (activeState.animationId) clearInterval(activeState.animationId);
-
     activeState.rect.style.transform = 'scale(1)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
-
     if (activeState.zoomPart) activeState.zoomPart.remove();
     if (activeState.zoomText) activeState.zoomText.remove();
-
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-
-    Object.assign(activeState, {
-        rect: null,
-        zoomPart: null,
-        zoomText: null,
-        animationId: null,
-        clipPathId: null
-    });
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, animationId: null, clipPathId: null });
 }
 
 function startHover() {
     const rect = this;
     if (activeState.rect === rect) return;
-
     cleanupHover();
     activeState.rect = rect;
 
@@ -118,13 +101,11 @@ function startHover() {
 
     const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
     clip.setAttribute('id', clipPathId);
-
     const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     clipRect.setAttribute('x', absoluteX);
     clipRect.setAttribute('y', absoluteY);
     clipRect.setAttribute('width', width);
     clipRect.setAttribute('height', height);
-
     clipDefs.appendChild(clip).appendChild(clipRect);
 
     const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
@@ -141,7 +122,6 @@ function startHover() {
 
     zoomPart.setAttribute('x', groupX);
     zoomPart.setAttribute('y', groupY);
-
     zoomPart.style.opacity = 0;
     mainSvg.appendChild(zoomPart);
     activeState.zoomPart = zoomPart;
@@ -152,7 +132,6 @@ function startHover() {
     rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
     rect.style.transform = `scale(${scale})`;
     rect.style.strokeWidth = '4px';
-
     zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
     zoomPart.style.transform = `scale(${scale})`;
     zoomPart.style.opacity = 1;
@@ -179,15 +158,12 @@ function startHover() {
         zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
         zoomText.setAttribute('text-anchor', 'middle');
         mainSvg.appendChild(zoomText);
-        zoomText.parentNode.appendChild(zoomText);
         activeState.zoomText = zoomText;
     }
 }
 
 function stopHover() {
-    if (activeState.rect === this) {
-        setTimeout(cleanupHover, 50);
-    }
+    if (activeState.rect === this) setTimeout(cleanupHover, 50);
 }
 
 function attachHover(rect, i) {
