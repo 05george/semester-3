@@ -1,36 +1,13 @@
-// 🛑 الجزء الأول: دالة finishLoading وخطة الطوارئ (لضمان اختفاء شاشة التحميل الأولية) 🛑
-
-function finishLoading() {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const mainSvg = document.getElementById('main-svg');
-    
-    // إخفاء الشاشة
-    if (loadingOverlay) {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-        }, 500);
-    }
-    // إظهار الخريطة
-    if (mainSvg) {
-        mainSvg.style.opacity = '1';
-    }
-}
-
-// 🆕 خطة الطوارئ: هتشتغل بعد 3 ثواني لإخفاء شاشة التحميل الرئيسية
-setTimeout(finishLoading, 3000); 
-
-
-// 🛑 يبدأ الكود الرئيسي هنا (يتم تنفيذه بعد اكتمال تحميل DOM) 🛑
-Document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
-const scrollContainer = document.getElementById('scroll-container'); 
+const scrollContainer = document.getElementById('scroll-container'); // ده العنصر اللي فيه Scroll
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
+const loadingOverlay = document.getElementById('loading-overlay');
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
-const IMAGE_WIDTH = 1024; 
+const IMAGE_WIDTH = 1024; // عرض كل أسبوع
 
 const activeState = {
     rect: null,
@@ -56,9 +33,8 @@ function debounce(func, delay) {
 }
 
 function updateDynamicSizes() {
-    if (!mainSvg) return; 
     const images = mainSvg.querySelectorAll('image');
-    if (!images.length) return; 
+    if (!images.length) return;
     const totalWeeks = mainSvg.querySelectorAll('g').length; 
     const totalWidth = totalWeeks * IMAGE_WIDTH;
     
@@ -74,50 +50,61 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
-// 🆕 دالة التحميل الكسول البسيطة (لضمان ظهور الصور بدون نسبة مئوية)
-function lazyLoadImageSimple(imgElement, weekNumber) {
+function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const src = imgElement.getAttribute('data-src');
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
     
-    if (imgElement.getAttribute('href') || loadingQueue.has(weekNumber)) return;
+    if (loadingQueue.has(weekNumber)) return;
 
-    loadingQueue.add(weekNumber);
+    loadingQueue.add(weekNumber); 
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
-    // استخدام كائن Image بسيط لتحميل الصورة
-    const tempImg = new Image();
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', src, true);
+    xhr.responseType = 'blob'; 
     
-    const finishLoad = (success) => {
-        loadingQueue.delete(weekNumber);
-        
-        if (success) {
-            imgElement.setAttribute('href', src);
-            if (overlay) overlay.style.opacity = '0';
-            if (text) text.style.opacity = '0';
-        } else {
-            if (text) text.textContent = 'Load Failed';
-            if (overlay) overlay.style.fill = 'red';
-            imgElement.setAttribute('data-src', src); // نرجع الـdata-src للمحاولة مرة أخرى
+    xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+            const percentage = Math.round((event.loaded / event.total) * 100);
+            if (text) {
+                text.textContent = `${percentage}%`;
+            }
         }
-        
-        setTimeout(() => {
-            if (overlay) overlay.remove();
-            if (text) text.remove();
-            imgElement.removeAttribute('data-loading');
-        }, 300);
     };
 
-    tempImg.onload = () => finishLoad(true);
-    tempImg.onerror = () => finishLoad(false);
+    xhr.onload = () => {
+        loadingQueue.delete(weekNumber); 
+        
+        if (xhr.status === 200) {
+            if (text) text.textContent = '100%';
+            
+            const blob = xhr.response;
+            const objectURL = URL.createObjectURL(blob);
+            
+            imgElement.setAttribute('href', objectURL);
+            
+            if (overlay) overlay.style.opacity = '0';
+            if (text) text.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (overlay) overlay.remove();
+                if (text) text.remove();
+                imgElement.removeAttribute('data-loading');
+            }, 300);
+
+        } else {
+            if (text) text.textContent = 'Failed';
+            if (overlay) overlay.style.fill = 'red';
+        }
+    };
     
-    // بدء التحميل
-    tempImg.src = src; 
+    xhr.send();
 }
 
-
 function checkLazyLoad() {
+    // 🆕 نستخدم scrollLeft من scrollContainer مباشرة
     const scrollLeft = scrollContainer.scrollLeft; 
     const viewportWidth = window.innerWidth;
     
@@ -129,13 +116,15 @@ function checkLazyLoad() {
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
         
+        // 🆕 تم زيادة مسافة الأمان إلى 3 شاشات عشان نضمن التحميل
         const LOAD_THRESHOLD = viewportWidth * 3; 
         
+        // الشرط اللي بيقرر متى يبدأ التحميل:
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
             const weekNumber = (imageX / IMAGE_WIDTH) + 1;
             
             if (weekNumber !== null) {
-                lazyLoadImageSimple(img, weekNumber); // 🛑 نستخدم الدالة البسيطة 🛑
+                lazyLoadImageWithProgress(img, weekNumber);
             }
         }
     });
@@ -144,31 +133,31 @@ function checkLazyLoad() {
 const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 
-if (scrollContainer) { 
-    scrollContainer.addEventListener('scroll', function () {
-        if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
-            this.scrollLeft = window.MAX_SCROLL_LEFT;
-        }
-    
-        if (activeState.rect && !isTouchDevice) {  
-            debouncedCleanupHover();  
-        }  
-    
-        if (activeState.rect && isTouchDevice) {  
-            if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) {   
-                 activeState.isScrolling = true;  
-                 cleanupHover();   
-            }  
-        }
-        
-        debouncedCheckLazyLoad();
-    });
-}
+scrollContainer.addEventListener('scroll', function () {
+    if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
+        this.scrollLeft = window.MAX_SCROLL_LEFT;
+    }
 
+    if (activeState.rect && !isTouchDevice) {  
+        debouncedCleanupHover();  
+    }  
+
+    if (activeState.rect && isTouchDevice) {  
+        if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) {   
+             activeState.isScrolling = true;  
+             cleanupHover();   
+        }  
+    }
+    
+    debouncedCheckLazyLoad();
+});
+
+// 🆕 نضمن تشغيلها فوراً في البداية عشان تحمل الأسبوع الثالث والرابع
 setTimeout(checkLazyLoad, 100); 
 
 
 function getCumulativeTranslate(element) {
+// ... باقي الدوال اللي تحت زي ما هي عشان الـZoom
     let x = 0, y = 0;
     let current = element;
     while (current && current.tagName !== 'svg') {
@@ -211,7 +200,6 @@ function cleanupHover() {
     activeState.rect.style.transform = 'scale(1)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
-    activeState.rect.style.stroke = ''; 
     if (activeState.zoomPart) activeState.zoomPart.remove();
     if (activeState.zoomText) activeState.zoomText.remove();
 
@@ -232,30 +220,10 @@ function startHover() {
     cleanupHover();
     activeState.rect = rect;
 
-    const g = rect.closest('g');
-    const imageElement = g.querySelector('image');
-
-    if (!imageElement) return;
-
-    const imageSourceHref = imageElement.getAttribute('href');
-    const imageDataSource = imageElement.getAttribute('data-src');
-
-    if (!imageSourceHref && imageDataSource) {
-        const transformAttr = g.getAttribute('transform');
-        const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
-        const imageX = match ? parseFloat(match[1]) : 0;
-        const weekNumber = (imageX / IMAGE_WIDTH) + 1;
-
-        if (weekNumber !== null) {
-            lazyLoadImageSimple(imageElement, weekNumber); 
-        }
-        rect.style.stroke = 'orange'; 
-        rect.style.strokeWidth = '4px';
+    const imageElement = rect.closest('g').querySelector('image');
+    if (!imageElement || !imageElement.getAttribute('href')) {
         return; 
     }
-    
-    const imageData = getGroupImage(rect);  
-    if (!imageData) return;
     
     const i = rect.getAttribute('data-index') || Date.now();  
     const clipPathId = `clip-${i}-${Date.now()}`;  
@@ -270,6 +238,9 @@ function startHover() {
     const cumulative = getCumulativeTranslate(rect);  
     const absoluteX = x + cumulative.x;  
     const absoluteY = y + cumulative.y;  
+
+    const imageData = getGroupImage(rect);  
+    if (!imageData) return;  
 
     const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
     clip.setAttribute('id', clipPathId);  
@@ -288,9 +259,9 @@ function startHover() {
     zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);  
 
     const groupTransform = imageData.group.getAttribute('transform');  
-    const matchGroup = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;  
-    const groupX = matchGroup ? parseFloat(matchGroup[1]) : 0;  
-    const groupY = matchGroup ? parseFloat(matchGroup[2]) : 0;  
+    const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;  
+    const groupX = match ? parseFloat(match[1]) : 0;  
+    const groupY = match ? parseFloat(match[2]) : 0;  
 
     zoomPart.setAttribute('x', groupX);  
     zoomPart.setAttribute('y', groupY);  
@@ -341,6 +312,7 @@ function startHover() {
         mainSvg.appendChild(zoomText);  
         activeState.zoomText = zoomText;  
     }
+
 }
 
 function stopHover() {
@@ -348,7 +320,7 @@ function stopHover() {
 }
 
 function handleLinkOpen(event) {
-    const href = event.currentTarget.getAttribute('data-href') || event.currentTarget.getAttribute('href') || ''; 
+    const href = event.currentTarget.getAttribute('href');
     if (href && href !== '#') {
         window.open(href, '_blank');
         event.preventDefault();
@@ -377,20 +349,16 @@ function attachHover(rect, i) {
         const timeElapsed = Date.now() - activeState.touchStartTime;  
 
         if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) {   
-            const imageElement = this.closest('g').querySelector('image');
-            if (imageElement && imageElement.hasAttribute('data-src') && !imageElement.hasAttribute('href')) {
-                startHover.call(this); 
-            } else {
-                handleLinkOpen(event);   
-            }
+            handleLinkOpen(event);   
         }  
 
         cleanupHover();   
     });
+
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-    const href = rect.getAttribute('data-href') || rect.getAttribute('href') || ''; 
+    const href = rect.getAttribute('href') || '';
 
     const fileName = href.split('/').pop().split('#')[0] || '';  
     const textContent = fileName;  
@@ -422,6 +390,15 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
+function finishLoading() {
+    if (loadingOverlay) {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+        }, 500);
+    }
+    mainSvg.style.opacity = '1';
+}
 
 const rootObserver = new MutationObserver(mutations => {
     let newRectsFound = false;
@@ -444,12 +421,44 @@ const rootObserver = new MutationObserver(mutations => {
             }
         });
     });
+
+    if (newRectsFound) {  
+        setTimeout(finishLoading, 100);   
+    }
+
 });
 
-if (mainSvg) { 
-    rootObserver.observe(mainSvg, { childList: true, subtree: true });
+rootObserver.observe(mainSvg, { childList: true, subtree: true });
+
+const mainSvgImages = document.querySelectorAll('#main-svg image[href]');
+const totalImagesToLoad = mainSvgImages.length; 
+let loadedImagesCount = 0;
+
+function checkAllImagesLoaded() {
+    loadedImagesCount++;
+    const percentage = Math.round((loadedImagesCount / totalImagesToLoad) * 100);
+
+    if (loadingOverlay) {
+        loadingOverlay.textContent = `Loading Map... ${percentage}%`;
+    }
+
+    if (loadedImagesCount === totalImagesToLoad) {
+        finishLoading();
+    }
 }
 
-finishLoading(); 
+mainSvgImages.forEach(img => {
+    img.addEventListener('load', checkAllImagesLoaded, { once: true });
 
-}); // نهاية Document.addEventListener('DOMContentLoaded', ...
+    if (img.complete || img.naturalWidth > 0) {
+        checkAllImagesLoaded();
+    }
+});
+
+if (totalImagesToLoad === 0) {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(finishLoading, 100);
+    });
+}
+
+});
