@@ -396,7 +396,6 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
 
 function finishLoading() {
     if (loadingOverlay) {
-        // حط هنا شرط بسيط عشان الدالة متشتغلش مرتين
         if (loadingOverlay.style.display === 'none') return;
         
         loadingOverlay.style.opacity = '0';
@@ -430,7 +429,6 @@ const rootObserver = new MutationObserver(mutations => {
     });
 
     if (newRectsFound) {  
-        // بعد ظهور الـ Rects لأول مرة، ننهي شاشة التحميل
         setTimeout(finishLoading, 100);   
     }
 
@@ -451,7 +449,6 @@ const handleInitialLoad = () => {
     let forcedTimeout = setTimeout(() => {
         // لو فات ثانيتين والصفحة معلّقة، هننطلق ونظهر الخريطة
         if (loadedImagesCount < totalImagesToLoad) {
-             // console.warn("Forcing finishLoading() due to initial load delay."); // رسالة للمطور
              finishLoading();
         }
     }, 2000); // ثانيتين كحد أقصى
