@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
-const scrollContainer = document.getElementById('scroll-container'); // ده العنصر اللي فيه Scroll
+const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
 const loadingOverlay = document.getElementById('loading-overlay');
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
-const IMAGE_WIDTH = 1024; // عرض كل أسبوع
 
 const activeState = {
     rect: null,
@@ -19,8 +18,6 @@ const activeState = {
     isScrolling: false,
     touchStartTime: 0
 };
-
-const loadingQueue = new Set(); 
 
 function debounce(func, delay) {
     let timeoutId;
@@ -35,10 +32,11 @@ function debounce(func, delay) {
 function updateDynamicSizes() {
     const images = mainSvg.querySelectorAll('image');
     if (!images.length) return;
-    const totalWeeks = mainSvg.querySelectorAll('g').length; 
-    const totalWidth = totalWeeks * IMAGE_WIDTH;
-    
-    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} 2454`);
+    const firstImage = images[0];
+    const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
+    const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+    const totalWidth = images.length * imageWidth;
+    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
     window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
 }
 
@@ -55,9 +53,6 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
     
-    if (loadingQueue.has(weekNumber)) return;
-
-    loadingQueue.add(weekNumber); 
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
@@ -75,8 +70,6 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     };
 
     xhr.onload = () => {
-        loadingQueue.delete(weekNumber); 
-        
         if (xhr.status === 200) {
             if (text) text.textContent = '100%';
             
@@ -104,8 +97,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
 }
 
 function checkLazyLoad() {
-    // 🆕 نستخدم scrollLeft من scrollContainer مباشرة
-    const scrollLeft = scrollContainer.scrollLeft; 
+    const scrollLeft = scrollContainer.scrollLeft;
     const viewportWidth = window.innerWidth;
     
     const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
@@ -116,12 +108,10 @@ function checkLazyLoad() {
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
         
-        // 🆕 تم زيادة مسافة الأمان إلى 3 شاشات عشان نضمن التحميل
-        const LOAD_THRESHOLD = viewportWidth * 3; 
+        const LOAD_THRESHOLD = 2048; 
         
-        // الشرط اللي بيقرر متى يبدأ التحميل:
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
-            const weekNumber = (imageX / IMAGE_WIDTH) + 1;
+            const weekNumber = g.getAttribute('transform').match(/translate\(([\d]+)/) ? (imageX / 1024) + 1 : null;
             
             if (weekNumber !== null) {
                 lazyLoadImageWithProgress(img, weekNumber);
@@ -129,8 +119,6 @@ function checkLazyLoad() {
         }
     });
 }
-
-const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 
 scrollContainer.addEventListener('scroll', function () {
@@ -149,15 +137,13 @@ scrollContainer.addEventListener('scroll', function () {
         }  
     }
     
-    debouncedCheckLazyLoad();
+    checkLazyLoad();
 });
 
-// 🆕 نضمن تشغيلها فوراً في البداية عشان تحمل الأسبوع الثالث والرابع
-setTimeout(checkLazyLoad, 100); 
+checkLazyLoad(); 
 
 
 function getCumulativeTranslate(element) {
-// ... باقي الدوال اللي تحت زي ما هي عشان الـZoom
     let x = 0, y = 0;
     let current = element;
     while (current && current.tagName !== 'svg') {
