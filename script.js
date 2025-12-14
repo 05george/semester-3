@@ -85,7 +85,7 @@ function getGroupImage(element) {
             const images = [...current.children].filter(c => c.tagName === 'image');
             if (images.length) {
                 const baseImage = images[0];
-                const imageSource = baseImage.getAttribute('href') || baseImage.getAttribute('data-href');
+                const imageSource = baseImage.getAttribute('href'); 
                 if (!imageSource) return null;
 
                 return {
@@ -144,9 +144,6 @@ function startHover() {
     const imageData = getGroupImage(rect);  
     if (!imageData) return;  
 
-    // Ensure image is loaded before attempting zoom
-    loadImage(imageData.group.querySelector('image'));
-    
     const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
     clip.setAttribute('id', clipPathId);  
     const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
@@ -335,79 +332,30 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-// --------------------------------------------------------------------------
-// Lazy Loading Code - New addition to solve slow image loading
-// --------------------------------------------------------------------------
+// --- Image Preloading & Loading Overlay Guarantee ---
 
-function loadImage(imageElement) {
-    const isSvgImage = imageElement.tagName === 'image';
-    
-    // Determine which attribute holds the URL and which needs to be set
-    const urlAttribute = isSvgImage ? 'data-href' : 'src';
-    const loadAttribute = isSvgImage ? 'href' : 'src';
-    
-    // Check if the image is already loading/loaded
-    if (imageElement.getAttribute(loadAttribute)) {
-        return; 
-    }
-    
-    const url = imageElement.getAttribute(urlAttribute);
-    if (url) {
-        imageElement.setAttribute(loadAttribute, url);
-        // Once loaded, we can call finishLoading() to hide the overlay
-        // We'll use a safer approach below for hiding the overlay.
+const mainSvgImages = document.querySelectorAll('#main-svg image');
+const totalImagesToLoad = mainSvgImages.length;
+let loadedImagesCount = 0;
+
+function checkAllImagesLoaded() {
+    loadedImagesCount++;
+    if (loadedImagesCount === totalImagesToLoad) {
+        finishLoading();
     }
 }
 
-const lazyImages = document.querySelectorAll('#main-svg image');
-
-if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const imageElement = entry.target;
-                loadImage(imageElement);
-                observer.unobserve(imageElement);
-            }
-        });
-    }, {
-        rootMargin: '0px 1000px 0px 1000px', 
-        threshold: 0.01
-    });
-
-    lazyImages.forEach(image => {
-        observer.observe(image);
-    });
-} else {
-    lazyImages.forEach(image => {
-        loadImage(image);
-    });
-}
-
-// --------------------------------------------------------------------------
-// Safety Measure: Hide loading overlay if all images are loaded after a delay.
-// This overrides the original setTimeout(finishLoading, 500) at the end.
-// --------------------------------------------------------------------------
-
-// We hide the overlay after the first image loads (or after 500ms if JS failed to run)
-// The original finishLoading is called here, but now it will be triggered by lazy loading as well.
-let imagesLoadedCount = 0;
-const totalImages = lazyImages.length;
-
-// Monitor image loading to hide the overlay reliably
-lazyImages.forEach(img => {
-    img.addEventListener('load', () => {
-        imagesLoadedCount++;
-        // If 3 images are loaded (enough to fill the screen), we hide the overlay immediately
-        if (imagesLoadedCount >= 3) { 
-            finishLoading();
-        }
-    }, { once: true });
+mainSvgImages.forEach(img => {
+    img.addEventListener('load', checkAllImagesLoaded, { once: true });
+    
+    // Fallback for cached/already loaded images
+    if (img.complete || img.naturalWidth > 0) {
+        checkAllImagesLoaded();
+    }
 });
 
-// If the IntersectionObserver is supported, the initial finishLoading call should be removed 
-// as the observer handles the loading, but we keep the fallback to guarantee the overlay hides.
-setTimeout(finishLoading, 500); 
-
-// Note: I also updated the regex in getCumulativeTranslate and startHover from /translate to /translate\(/ 
-// and added a check in getGroupImage to ensure the image is loaded before zooming.
+if (totalImagesToLoad === 0) {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(finishLoading, 100);
+    });
+}
