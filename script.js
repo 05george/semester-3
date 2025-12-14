@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', () => {
+
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
@@ -361,3 +363,5 @@ if (totalImagesToLoad === 0) {
         setTimeout(finishLoading, 100);
     });
 }
+
+});
