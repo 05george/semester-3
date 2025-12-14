@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,25 +12,18 @@ html, body {
     overflow: hidden;
     background: black;
 }
-body {
- display: block;
- width: 100%; 
- height: 100svh;
-}
+
 #scroll-container {
-    display: block;
-    width: 100%; 
+    width: 100%;
     height: 100svh;
     overflow-x: auto;
-    overflow-y: hidden; 
+    overflow-y: hidden;
     white-space: nowrap;
 }
+
 #loading-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: #111;
     color: white;
     display: flex;
@@ -38,23 +31,21 @@ body {
     align-items: center;
     font-size: 24px;
     z-index: 9999;
-    transition: opacity 0.5s ease;
+    transition: opacity .5s;
 }
+
 #main-svg {
     height: 100svh;
-    display: inline-block;
-    background: black;
     width: auto;
-    opacity: 0; 
-    transition: opacity 0.5s ease;
+    opacity: 0;
+    transition: opacity .5s;
 }
+
 .image-mapper-shape {
-    fill: transparent;
-    stroke: transparent;
+    fill: rgba(255,255,255,0.001);
     stroke-width: 2px;
-    transform-origin: center center;
-    transition: transform 0.3s ease, filter 0.3s ease, stroke-width 0.3s ease;
-    cursor: pointer; 
+    cursor: pointer;
+    transition: transform .3s, filter .3s;
 }
 .q { stroke: red; }                /*الأسئله*🔴*/
 .v { stroke: blue; }           /*فيديو الشرح*🔵*/
