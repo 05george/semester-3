@@ -337,6 +337,12 @@ let loadedImagesCount = 0;
 
 function checkAllImagesLoaded() {
     loadedImagesCount++;
+    const percentage = Math.round((loadedImagesCount / totalImagesToLoad) * 100);
+
+    if (loadingOverlay) {
+        loadingOverlay.textContent = `Loading Map... ${percentage}%`;
+    }
+
     if (loadedImagesCount === totalImagesToLoad) {
         finishLoading();
     }
@@ -344,7 +350,7 @@ function checkAllImagesLoaded() {
 
 mainSvgImages.forEach(img => {
     img.addEventListener('load', checkAllImagesLoaded, { once: true });
-    
+
     if (img.complete || img.naturalWidth > 0) {
         checkAllImagesLoaded();
     }
