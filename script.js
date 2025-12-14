@@ -1,208 +1,252 @@
-const mainSvg=document.getElementById('main-svg')
-const clipDefs=mainSvg.querySelector('defs')
-const scrollContainer=document.getElementById('scroll-container')
-const loadingOverlay=document.getElementById('loading-overlay')
-const loadingText=document.getElementById('loading-text')
+window.onload = function() {
 
-const activeState={
-rect:null,
-zoomPart:null,
-zoomText:null,
-animationId:null,
-clipPathId:null
+const mainSvg = document.getElementById('main-svg');
+const scrollContainer = document.getElementById('scroll-container');
+const loadingOverlay = document.getElementById('loading-overlay');
+const clipDefs = mainSvg.querySelector('defs');
+
+const activeState = {
+    rect: null,
+    zoomPart: null,
+    zoomText: null,
+    animationId: null,
+    clipPathId: null
+};
+
+function updateDynamicSizes() {
+    const images = mainSvg.querySelectorAll('image');
+    if (!images.length) return;
+    const firstImage = images[0];
+    const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
+    const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+    const totalWidth = images.length * imageWidth;
+    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
+    window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
 }
 
-function updateDynamicSizes(){
-const images=mainSvg.querySelectorAll('image')
-if(!images.length)return
-const firstImage=images[0]
-const w=parseFloat(firstImage.getAttribute('width'))||1024
-const h=parseFloat(firstImage.getAttribute('height'))||2454
-const total=w*images.length
-mainSvg.setAttribute('viewBox',`0 0 ${total} ${h}`)
-window.MAX_SCROLL_LEFT=total-window.innerWidth
-}
-updateDynamicSizes()
+updateDynamicSizes();
 
-scrollContainer.addEventListener('scroll',function(){
-if(this.scrollLeft>window.MAX_SCROLL_LEFT){
-this.scrollLeft=window.MAX_SCROLL_LEFT
-}
-})
+scrollContainer.addEventListener('scroll', function () {
+    if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
+        this.scrollLeft = window.MAX_SCROLL_LEFT;
+    }
+});
 
-function getCumulativeTranslate(el){
-let x=0,y=0
-while(el&&el.tagName!=='svg'){
-const t=el.getAttribute('transform')
-if(t){
-const m=t.match(/translate\(([\d.-]+)[ ,]+([\d.-]+)\)/)
-if(m){x+=+m[1];y+=+m[2]}
-}
-el=el.parentNode
-}
-return{x,y}
+function getCumulativeTranslate(element) {
+    let x = 0, y = 0;
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        const transformAttr = current.getAttribute('transform');
+        if (transformAttr) {
+            const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
+        }
+        current = current.parentNode;
+    }
+    return { x, y };
 }
 
-function getGroupImage(el){
-while(el&&el.tagName!=='svg'){
-if(el.tagName==='g'){
-const img=[...el.children].find(c=>c.tagName==='image')
-if(img){
-return{
-src:img.getAttribute('href'),
-width:+img.getAttribute('width'),
-height:+img.getAttribute('height'),
-group:el
-}
-}
-}
-el=el.parentNode
-}
-return null
-}
-
-function cleanupHover(){
-if(!activeState.rect)return
-if(activeState.animationId)clearInterval(activeState.animationId)
-activeState.rect.style.transform='scale(1)'
-activeState.rect.style.filter='none'
-activeState.rect.style.strokeWidth='2px'
-if(activeState.zoomPart)activeState.zoomPart.remove()
-if(activeState.zoomText)activeState.zoomText.remove()
-const clip=document.getElementById(activeState.clipPathId)
-if(clip)clip.remove()
-Object.assign(activeState,{rect:null,zoomPart:null,zoomText:null,animationId:null,clipPathId:null})
+function getGroupImage(element) {
+    let current = element;
+    while (current && current.tagName !== 'svg') {
+        if (current.tagName === 'g') {
+            const images = [...current.children].filter(c => c.tagName === 'image');
+            if (images.length) {
+                const baseImage = images[0];
+                return {
+                    src: baseImage.getAttribute('data-src') || baseImage.getAttribute('href'),
+                    width: parseFloat(baseImage.getAttribute('width')),
+                    height: parseFloat(baseImage.getAttribute('height')),
+                    group: current
+                };
+            }
+        }
+        current = current.parentNode;
+    }
+    return null;
 }
 
-function startHover(){
-const rect=this
-if(activeState.rect===rect)return
-cleanupHover()
-activeState.rect=rect
-
-const id=`clip-${Date.now()}`
-activeState.clipPathId=id
-
-const x=+rect.getAttribute('x')
-const y=+rect.getAttribute('y')
-const w=+rect.getAttribute('width')
-const h=+rect.getAttribute('height')
-
-const cum=getCumulativeTranslate(rect)
-const ax=x+cum.x
-const ay=y+cum.y
-
-const imgData=getGroupImage(rect)
-if(!imgData)return
-
-const clip=document.createElementNS('http://www.w3.org/2000/svg','clipPath')
-clip.setAttribute('id',id)
-const r=document.createElementNS('http://www.w3.org/2000/svg','rect')
-r.setAttribute('x',ax)
-r.setAttribute('y',ay)
-r.setAttribute('width',w)
-r.setAttribute('height',h)
-clip.appendChild(r)
-clipDefs.appendChild(clip)
-
-const zoom=document.createElementNS('http://www.w3.org/2000/svg','image')
-zoom.setAttribute('href',imgData.src)
-zoom.setAttribute('width',imgData.width)
-zoom.setAttribute('height',imgData.height)
-zoom.setAttribute('clip-path',`url(#${id})`)
-zoom.setAttribute('class','zoom-part')
-
-const t=imgData.group.getAttribute('transform')
-const m=t?t.match(/translate\(([\d.-]+),([\d.-]+)\)/):null
-zoom.setAttribute('x',m?+m[1]:0)
-zoom.setAttribute('y',m?+m[2]:0)
-
-mainSvg.appendChild(zoom)
-activeState.zoomPart=zoom
-
-rect.style.transformOrigin=`${x+w/2}px ${y+h/2}px`
-rect.style.transform='scale(1.1)'
-rect.style.strokeWidth='4px'
-
-const cx=ax+w/2
-const cy=ay+h/2
-zoom.style.transformOrigin=`${cx}px ${cy}px`
-zoom.style.transform='scale(1.1)'
-
-let hue=0
-activeState.animationId=setInterval(()=>{
-hue=(hue+10)%360
-const glow=`drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`
-rect.style.filter=glow
-zoom.style.filter=glow
-if(activeState.zoomText)activeState.zoomText.style.filter=glow
-},100)
-
-const baseText=rect.parentNode.querySelector('text')
-if(baseText){
-const zt=baseText.cloneNode(true)
-const fs=parseFloat(baseText.style.fontSize)
-zt.style.fontSize=fs*2+'px'
-zt.style.pointerEvents='none'
-zt.setAttribute('x',cx)
-zt.setAttribute('y',ay+fs*2)
-zt.setAttribute('text-anchor','middle')
-mainSvg.appendChild(zt)
-activeState.zoomText=zt
-}
+function cleanupHover() {
+    if (!activeState.rect) return;
+    if (activeState.animationId) clearInterval(activeState.animationId);
+    activeState.rect.style.transform = 'scale(1)';
+    activeState.rect.style.filter = 'none';
+    activeState.rect.style.strokeWidth = '2px';
+    if (activeState.zoomPart) activeState.zoomPart.remove();
+    if (activeState.zoomText) activeState.zoomText.remove();
+    const currentClip = document.getElementById(activeState.clipPathId);
+    if (currentClip) currentClip.remove();
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, animationId: null, clipPathId: null });
 }
 
-function stopHover(){
-if(activeState.rect===this)setTimeout(cleanupHover,50)
+function startHover() {
+    const rect = this;
+    if (activeState.rect === rect) return;
+    cleanupHover();
+    activeState.rect = rect;
+
+    const i = rect.getAttribute('data-index') || Date.now();
+    const clipPathId = `clip-${i}-${Date.now()}`;
+    activeState.clipPathId = clipPathId;
+
+    const scale = 1.1;
+    const x = parseFloat(rect.getAttribute('x'));
+    const y = parseFloat(rect.getAttribute('y'));
+    const width = parseFloat(rect.getAttribute('width'));
+    const height = parseFloat(rect.getAttribute('height'));
+
+    const cumulative = getCumulativeTranslate(rect);
+    const absoluteX = x + cumulative.x;
+    const absoluteY = y + cumulative.y;
+
+    const imageData = getGroupImage(rect);
+    if (!imageData) return;
+
+    const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+    clip.setAttribute('id', clipPathId);
+    const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    clipRect.setAttribute('x', absoluteX);
+    clipRect.setAttribute('y', absoluteY);
+    clipRect.setAttribute('width', width);
+    clipRect.setAttribute('height', height);
+    clipDefs.appendChild(clip).appendChild(clipRect);
+
+    const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+    zoomPart.setAttribute('href', imageData.src);
+    zoomPart.setAttribute('width', imageData.width);
+    zoomPart.setAttribute('height', imageData.height);
+    zoomPart.setAttribute('class', 'zoom-part');
+    zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+
+    const groupTransform = imageData.group.getAttribute('transform');
+    const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
+    const groupX = match ? parseFloat(match[1]) : 0;
+    const groupY = match ? parseFloat(match[2]) : 0;
+
+    zoomPart.setAttribute('x', groupX);
+    zoomPart.setAttribute('y', groupY);
+    zoomPart.style.opacity = 0;
+    mainSvg.appendChild(zoomPart);
+    activeState.zoomPart = zoomPart;
+
+    const centerX = absoluteX + width / 2;
+    const centerY = absoluteY + height / 2;
+
+    rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
+    rect.style.transform = `scale(${scale})`;
+    rect.style.strokeWidth = '4px';
+    zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+    zoomPart.style.transform = `scale(${scale})`;
+    zoomPart.style.opacity = 1;
+
+    let hue = 0;
+    activeState.animationId = setInterval(() => {
+        hue = (hue + 10) % 360;
+        const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
+        rect.style.filter = glow;
+        zoomPart.style.filter = glow;
+        if (activeState.zoomText) activeState.zoomText.style.filter = glow;
+    }, 100);
+
+    const baseText = rect.parentNode.querySelector('text');
+    if (baseText) {
+        const zoomText = baseText.cloneNode(true);
+        const baseFont = parseFloat(baseText.style.fontSize);
+        zoomText.style.fontSize = (baseFont * 2) + 'px';
+        zoomText.style.fill = 'white';
+        zoomText.style.pointerEvents = 'none';
+        zoomText.style.userSelect = 'none';
+        zoomText.style.opacity = '1';
+        zoomText.setAttribute('x', absoluteX + width / 2);
+        zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
+        zoomText.setAttribute('text-anchor', 'middle');
+        mainSvg.appendChild(zoomText);
+        activeState.zoomText = zoomText;
+    }
 }
 
-function attachHover(rect){
-rect.addEventListener('mouseover',startHover)
-rect.addEventListener('mouseout',stopHover)
-rect.addEventListener('touchstart',startHover,{passive:true})
-rect.addEventListener('touchend',cleanupHover)
+function stopHover() {
+    if (activeState.rect === this) setTimeout(cleanupHover, 50);
 }
 
-document.querySelectorAll('rect.image-mapper-shape').forEach(rect=>{
-const href=rect.getAttribute('data-href')||''
-const name=href.split('/').pop()||''
-const w=+rect.getAttribute('width')
-const x=+rect.getAttribute('x')
-const y=+rect.getAttribute('y')
-let fs=Math.max(8,Math.min(16,w*0.12))
-const text=document.createElementNS('http://www.w3.org/2000/svg','text')
-text.setAttribute('x',x+w/2)
-text.setAttribute('y',y+fs+6)
-text.setAttribute('text-anchor','middle')
-text.textContent=name
-text.style.fontSize=fs+'px'
-text.style.fill='white'
-text.style.pointerEvents='none'
-rect.parentNode.appendChild(text)
-attachHover(rect)
-})
-
-const images=[...document.images]
-let loaded=0
-const steps=[0,25,50,75,100]
-
-function updateLoader(){
-const percent=Math.floor((loaded/images.length)*100)
-const step=steps.findLast(s=>percent>=s)
-loadingText.textContent=step+'%'
-if(step===100){
-setTimeout(()=>loadingOverlay.style.display='none',300)
-}
+function attachHover(rect, i) {
+    rect.setAttribute('data-index', i);
+    rect.addEventListener('mouseover', startHover);
+    rect.addEventListener('mouseout', stopHover);
+    rect.addEventListener('touchstart', startHover);
+    rect.addEventListener('touchend', cleanupHover);
 }
 
-images.forEach(img=>{
-if(img.complete){
-loaded++
-updateLoader()
-}else{
-img.addEventListener('load',()=>{
-loaded++
-updateLoader()
-})
+// ======== تحميل الصور الحقيقي ========
+const svgImages = Array.from(mainSvg.querySelectorAll('image'));
+const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+let loadedCount = 0;
+const totalCount = urls.length;
+
+function updateLoader() {
+    const percent = Math.round((loadedCount/totalCount)*100);
+    const displayedPercent = [0,25,50,75,100].reduce((prev, curr) => curr <= percent ? curr : prev, 0);
+    if (loadingOverlay) loadingOverlay.textContent = `Loading Map... ${displayedPercent}%`;
 }
-})
+
+urls.forEach((url, index) => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+        loadedCount++;
+        updateLoader();
+        if (loadedCount === totalCount) {
+            loadingOverlay.style.opacity = 0;
+            setTimeout(()=>{loadingOverlay.style.display='none'; mainSvg.style.opacity=1;}, 300);
+            // بعد تحميل كل الصور، نعطيهم href داخل SVG
+            svgImages.forEach((svgImg, i) => {
+                svgImg.setAttribute('href', urls[i]);
+            });
+        }
+    };
+    img.src = url;
+});
+
+// attach hover بعد تحميل الصور
+document.querySelectorAll('rect.image-mapper-shape').forEach((rect,i)=>{
+    const href = rect.getAttribute('href') || '';
+    const fileName = href.split('/').pop().split('#')[0] || '';
+    const rectWidth = parseFloat(rect.getAttribute('width'));
+    const rectX = parseFloat(rect.getAttribute('x'));
+    const rectY = parseFloat(rect.getAttribute('y'));
+    const minFont = 8, maxFont = 16;
+    let fontSize = Math.max(minFont, Math.min(maxFont, rectWidth*0.12));
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', rectX + rectWidth/2);
+    text.setAttribute('y', rectY + fontSize + 6);
+    text.setAttribute('text-anchor','middle');
+    text.textContent = fileName;
+    text.style.fontSize = fontSize+'px';
+    text.style.fill='white';
+    text.style.pointerEvents='none';
+    rect.parentNode.appendChild(text);
+    attachHover(rect,i);
+});
+
+// MutationObserver للحفاظ على ديناميكية rects
+const rootObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+            if(node.nodeType===1){
+                if(node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')){
+                    attachHover(node,Date.now());
+                    node.setAttribute('data-processed','true');
+                }
+                if(node.querySelector){
+                    node.querySelectorAll('rect.image-mapper-shape:not([data-processed])')
+                    .forEach(rect=>{
+                        attachHover(rect,Date.now());
+                        rect.setAttribute('data-processed','true');
+                    });
+                }
+            }
+        });
+    });
+});
+rootObserver.observe(mainSvg,{childList:true,subtree:true});
+
+};
