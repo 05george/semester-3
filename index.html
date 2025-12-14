@@ -63,15 +63,18 @@ body {
 </style>
 </head>
 <body>
-<div id="scroll-container"> 
-    <svg xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 12288 2454"
-        preserveAspectRatio="xMinYMin slice"
-        id="main-svg">
-      <defs></defs>
-    <script src="script.js"></script>
-</div>
-<div id="loading-overlay">Loading Map...</div>
+
+    <div id="loading-overlay">Loading Map...</div> 
+
+    <div id="scroll-container"> 
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 12288 2454"
+            preserveAspectRatio="xMinYMin slice"
+            id="main-svg">
+          
+          <defs></defs>
+          
 
 <!-- الاسبوع الأول -->
 <g transform="translate(0,0)">
@@ -189,11 +192,10 @@ body {
 <g transform="translate(12288,0)">
     <image href="image/13.webp" width="1024" height="2454" />
 </g>
+        </svg>
 
-</svg>
+        <script src="script.js"></script>
+        
+    </div>
 </body>
-</svg>
-    <script src="script.js"></script>
-</div>
-<div id="loading-overlay">Loading Map...</div>
 </html>
