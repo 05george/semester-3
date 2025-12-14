@@ -1,9 +1,17 @@
-Document.addEventListener('DOMContentLoaded', () => {
+window.onload = function() {
 
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
-const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
 const loadingOverlay = document.getElementById('loading-overlay');
+
+if (!mainSvg || !scrollContainer || !loadingOverlay) {
+    console.error("Critical SVG or Scroll Container elements are missing from the DOM.");
+    if (loadingOverlay) {
+         loadingOverlay.style.display = 'none';
+    }
+    return; 
+}
+const clipDefs = mainSvg.querySelector('defs');
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
@@ -478,4 +486,4 @@ const handleInitialLoad = () => {
 
 handleInitialLoad();
 
-});
+};
