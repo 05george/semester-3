@@ -1,13 +1,13 @@
 Document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
-const scrollContainer = document.getElementById('scroll-container'); // ده العنصر اللي فيه Scroll
+const scrollContainer = document.getElementById('scroll-container'); 
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
 const loadingOverlay = document.getElementById('loading-overlay');
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
-const IMAGE_WIDTH = 1024; // عرض كل أسبوع
+const IMAGE_WIDTH = 1024; 
 
 const activeState = {
     rect: null,
@@ -33,8 +33,9 @@ function debounce(func, delay) {
 }
 
 function updateDynamicSizes() {
+    if (!mainSvg) return; // 🆕 تأكيد وجود الـSVG
     const images = mainSvg.querySelectorAll('image');
-    if (!images.length) return;
+    if (!images.length) return; 
     const totalWeeks = mainSvg.querySelectorAll('g').length; 
     const totalWidth = totalWeeks * IMAGE_WIDTH;
     
@@ -131,26 +132,27 @@ function checkLazyLoad() {
 const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 
-scrollContainer.addEventListener('scroll', function () {
-    if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
-        this.scrollLeft = window.MAX_SCROLL_LEFT;
-    }
-
-    if (activeState.rect && !isTouchDevice) {  
-        debouncedCleanupHover();  
-    }  
-
-    if (activeState.rect && isTouchDevice) {  
-        if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) {   
-             activeState.isScrolling = true;  
-             cleanupHover();   
-        }  
-    }
+if (scrollContainer) { // 🆕 تأكيد وجود الـScroll Container قبل إضافة الـEvent Listener
+    scrollContainer.addEventListener('scroll', function () {
+        if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
+            this.scrollLeft = window.MAX_SCROLL_LEFT;
+        }
     
-    debouncedCheckLazyLoad();
-});
+        if (activeState.rect && !isTouchDevice) {  
+            debouncedCleanupHover();  
+        }  
+    
+        if (activeState.rect && isTouchDevice) {  
+            if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) {   
+                 activeState.isScrolling = true;  
+                 cleanupHover();   
+            }  
+        }
+        
+        debouncedCheckLazyLoad();
+    });
+}
 
-// 🆕 نضمن تشغيلها فوراً في البداية 
 setTimeout(checkLazyLoad, 100); 
 
 
@@ -447,11 +449,11 @@ const rootObserver = new MutationObserver(mutations => {
 
 });
 
-rootObserver.observe(mainSvg, { childList: true, subtree: true });
+if (mainSvg) { // 🆕 تأكيد وجود الـSVG قبل إضافة الـObserver
+    rootObserver.observe(mainSvg, { childList: true, subtree: true });
+}
 
-// ❌ تم حذف الـLogic القديم الذي كان يعتمد على عدّ الصور الأولية
-
-// 🆕 الحل البديل: تشغيل finishLoading بعد وقت قصير لضمان إزالة شاشة التحميل
-setTimeout(finishLoading, 1500); // 1.5 ثانية انتظار
+// 🆕 تشغيل finishLoading() فوراً بعد انتهاء الـDOMContent
+finishLoading(); 
 
 });
