@@ -9,7 +9,6 @@ const TAP_THRESHOLD_MS = 300;
 const activeState = {
     rect: null,
     zoomPart: null,
-    zoomText: null,
     baseText: null,
     animationId: null,
     clipPathId: null,
@@ -332,8 +331,6 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-// --- Image Preloading & Loading Overlay Guarantee ---
-
 const mainSvgImages = document.querySelectorAll('#main-svg image');
 const totalImagesToLoad = mainSvgImages.length;
 let loadedImagesCount = 0;
@@ -348,7 +345,6 @@ function checkAllImagesLoaded() {
 mainSvgImages.forEach(img => {
     img.addEventListener('load', checkAllImagesLoaded, { once: true });
     
-    // Fallback for cached/already loaded images
     if (img.complete || img.naturalWidth > 0) {
         checkAllImagesLoaded();
     }
