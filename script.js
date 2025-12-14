@@ -221,7 +221,7 @@ function stopHover() {
 }
 
 function handleLinkOpen(event) {
-    const href = event.currentTarget.getAttribute('data-href');
+    const href = event.currentTarget.getAttribute('href');
     if (href && href !== '#') {
         window.open(href, '_blank');
         event.preventDefault();
