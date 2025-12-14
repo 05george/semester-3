@@ -167,6 +167,41 @@ function attachHover(rect, i) {
     rect.addEventListener('touchend', cleanupHover);
 }
 
+
+    document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
+    const href = rect.getAttribute('data-href') || '';
+    const fileName = href.split('/').pop().split('#')[0] || '';
+
+    const rectWidth  = parseFloat(rect.getAttribute('width'));
+    const rectHeight = parseFloat(rect.getAttribute('height'));
+    const rectX = parseFloat(rect.getAttribute('x'));
+    const rectY = parseFloat(rect.getAttribute('y'));
+
+    // إعدادات حجم الخط (ديناميكي)
+    const minFont = 8;
+    const maxFont = 16;
+    const scaleFactor = 0.12;
+
+    let fontSize = rectWidth * scaleFactor;
+    fontSize = Math.max(minFont, Math.min(maxFont, fontSize));
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+
+    // داخل المستطيل - أعلى المستطيل
+    text.setAttribute('x', rectX + rectWidth / 2);          // توسيط أفقي
+    text.setAttribute('y', rectY + fontSize + 6);           // مسافة من أعلى المستطيل
+    text.setAttribute('text-anchor', 'middle');
+
+    text.textContent = fileName;
+
+    text.style.fontSize = fontSize + 'px';
+    text.style.fill = 'white';
+    text.style.pointerEvents = 'none';
+    text.style.userSelect = 'none';
+
+    rect.parentNode.appendChild(text);
+});
+
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     rect.setAttribute('data-processed', 'true');
     attachHover(rect, i);
