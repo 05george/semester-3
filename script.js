@@ -1,31 +1,32 @@
-// 🆕 الجزء الأول: دالة finishLoading وخطة الطوارئ (توضع في بداية ملف script.js)
+// 🛑 الجزء الأول: دالة finishLoading وخطة الطوارئ (لضمان اختفاء شاشة التحميل الأولية) 🛑
 
 function finishLoading() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const mainSvg = document.getElementById('main-svg');
     
+    // إخفاء الشاشة
     if (loadingOverlay) {
         loadingOverlay.style.opacity = '0';
         setTimeout(() => {
             loadingOverlay.style.display = 'none';
         }, 500);
     }
+    // إظهار الخريطة
     if (mainSvg) {
         mainSvg.style.opacity = '1';
     }
-    // تحديث الأبعاد يتم داخل DOMContentLoaded لمنع الأخطاء الأولية
 }
 
-// 🆕 خطة الطوارئ: هتشتغل بعد 3 ثواني عشان لو الكود كله وقف
+// 🆕 خطة الطوارئ: لو الكود الداخلي وقف، الدالة دي هتشتغل بعد 3 ثواني لإخفاء شاشة التحميل
 setTimeout(finishLoading, 3000); 
 
-// 🛑 يبدأ الكود الرئيسي هنا 🛑
+
+// 🛑 يبدأ الكود الرئيسي هنا (يتم تنفيذه بعد اكتمال تحميل DOM) 🛑
 Document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container'); 
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
-// ملاحظة: loadingOverlay و finishLoading() تم التعامل معاهم في الجزء العلوي
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
@@ -73,6 +74,7 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
+// 🆕 دالة التحميل مع النسبة المئوية (XHR)
 function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const src = imgElement.getAttribute('data-src');
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
@@ -92,7 +94,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
         if (event.lengthComputable) {
             const percentage = Math.round((event.loaded / event.total) * 100);
             if (text) {
-                text.textContent = `${percentage}%`;
+                text.textContent = `${percentage}%`; // تحديث النسبة المئوية
             }
         }
     };
@@ -124,6 +126,13 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
         }
     };
     
+    xhr.onerror = () => { // إضافة معالجة خطأ عام لـ XHR
+        loadingQueue.delete(weekNumber); 
+        if (text) text.textContent = 'Error';
+        if (overlay) overlay.style.fill = 'orange';
+        imgElement.setAttribute('data-src', src);
+    }
+    
     xhr.send();
 }
 
@@ -145,7 +154,7 @@ function checkLazyLoad() {
             const weekNumber = (imageX / IMAGE_WIDTH) + 1;
             
             if (weekNumber !== null) {
-                lazyLoadImageWithProgress(img, weekNumber);
+                lazyLoadImageWithProgress(img, weekNumber); // 🛑 نستخدم دالة النسبة المئوية 🛑
             }
         }
     });
@@ -257,7 +266,7 @@ function startHover() {
         const weekNumber = (imageX / IMAGE_WIDTH) + 1;
 
         if (weekNumber !== null) {
-            lazyLoadImageWithProgress(imageElement, weekNumber);
+            lazyLoadImageWithProgress(imageElement, weekNumber); // 🛑 نستخدم دالة النسبة المئوية 🛑
         }
         rect.style.stroke = 'orange'; 
         rect.style.strokeWidth = '4px';
@@ -432,8 +441,6 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
-// دالة تحديث الحجم يتم استدعاؤها هنا لتعيين MAX_SCROLL_LEFT بعد التحميل
-updateDynamicSizes(); 
 
 const rootObserver = new MutationObserver(mutations => {
     let newRectsFound = false;
@@ -458,7 +465,7 @@ const rootObserver = new MutationObserver(mutations => {
     });
 
     if (newRectsFound) {  
-        // ❌ تم حذف استدعاء finishLoading هنا لمنع التكرار والأخطاء
+        // هنا مفيش داعي لـ finishLoading عشان هي بتنادي نفسها في الاخر
     }
 
 });
@@ -467,7 +474,7 @@ if (mainSvg) {
     rootObserver.observe(mainSvg, { childList: true, subtree: true });
 }
 
-// 🆕 استدعاء finishLoading بعد الانتهاء من إعداد DOM
+// 🆕 استدعاء finishLoading() بعد الانتهاء من إعداد DOM
 finishLoading(); 
 
 }); // نهاية Document.addEventListener('DOMContentLoaded', ...
