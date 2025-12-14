@@ -6,7 +6,7 @@ const activeState = {
     rect: null,
     zoomPart: null,
     zoomText: null,
-    baseText: null, // <<-- تم إضافتها لحفظ مرجع النص الأصلي
+    baseText: null,
     animationId: null,
     clipPathId: null
 };
@@ -73,7 +73,6 @@ function cleanupHover() {
     if (activeState.zoomPart) activeState.zoomPart.remove();
     if (activeState.zoomText) activeState.zoomText.remove();
 
-    // التعديل: إظهار النص الأصلي بعد انتهاء الـ Hover
     if (activeState.baseText) {
         activeState.baseText.style.opacity = '1';
     }
@@ -151,19 +150,22 @@ function startHover() {
         zoomPart.style.filter = glow;
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
+    
+    // التعديل لحل مشكلة ربط النص بالـ Rect
+    let baseText = rect.nextElementSibling;
+    if (baseText && !baseText.matches('text.rect-label')) {
+        baseText = null;
+    }
 
-    const baseText = rect.parentNode.querySelector('text');
     if (baseText) {
-        // التعديل: إخفاء النص الأصلي وحفظ مرجعه
         baseText.style.opacity = '0';
         activeState.baseText = baseText;
 
         const zoomText = baseText.cloneNode(true);
         const baseFont = parseFloat(baseText.style.fontSize);
-        
-        // التعديل: مضاعفة حجم النص
+
         zoomText.style.fontSize = (baseFont * 2) + 'px'; 
-        
+
         zoomText.style.fill = 'white';
         zoomText.style.pointerEvents = 'none';
         zoomText.style.userSelect = 'none';
@@ -177,11 +179,9 @@ function startHover() {
 }
 
 function stopHover() {
-    // تم إزالة setTimeout للحفاظ على سرعة الاستجابة
     if (activeState.rect === this) cleanupHover();
 }
 
-// دالة جديدة لفتح الرابط
 function handleLinkOpen(event) {
     const href = event.currentTarget.getAttribute('data-href');
     if (href && href !== '#') {
@@ -197,20 +197,27 @@ function attachHover(rect, i) {
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     rect.addEventListener('touchstart', startHover);
-    
-    // التعديل: تشغيل الرابط عند رفع الإصبع (touchend) + عمل cleanup
+
     rect.addEventListener('touchend', function(event) {
         handleLinkOpen(event); 
         cleanupHover(); 
     });
-    
-    // التعديل: تشغيل الرابط عند الضغط بالماوس (click)
+
     rect.addEventListener('click', handleLinkOpen); 
 }
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
-    const fileName = href.split('/').pop().split('#')[0] || '';
+    const title = rect.getAttribute('data-title');
+    let textContent;
+    
+    if (title) {
+        textContent = title;
+    } else {
+        const fileName = href.split('/').pop().split('#')[0] || '';
+        textContent = fileName;
+    }
+
     const rectWidth = parseFloat(rect.getAttribute('width'));
     const rectX = parseFloat(rect.getAttribute('x'));
     const rectY = parseFloat(rect.getAttribute('y'));
@@ -223,11 +230,14 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.setAttribute('x', rectX + rectWidth / 2);
     text.setAttribute('y', rectY + fontSize + 6);
     text.setAttribute('text-anchor', 'middle');
-    text.textContent = fileName;
+    text.textContent = textContent;
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-    rect.parentNode.appendChild(text);
+    
+    // التعديل: إضافة كلاس مميز للنص وإضافته بعد الـ Rect مباشرة
+    text.setAttribute('class', 'rect-label');
+    rect.parentNode.insertBefore(text, rect.nextSibling);
 });
 
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
