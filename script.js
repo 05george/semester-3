@@ -17,7 +17,7 @@ function finishLoading() {
     }
 }
 
-// 🆕 خطة الطوارئ: لو الكود الداخلي وقف، الدالة دي هتشتغل بعد 3 ثواني لإخفاء شاشة التحميل
+// 🆕 خطة الطوارئ: هتشتغل بعد 3 ثواني لإخفاء شاشة التحميل الرئيسية
 setTimeout(finishLoading, 3000); 
 
 
@@ -74,75 +74,48 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
-// 🆕 دالة التحميل مع النسبة المئوية (XHR) والإصلاح الإجباري
-function lazyLoadImageWithProgress(imgElement, weekNumber) {
+// 🆕 دالة التحميل الكسول البسيطة (لضمان ظهور الصور بدون نسبة مئوية)
+function lazyLoadImageSimple(imgElement, weekNumber) {
     const src = imgElement.getAttribute('data-src');
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
     
-    if (loadingQueue.has(weekNumber) || imgElement.getAttribute('href')) return;
+    if (imgElement.getAttribute('href') || loadingQueue.has(weekNumber)) return;
 
-    loadingQueue.add(weekNumber); 
+    loadingQueue.add(weekNumber);
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
-    // 🆕 دالة مساعدة لإنهاء التحميل وإزالة الـoverlay
-    function finalizeLoad(success, message) {
-        loadingQueue.delete(weekNumber); 
+    // استخدام كائن Image بسيط لتحميل الصورة
+    const tempImg = new Image();
+    
+    const finishLoad = (success) => {
+        loadingQueue.delete(weekNumber);
         
-        if (text) text.textContent = success ? '100%' : message;
-        if (overlay) overlay.style.opacity = '0';
+        if (success) {
+            imgElement.setAttribute('href', src);
+            if (overlay) overlay.style.opacity = '0';
+            if (text) text.style.opacity = '0';
+        } else {
+            if (text) text.textContent = 'Load Failed';
+            if (overlay) overlay.style.fill = 'red';
+            imgElement.setAttribute('data-src', src); // نرجع الـdata-src للمحاولة مرة أخرى
+        }
         
         setTimeout(() => {
             if (overlay) overlay.remove();
             if (text) text.remove();
             imgElement.removeAttribute('data-loading');
         }, 300);
-    }
+    };
+
+    tempImg.onload = () => finishLoad(true);
+    tempImg.onerror = () => finishLoad(false);
     
-    try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', src, true);
-        xhr.responseType = 'blob'; 
-        
-        xhr.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentage = Math.round((event.loaded / event.total) * 100);
-                if (text) {
-                    text.textContent = `${percentage}%`; // تحديث النسبة المئوية
-                }
-            }
-        };
-
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                const blob = xhr.response;
-                const objectURL = URL.createObjectURL(blob);
-                imgElement.setAttribute('href', objectURL);
-                finalizeLoad(true);
-            } else {
-                 // فشل التحميل العادي (مثل 404)
-                imgElement.setAttribute('data-src', src); // نرجع الـdata-src
-                finalizeLoad(false, `Error ${xhr.status}`); 
-            }
-        };
-        
-        xhr.onerror = () => { // فشل شبكة
-            imgElement.setAttribute('data-src', src);
-            finalizeLoad(false, 'Network Error');
-        }
-        
-        xhr.send();
-        
-    } catch (e) {
-        // 🆕 لو فشلت محاولة الـXHR من الأساس (مثل قيود المتصفح)
-        console.error("XHR failed, falling back to simple load:", e);
-
-        // محاولة تحميل الصورة بطريقة بسيطة ومباشرة وإزالة الـoverlay
-        imgElement.setAttribute('href', src);
-        finalizeLoad(false, 'Fallback Load');
-    }
+    // بدء التحميل
+    tempImg.src = src; 
 }
+
 
 function checkLazyLoad() {
     const scrollLeft = scrollContainer.scrollLeft; 
@@ -162,7 +135,7 @@ function checkLazyLoad() {
             const weekNumber = (imageX / IMAGE_WIDTH) + 1;
             
             if (weekNumber !== null) {
-                lazyLoadImageWithProgress(img, weekNumber); 
+                lazyLoadImageSimple(img, weekNumber); // 🛑 نستخدم الدالة البسيطة 🛑
             }
         }
     });
@@ -274,7 +247,7 @@ function startHover() {
         const weekNumber = (imageX / IMAGE_WIDTH) + 1;
 
         if (weekNumber !== null) {
-            lazyLoadImageWithProgress(imageElement, weekNumber); 
+            lazyLoadImageSimple(imageElement, weekNumber); 
         }
         rect.style.stroke = 'orange'; 
         rect.style.strokeWidth = '4px';
