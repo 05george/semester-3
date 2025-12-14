@@ -5,7 +5,8 @@ const scrollContainer = document.querySelector('div');
 const activeState = {
     rect: null,
     zoomPart: null,
-    zoomText: null, // ده هيكون بيشاور على الـ <text> الأصلي
+    zoomText: null,
+    baseText: null, // <<-- تم إضافتها لحفظ مرجع النص الأصلي
     animationId: null,
     clipPathId: null
 };
@@ -66,24 +67,20 @@ function getGroupImage(element) {
 function cleanupHover() {
     if (!activeState.rect) return;
     if (activeState.animationId) clearInterval(activeState.animationId);
-    
-    // ⭐ التعديل هنا: نرجع النص الأصلي لحجمه الطبيعي ونشيل الـ glow
-    if (activeState.zoomText) {
-        activeState.zoomText.style.transform = 'scale(1)';
-        activeState.zoomText.style.filter = 'none';
-        activeState.zoomText.style.opacity = '1'; // نخليه مرئي
-    }
-
     activeState.rect.style.transform = 'scale(1)';
     activeState.rect.style.filter = 'none';
     activeState.rect.style.strokeWidth = '2px';
-    
     if (activeState.zoomPart) activeState.zoomPart.remove();
-    // مفيش zoomText محتاج يتشال لأنه النص الأصلي
-    
+    if (activeState.zoomText) activeState.zoomText.remove();
+
+    // التعديل: إظهار النص الأصلي بعد انتهاء الـ Hover
+    if (activeState.baseText) {
+        activeState.baseText.style.opacity = '1';
+    }
+
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, animationId: null, clipPathId: null });
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null });
 }
 
 function startHover() {
@@ -157,56 +154,60 @@ function startHover() {
 
     const baseText = rect.parentNode.querySelector('text');
     if (baseText) {
-        // ⭐ التعديل هنا: نستخدم النص الأصلي ونكبره شوية
-        baseText.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
-        baseText.style.transform = `scale(1.2)`; // تكبير النص الأصلي
-        baseText.style.opacity = '1'; 
-        activeState.zoomText = baseText;
+        // التعديل: إخفاء النص الأصلي وحفظ مرجعه
+        baseText.style.opacity = '0';
+        activeState.baseText = baseText;
+
+        const zoomText = baseText.cloneNode(true);
+        const baseFont = parseFloat(baseText.style.fontSize);
+        
+        // التعديل: مضاعفة حجم النص
+        zoomText.style.fontSize = (baseFont * 2) + 'px'; 
+        
+        zoomText.style.fill = 'white';
+        zoomText.style.pointerEvents = 'none';
+        zoomText.style.userSelect = 'none';
+        zoomText.style.opacity = '1';
+        zoomText.setAttribute('x', absoluteX + width / 2);
+        zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
+        zoomText.setAttribute('text-anchor', 'middle');
+        mainSvg.appendChild(zoomText);
+        activeState.zoomText = zoomText;
     }
 }
 
 function stopHover() {
-    if (activeState.rect === this) setTimeout(cleanupHover, 50);
+    // تم إزالة setTimeout للحفاظ على سرعة الاستجابة
+    if (activeState.rect === this) cleanupHover();
 }
 
-// ⭐ الدالة الجديدة لفتح الرابط
-function openLink(rect) {
-    const href = rect.getAttribute('data-href');
+// دالة جديدة لفتح الرابط
+function handleLinkOpen(event) {
+    const href = event.currentTarget.getAttribute('data-href');
     if (href && href !== '#') {
         window.open(href, '_blank');
-        return true;
+        event.preventDefault();
+        event.stopPropagation();
     }
-    return false;
 }
+
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
-    
-    // 1. Hover/Zoom للماوس: شغال زي ما هو
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
+    rect.addEventListener('touchstart', startHover);
     
-    // 2. Hover/Zoom للمس: شغال زي ما هو (الـ Touchend هتفتح الرابط)
-    rect.addEventListener('touchstart', function(e) {
-        e.preventDefault(); 
-        startHover.call(this);
+    // التعديل: تشغيل الرابط عند رفع الإصبع (touchend) + عمل cleanup
+    rect.addEventListener('touchend', function(event) {
+        handleLinkOpen(event); 
+        cleanupHover(); 
     });
-
-    // 3. فتح الرابط باللمس: هيحصل لما تشيل صباعك
-    rect.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        openLink(this);
-        // نشيل الـ Hover بعد فتح الرابط عشان النص يرجع طبيعي
-        setTimeout(cleanupHover, 50); 
-    });
-
-    // 4. فتح الرابط بالماوس: هيحصل لما تضغط كليك
-    rect.addEventListener('click', function(e) {
-        openLink(this);
-    });
+    
+    // التعديل: تشغيل الرابط عند الضغط بالماوس (click)
+    rect.addEventListener('click', handleLinkOpen); 
 }
 
-// إضافة النصوص الأصلية لكل Rect مع إضافة transition عشان الـ scale يكون سلس
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
     const fileName = href.split('/').pop().split('#')[0] || '';
@@ -226,10 +227,8 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-    text.style.transition = 'transform 0.3s ease, filter 0.3s ease'; 
     rect.parentNode.appendChild(text);
 });
-
 
 document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     rect.setAttribute('data-processed', 'true');
