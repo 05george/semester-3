@@ -170,11 +170,14 @@ function startHover() {
     if (baseText) {
         const zoomText = baseText.cloneNode(true);
         const baseFont = parseFloat(baseText.style.fontSize);
-
         zoomText.style.fontSize = (baseFont * 2) + 'px';
-        zoomText.style.opacity = '1';
+        zoomText.style.fill = 'white';
         zoomText.style.pointerEvents = 'none';
-
+        zoomText.style.userSelect = 'none';
+        zoomText.style.opacity = '1';
+        zoomText.setAttribute('x', absoluteX + width / 2);
+        zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
+        zoomText.setAttribute('text-anchor', 'middle');
         mainSvg.appendChild(zoomText);
         zoomText.parentNode.appendChild(zoomText);
         activeState.zoomText = zoomText;
@@ -198,28 +201,22 @@ function attachHover(rect, i) {
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
     const fileName = href.split('/').pop().split('#')[0] || '';
-
     const rectWidth = parseFloat(rect.getAttribute('width'));
     const rectX = parseFloat(rect.getAttribute('x'));
     const rectY = parseFloat(rect.getAttribute('y'));
-
     const minFont = 8;
     const maxFont = 16;
     const scaleFactor = 0.12;
-
     let fontSize = rectWidth * scaleFactor;
     fontSize = Math.max(minFont, Math.min(maxFont, fontSize));
-
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     text.setAttribute('x', rectX + rectWidth / 2);
     text.setAttribute('y', rectY + fontSize + 6);
     text.setAttribute('text-anchor', 'middle');
-
     text.textContent = fileName;
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-
     rect.parentNode.appendChild(text);
 });
 
@@ -227,3 +224,24 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     rect.setAttribute('data-processed', 'true');
     attachHover(rect, i);
 });
+
+const rootObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) {
+                if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+                    attachHover(node, Date.now());
+                    node.setAttribute('data-processed', 'true');
+                }
+                if (node.querySelector) {
+                    node.querySelectorAll('rect.image-mapper-shape:not([data-processed])')
+                        .forEach(rect => {
+                            attachHover(rect, Date.now());
+                            rect.setAttribute('data-processed', 'true');
+                        });
+                }
+            }
+        });
+    });
+});
+rootObserver.observe(mainSvg, { childList: true, subtree: true });
