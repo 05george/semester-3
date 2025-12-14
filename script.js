@@ -9,8 +9,8 @@ const activeState = {
     baseText: null,
     animationId: null,
     clipPathId: null,
-    touchStartX: 0,
-    touchStartY: 0
+    // تم حذف خاصيتي touchStartX/Y القديمتين
+    initialScrollLeft: 0 // خاصية جديدة لتسجيل قيمة شريط التمرير
 };
 
 function updateDynamicSizes() {
@@ -81,7 +81,7 @@ function cleanupHover() {
 
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, touchStartX: 0, touchStartY: 0 });
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0 });
 }
 
 function startHover() {
@@ -198,25 +198,18 @@ function attachHover(rect, i) {
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     
-    // التعديل 1: تسجيل نقطة بداية اللمس
+    // تسجيل قيمة scrollLeft عند بداية اللمس
     rect.addEventListener('touchstart', function(event) {
         startHover.call(this);
-        const touch = event.touches[0];
-        activeState.touchStartX = touch.clientX;
-        activeState.touchStartY = touch.clientY;
+        activeState.initialScrollLeft = scrollContainer.scrollLeft;
     });
 
-    // التعديل 2: فحص المسافة عند رفع الإصبع
+    // فحص قيمة scrollLeft عند رفع الإصبع
     rect.addEventListener('touchend', function(event) {
-        const touch = event.changedTouches[0];
-        const deltaX = Math.abs(touch.clientX - activeState.touchStartX);
-        const deltaY = Math.abs(touch.clientY - activeState.touchStartY);
-        const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const currentScrollLeft = scrollContainer.scrollLeft;
         
-        const TAP_THRESHOLD = 10; 
-        
-        // لو الحركة أقل من 10 بكسل، يبقى دي ضغطة (Tap)
-        if (distanceMoved < TAP_THRESHOLD) {
+        // إذا كان الفرق صفراً، يعني لم يحدث سحب أفقي، فنفتح الرابط
+        if (Math.abs(currentScrollLeft - activeState.initialScrollLeft) < 2) { 
             handleLinkOpen(event); 
         }
 
