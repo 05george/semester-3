@@ -5,7 +5,6 @@ const scrollContainer = document.getElementById('scroll-container');
 const loadingOverlay = document.getElementById('loading-overlay');
 
 if (!mainSvg || !scrollContainer || !loadingOverlay) {
-    console.error("Critical SVG or Scroll Container elements are missing from the DOM.");
     if (loadingOverlay) {
          loadingOverlay.style.display = 'none';
     }
@@ -58,9 +57,7 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
-// الدالة المبسطة لتحميل الصورة (تعتمد على المتصفح وتزيل شاشة التحميل)
 function lazyLoadImage(imgElement) {
-    // لو الصورة بدأت تحميل خلاص، متعملش حاجة
     if (imgElement.hasAttribute('data-loading') || imgElement.getAttribute('href')) {
         return;
     }
@@ -79,10 +76,8 @@ function lazyLoadImage(imgElement) {
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
-    // البدء الفعلي للتحميل عن طريق المتصفح
     imgElement.setAttribute('href', src);
 
-    // متابعة تحميل الصورة
     imgElement.onload = () => {
         if (text) text.textContent = '100%';
         if (overlay) overlay.style.opacity = '0';
@@ -95,7 +90,6 @@ function lazyLoadImage(imgElement) {
         }, 300);
     };
     
-    // في حالة فشل التحميل
     imgElement.onerror = () => {
         if (text) text.textContent = 'Failed to load';
         if (overlay) overlay.style.fill = 'red';
@@ -109,30 +103,23 @@ function checkLazyLoad() {
     const viewportWidth = window.innerWidth;
     const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
     
-    // قيمة عتبة التحميل العاجل (الصور الظاهرة + شاشة إضافية)
     const HIGH_PRIORITY_THRESHOLD = viewportWidth * 2; 
     
-    // --- 1. التحميل العاجل (High Priority) ---
-    // تحميل الصور القريبة جدًا من الشاشة أولاً
     lazyImages.forEach(img => {
         const g = img.closest('g');
         const transformAttr = g.getAttribute('transform');
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
 
-        // الشرط: لو إحداثيات الصورة أقل من نهاية الرؤية + منطقة تحميل عاجل
         if (imageX < scrollLeft + viewportWidth + HIGH_PRIORITY_THRESHOLD) {
              lazyLoadImage(img);
         }
     });
     
-    // --- 2. التحميل التدريجي في الخلفية (Low Priority / Eager Load) ---
-    // يبدأ تحميل باقي الصور بمجرد تحريك بسيط للشاشة (بعد أول صورتين)
     const LOW_PRIORITY_SCROLL_TRIGGER = 5; 
     
     if (scrollLeft > LOW_PRIORITY_SCROLL_TRIGGER) {
         lazyImages.forEach(img => {
-            // تحميل باقي الصور اللي لسه مابدأت
              lazyLoadImage(img);
         });
     }
@@ -335,18 +322,16 @@ function handleLinkOpen(event) {
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
 
-    if (!isTouchDevice) {  
-        rect.addEventListener('mouseover', startHover);  
-        rect.addEventListener('mouseout', stopHover);  
-        rect.addEventListener('click', handleLinkOpen);   
-    }  
-
+    rect.addEventListener('mouseover', startHover);  
+    rect.addEventListener('mouseout', stopHover);  
+    
+    rect.addEventListener('click', handleLinkOpen);   
+    
     rect.addEventListener('touchstart', function(event) {  
         activeState.touchStartTime = Date.now();   
         activeState.initialScrollLeft = scrollContainer.scrollLeft;  
         activeState.isScrolling = false;  
-
-        if (!isTouchDevice) startHover.call(this);  
+        startHover.call(this); 
     });  
 
     rect.addEventListener('touchend', function(event) {  
@@ -436,22 +421,18 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-// الدالة المسؤولة عن التحميل الأولي والـ Timeout
 const handleInitialLoad = () => {
     updateDynamicSizes(); 
     
-    // الصور اللي ليها href مباشرة في الـ HTML (أول صورتين غالبًا)
     const mainSvgImages = document.querySelectorAll('#main-svg image[href]:not([data-src])'); 
     const totalImagesToLoad = mainSvgImages.length; 
     let loadedImagesCount = 0;
     
-    // 🆕 إضافة Timeout قوي علشان يضمن إن الـ Overlay تختفي بعد زمن محدد (2 ثانية)
     let forcedTimeout = setTimeout(() => {
-        // لو فات ثانيتين والصفحة معلّقة، هننطلق ونظهر الخريطة
         if (loadedImagesCount < totalImagesToLoad) {
              finishLoading();
         }
-    }, 2000); // ثانيتين كحد أقصى
+    }, 2000); 
 
     function checkAllImagesLoaded() {
         loadedImagesCount++;
@@ -462,7 +443,7 @@ const handleInitialLoad = () => {
         }
 
         if (loadedImagesCount === totalImagesToLoad) {
-            clearTimeout(forcedTimeout); // إلغاء الـ Timeout لو التحميل خلص بشكل طبيعي
+            clearTimeout(forcedTimeout); 
             finishLoading();
         }
     }
