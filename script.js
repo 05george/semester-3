@@ -1,6 +1,6 @@
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container'); 
-const clipDefs = mainSvg.querySelector('defs');
+const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
 const loadingOverlay = document.getElementById('loading-overlay'); 
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -52,11 +52,11 @@ scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
     }
-    
+
     if (activeState.rect && !isTouchDevice) {
         debouncedCleanupHover();
     }
-    
+
     if (activeState.rect && isTouchDevice) {
         if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) { 
              activeState.isScrolling = true;
@@ -114,7 +114,7 @@ function cleanupHover() {
 
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    
+
     Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
@@ -186,7 +186,7 @@ function startHover() {
         zoomPart.style.filter = glow;
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
-    
+
     let baseText = rect.nextElementSibling;
     if (baseText && !baseText.matches('text.rect-label')) {
         baseText = null;
@@ -229,7 +229,7 @@ function handleLinkOpen(event) {
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
-    
+
     if (!isTouchDevice) {
         rect.addEventListener('mouseover', startHover);
         rect.addEventListener('mouseout', stopHover);
@@ -240,7 +240,7 @@ function attachHover(rect, i) {
         activeState.touchStartTime = Date.now(); 
         activeState.initialScrollLeft = scrollContainer.scrollLeft;
         activeState.isScrolling = false;
-        
+
         if (!isTouchDevice) startHover.call(this);
     });
 
@@ -257,10 +257,10 @@ function attachHover(rect, i) {
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
-    
+
     const fileName = href.split('/').pop().split('#')[0] || '';
     const textContent = fileName;
-    
+
     const rectWidth = parseFloat(rect.getAttribute('width'));
     const rectX = parseFloat(rect.getAttribute('x'));
     const rectY = parseFloat(rect.getAttribute('y'));
@@ -277,7 +277,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-    
+
     text.setAttribute('class', 'rect-label');
     rect.parentNode.insertBefore(text, rect.nextSibling);
 });
@@ -289,7 +289,10 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
 
 function finishLoading() {
     if (loadingOverlay) {
-        loadingOverlay.style.display = 'none';
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+        }, 500); 
     }
     mainSvg.style.opacity = '1'; 
 }
