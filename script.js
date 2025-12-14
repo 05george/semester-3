@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+Document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
@@ -35,9 +35,13 @@ function updateDynamicSizes() {
     const firstImage = images[0];
     const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
     const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+    
+    // حساب إجمالي العرض للـ viewBox
     const totalWidth = images.length * imageWidth;
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
-    window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
+    
+    // عشان نحدد أقصى سكرول ممكن (ملاحظة: window.innerWidth لازم تكون متاحة)
+    window.MAX_SCROLL_LEFT = totalWidth - (window.innerWidth || document.documentElement.clientWidth); 
 }
 
 updateDynamicSizes();
@@ -48,58 +52,53 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
-function lazyLoadImageWithProgress(imgElement, weekNumber) {
+// 🆕 الدالة الجديدة والمبسطة لتحميل الصورة بدون XHR
+function lazyLoadImage(imgElement) {
     const src = imgElement.getAttribute('data-src');
+    
+    // تحديد رقم الأسبوع للـ Overlay
+    const g = imgElement.closest('g');
+    const transformAttr = g.getAttribute('transform');
+    const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+    const imageX = match ? parseFloat(match[1]) : 0;
+    const weekNumber = (imageX / 1024) + 1; 
+    
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
-    
+
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', src, true);
-    xhr.responseType = 'blob'; 
-    
-    xhr.onprogress = (event) => {
-        if (event.lengthComputable) {
-            const percentage = Math.round((event.loaded / event.total) * 100);
-            if (text) {
-                text.textContent = `${percentage}%`;
-            }
-        }
-    };
+    // البدء الفعلي للتحميل عن طريق المتصفح
+    imgElement.setAttribute('href', src);
 
-    xhr.onload = () => {
-        if (xhr.status === 200) {
-            if (text) text.textContent = '100%';
-            
-            const blob = xhr.response;
-            const objectURL = URL.createObjectURL(blob);
-            
-            imgElement.setAttribute('href', objectURL);
-            
-            if (overlay) overlay.style.opacity = '0';
-            if (text) text.style.opacity = '0';
-            
-            setTimeout(() => {
-                if (overlay) overlay.remove();
-                if (text) text.remove();
-                imgElement.removeAttribute('data-loading');
-            }, 300);
+    // متابعة تحميل الصورة
+    imgElement.onload = () => {
+        if (text) text.textContent = '100%';
+        if (overlay) overlay.style.opacity = '0';
+        if (text) text.style.opacity = '0';
 
-        } else {
-            if (text) text.textContent = 'Failed';
-            if (overlay) overlay.style.fill = 'red';
-        }
+        setTimeout(() => {
+            if (overlay) overlay.remove();
+            if (text) text.remove();
+            imgElement.removeAttribute('data-loading');
+        }, 300);
     };
     
-    xhr.send();
+    // في حالة فشل التحميل
+    imgElement.onerror = () => {
+        if (text) text.textContent = 'Failed to load';
+        if (overlay) overlay.style.fill = 'red';
+        imgElement.removeAttribute('data-loading');
+    };
 }
+
 
 function checkLazyLoad() {
     const scrollLeft = scrollContainer.scrollLeft;
     const viewportWidth = window.innerWidth;
-    
+
+    // البحث عن الصور التي لم يتم تحميلها بعد وليس قيد التحميل
     const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
 
     lazyImages.forEach(img => {
@@ -107,15 +106,13 @@ function checkLazyLoad() {
         const transformAttr = g.getAttribute('transform');
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
-        
-        const LOAD_THRESHOLD = 2048; 
-        
+
+        // LOAD_THRESHOLD: زودت مسافة التحميل لضمان تحميل مسبق قبل الوصول
+        const LOAD_THRESHOLD = 3072; // زيادة عن 2048 لضمان التحميل المسبق
+
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
-            const weekNumber = g.getAttribute('transform').match(/translate\(([\d]+)/) ? (imageX / 1024) + 1 : null;
-            
-            if (weekNumber !== null) {
-                lazyLoadImageWithProgress(img, weekNumber);
-            }
+             // 🆕 استدعاء الدالة الجديدة المبسطة
+             lazyLoadImage(img);
         }
     });
 }
@@ -136,7 +133,7 @@ scrollContainer.addEventListener('scroll', function () {
              cleanupHover();   
         }  
     }
-    
+
     checkLazyLoad();
 });
 
@@ -165,6 +162,7 @@ function getGroupImage(element) {
             if (images.length) {
                 const baseImage = images[0];
                 const imageSource = baseImage.getAttribute('href'); 
+                // نرجع الـ imageSource بس لو موجودة عشان نضمن إن الصورة اتحملت
                 if (!imageSource) return null;
 
                 return {
@@ -207,10 +205,11 @@ function startHover() {
     activeState.rect = rect;
 
     const imageElement = rect.closest('g').querySelector('image');
+    // تأكد إن الصورة اتحملت فعليًا قبل ما تعمل الزووم
     if (!imageElement || !imageElement.getAttribute('href')) {
         return; 
     }
-    
+
     const i = rect.getAttribute('data-index') || Date.now();  
     const clipPathId = `clip-${i}-${Date.now()}`;  
     activeState.clipPathId = clipPathId;  
@@ -416,35 +415,42 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-const mainSvgImages = document.querySelectorAll('#main-svg image[href]');
-const totalImagesToLoad = mainSvgImages.length; 
-let loadedImagesCount = 0;
+// تعديل بسيط على آلية التحقق من التحميل الأولي
+// للتأكد من حساب الـ MAX_SCROLL_LEFT بشكل صحيح بعد الـ DOMContentLoaded
+const handleInitialLoad = () => {
+    updateDynamicSizes(); // تحديث الأبعاد بعد التأكد من وجود كل شيء
+    
+    const mainSvgImages = document.querySelectorAll('#main-svg image[href]:not([data-src])'); // فقط الصور اللي ليها href مباشرة
+    const totalImagesToLoad = mainSvgImages.length; 
+    let loadedImagesCount = 0;
 
-function checkAllImagesLoaded() {
-    loadedImagesCount++;
-    const percentage = Math.round((loadedImagesCount / totalImagesToLoad) * 100);
+    function checkAllImagesLoaded() {
+        loadedImagesCount++;
+        const percentage = Math.round((loadedImagesCount / totalImagesToLoad) * 100);
 
-    if (loadingOverlay) {
-        loadingOverlay.textContent = `Loading Map... ${percentage}%`;
+        if (loadingOverlay) {
+            loadingOverlay.textContent = `Loading Map... ${percentage}%`;
+        }
+
+        if (loadedImagesCount === totalImagesToLoad) {
+            finishLoading();
+        }
     }
 
-    if (loadedImagesCount === totalImagesToLoad) {
-        finishLoading();
-    }
-}
-
-mainSvgImages.forEach(img => {
-    img.addEventListener('load', checkAllImagesLoaded, { once: true });
-
-    if (img.complete || img.naturalWidth > 0) {
-        checkAllImagesLoaded();
-    }
-});
-
-if (totalImagesToLoad === 0) {
-    document.addEventListener('DOMContentLoaded', () => {
+    if (totalImagesToLoad === 0) {
+        // لو مفيش صور محملة مباشرة (عشان متفشلش)
         setTimeout(finishLoading, 100);
-    });
-}
+    } else {
+        mainSvgImages.forEach(img => {
+            img.addEventListener('load', checkAllImagesLoaded, { once: true });
+
+            if (img.complete || img.naturalWidth > 0) {
+                checkAllImagesLoaded();
+            }
+        });
+    }
+};
+
+handleInitialLoad();
 
 });
