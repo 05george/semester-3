@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+/* CSS بتاعك زي ما هو */
 html, body {
     margin: 0;
     padding: 0;
@@ -60,6 +61,17 @@ body {
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
     image-rendering: auto;
 }
+/* 🆕 تنسيق الـOverlay اللي هيظهر أثناء التحميل الجزئي */
+.lazy-loading-overlay {
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    opacity: 0.9;
+}
+.lazy-loading-text {
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
 </style>
 </head>
 <body>
@@ -72,47 +84,51 @@ body {
             viewBox="0 0 12288 2454"
             preserveAspectRatio="xMinYMin slice"
             id="main-svg">
-          
+
           <defs></defs>
-          
-<!-- الاسبوع الأول -->
+
 <g transform="translate(0,0)">
     <image href="image/1.webp" x="0" y="0" width="1024" height="2454" />
 </g>
 
-<!-- الاسبوع الثاني -->
 <g transform="translate(1024,0)">
     <image href="image/2.png" width="1024" height="2454" />
 </g>
 
-<!-- الاسبوع الثالث -->
 <g transform="translate(2048,0)">
-    <image href="image/3.png" width="1024" height="2454" />
+    <image data-src="image/3.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="3" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="3">0%</text>
 </g>
 
-<!-- الاسبوع الرابع -->
 <g transform="translate(3072,0)">
-    <image href="image/4.webp" width="1024" height="2454" />
+    <image data-src="image/4.webp" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="4" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="4">0%</text>
 </g>
 
-<!-- الاسبوع الخامس -->
 <g transform="translate(4096,0)">
-    <image href="image/5.png" width="1024" height="2454" />
+    <image data-src="image/5.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="5" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="5">0%</text>
 </g>
 
-<!-- الاسبوع السادس -->
 <g transform="translate(5120,0)">
-    <image href="image/6.png" width="1024" height="2454" />
+    <image data-src="image/6.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="6" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="6">0%</text>
 </g>
 
-<!-- الاسبوع السابع -->
 <g transform="translate(6144,0)">
-    <image href="image/7.png" width="1024" height="2454" />
+    <image data-src="image/7.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="7" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="7">0%</text>
 </g>
 
-<!-- الاسبوع الثامن -->
 <g transform="translate(7168,0)">
-    <image href="image/8.webp" width="1024" height="2454" />
+    <image data-src="image/8.webp" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="8" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="8">0%</text>
 
     <g transform="translate(368,0)">
         <rect x="0" y="703" width="115" height="380" class="image-mapper-shape l" href="rrs-micro-1.pdf"/>
@@ -134,10 +150,12 @@ body {
     </g>
 </g>
 
-<!-- الاسبوع التاسع -->
 <g transform="translate(8192,0)">
-    <image href="image/9.png" width="1024" height="2454"/>
-<g transform="translate(140,0)">
+    <image data-src="image/9.png" width="1024" height="2454"/>
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="9" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="9">0%</text>
+    
+    <g transform="translate(140,0)">
         <rect x="0" y="308.91" width="113.14" height="340.63" class="image-mapper-shape l" href="rrs-pharma-1.pdf"/>
         <rect x="0" y="876" width="115" height="349" class="image-mapper-shape ipc" href="ipc/book.pdf"/>
         <rect x="0" y="1225" width="57.5" height="121" class="image-mapper-shape q" href="ipc/q/9.pdf"/>
@@ -170,24 +188,28 @@ body {
 
 </g>
 
-<!-- الاسبوع العاشر -->
 <g transform="translate(9216,0)">
-    <image href="image/10.png" width="1024" height="2454" />
+    <image data-src="image/10.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="10" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="10">0%</text>
 </g>
 
-<!-- الاسبوع الحادي عشر -->
 <g transform="translate(10240,0)">
-    <image href="image/11.png" width="1024" height="2454" />
+    <image data-src="image/11.png" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="11" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="11">0%</text>
 </g>
 
-<!-- الاسبوع الثاني عشر -->
 <g transform="translate(11264,0)">
-    <image href="image/12.webp" width="1024" height="2454" />
+    <image data-src="image/12.webp" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="12" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="12">0%</text>
 </g>
 
-<!-- الاسبوع الثالث عشر -->
 <g transform="translate(12288,0)">
-    <image href="image/13.webp" width="1024" height="2454" />
+    <image data-src="image/13.webp" width="1024" height="2454" />
+    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="13" />
+    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="13">0%</text>
 </g>
         </svg>
         <script src="script.js"></script>        
