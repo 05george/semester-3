@@ -1,214 +1,35 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100svh;
-    overflow: hidden;
-    background: black;
-}
-
-#scroll-container {
-    width: 100%;
-    height: 100svh;
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-}
-
-#loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: #111;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 24px;
-    z-index: 9999;
-    transition: opacity .5s;
-}
-
-#main-svg {
-    height: 100svh;
-    width: auto;
-    opacity: 0;
-    transition: opacity .5s;
-}
-
-.image-mapper-shape {
-    fill: rgba(255,255,255,0.001);
-    stroke-width: 2px;
-    cursor: pointer;
-    transition: transform .3s, filter .3s;
-}
-.q { stroke: red; }                /*الأسئله*🔴*/
-.v { stroke: blue; }           /*فيديو الشرح*🔵*/
-.ipc { stroke: white; } /*مواد لا تضاف علي GPA*⚪️*/
-.a { stroke: purple; }             /*اجابات*🟣*/
-.l { stroke: yellow; }           /*محاضرات*🟡*/
-.s { stroke: green; }         /*سكاشن العملي*🟢*/
-.zoom-part {
-    pointer-events: none;
-    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-    image-rendering: auto;
-}
-.lazy-loading-overlay {
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    opacity: 0.9;
-}
-.lazy-loading-text {
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-</style>
+<title>SVG Interactive Map</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <div id="loading-overlay">Loading Map...</div> 
-
-    <div id="scroll-container"> 
-
-        <svg xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 12288 2454"
-            preserveAspectRatio="xMinYMin slice"
-            id="main-svg">
-
-          <defs></defs>
+<div id="scroll-container">
+<svg id="main-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet">
+<defs></defs>
 
 <g transform="translate(0,0)">
-    <image href="image/1.webp" x="0" y="0" width="1024" height="2454" />
+<image href="image1.jpg" width="1024" height="2454"></image>
+<rect class="image-mapper-shape" x="200" y="300" width="300" height="200" data-href="file1.pdf"></rect>
 </g>
 
 <g transform="translate(1024,0)">
-    <image href="image/2.png" width="1024" height="2454" />
+<image href="image2.jpg" width="1024" height="2454"></image>
+<rect class="image-mapper-shape" x="150" y="500" width="320" height="220" data-href="file2.pdf"></rect>
 </g>
 
-<g transform="translate(2048,0)">
-    <image data-src="image/3.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="3" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="3">0%</text>
-</g>
+</svg>
+</div>
 
-<g transform="translate(3072,0)">
-    <image data-src="image/4.webp" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="4" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="4">0%</text>
-</g>
+<div id="loading-overlay">
+<span id="loading-text">0%</span>
+</div>
 
-<g transform="translate(4096,0)">
-    <image data-src="image/5.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="5" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="5">0%</text>
-</g>
-
-<g transform="translate(5120,0)">
-    <image data-src="image/6.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="6" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="6">0%</text>
-</g>
-
-<g transform="translate(6144,0)">
-    <image data-src="image/7.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="7" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="7">0%</text>
-</g>
-
-<g transform="translate(7168,0)">
-    <image data-src="image/8.webp" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="8" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="8">0%</text>
-
-    <g transform="translate(368,0)">
-        <rect x="0" y="703" width="115" height="380" class="image-mapper-shape l" href="rrs-micro-1.pdf"/>
-        <rect x="0" y="1083" width="115" height="253.5" class="image-mapper-shape l" href="rrs-patho-1.pdf"/>
-        <rect x="0" y="1339" width="115" height="125" class="image-mapper-shape q" href="rrs-patho-q-1.pdf"/>
-        <rect x="0" y="1465" width="115" height="378.5" class="image-mapper-shape l" href="rrs-physio-2.pdf"/>
-        <rect x="0" y="1845" width="115" height="380" class="image-mapper-shape s" href="rrs-anatomy-1.pdf"/>
-    </g>
-
-    <g transform="translate(598,0)">
-        <rect x="0" y="366" width="114.5" height="315" class="image-mapper-shape l" href="rrs-physio-1.pdf"/>
-        <rect x="0" y="1846" width="115" height="253.4" class="image-mapper-shape l" href="rrs-physio-2.pdf"/>
-        <rect x="0" y="2100" width="115" height="127" class="image-mapper-shape q" href="rrs-physio-q-1.pdf"/>
-    </g>
-
-    <g transform="translate(712.35,0)">
-        <rect x="0" y="702" width="115" height="380" class="image-mapper-shape l" href="rrs-histo-1.pdf"/>
-        <rect x="0" y="1465" width="115" height="380" class="image-mapper-shape l" href="rrs-anatomy-2.pdf"/>
-    </g>
-</g>
-
-<g transform="translate(8192,0)">
-    <image data-src="image/9.png" width="1024" height="2454"/>
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="9" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="9">0%</text>
-
-    <g transform="translate(140,0)">
-        <rect x="0" y="308.91" width="113.14" height="340.63" class="image-mapper-shape l" href="rrs-pharma-1.pdf"/>
-        <rect x="0" y="876" width="115" height="349" class="image-mapper-shape ipc" href="ipc/book.pdf"/>
-        <rect x="0" y="1225" width="57.5" height="121" class="image-mapper-shape q" href="ipc/q/9.pdf"/>
-        <rect x="57.5" y="1225" width="57.5" height="121" class="image-mapper-shape a" href="ipc/a/9.pdf"/>
-        <rect x="0" y="1810.38" width="115.86" height="470.24" class="image-mapper-shape s" href="#"/>
-    </g>
-
-    <g transform="translate(370,0)">
-        <rect x="0" y="1369" width="115" height="450" class="image-mapper-shape l" href="rrs-physio-3.pdf"/>
-        <rect x="0" y="422.29" width="114.62" height="456.42" class="image-mapper-shape l" href="#"/>
-        <rect x="0" y="1812.08" width="113.93" height="471.44" class="image-mapper-shape l" href="#"/>
-    </g>
-
-    <g transform="translate(485,0)">
-        <rect x="0" y="1121.29" width="113.83" height="347.86" class="image-mapper-shape l" href="#"/>
-        <rect x="0" y="1470.58" width="112.62" height="340.47" class="image-mapper-shape s" href="#"/>
-        <rect x="0" y="1813.77" width="113.88" height="361.36" class="image-mapper-shape s" href="#"/>
-    </g>
-
-    <g transform="translate(600,0)">
-        <rect x="0" y="1469.19" width="113.72" height="343.19" class="image-mapper-shape l" href="#"/>
-        <rect x="0" y="421.64" width="115.79" height="457.44" class="image-mapper-shape s" href="#"/>
-    </g>
-
-    <g transform="translate(715,0)">
-        <rect x="0" y="422.25" width="114.39" height="340.47" class="image-mapper-shape l" href="#"/>
-        <rect x="0" y="877.49" width="114.63" height="485.43" class="image-mapper-shape s" href="#"/>
-        <rect x="0" y="1364.73" width="113.21" height="447.54" class="image-mapper-shape l" href="#"/>
-    </g>
-
-</g>
-
-<g transform="translate(9216,0)">
-    <image data-src="image/10.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="10" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="10">0%</text>
-</g>
-
-<g transform="translate(10240,0)">
-    <image data-src="image/11.png" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="11" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="11">0%</text>
-</g>
-
-<g transform="translate(11264,0)">
-    <image data-src="image/12.webp" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="12" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="12">0%</text>
-</g>
-
-<g transform="translate(12288,0)">
-    <image data-src="image/13.webp" width="1024" height="2454" />
-    <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="13" />
-    <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="13">0%</text>
-</g>
-        </svg>
-        <script src="script.js"></script>        
-    </div>
+<script src="script.js"></script>
 </body>
 </html>
