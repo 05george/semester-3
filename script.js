@@ -8,7 +8,9 @@ const activeState = {
     zoomText: null,
     baseText: null,
     animationId: null,
-    clipPathId: null
+    clipPathId: null,
+    touchStartX: 0,
+    touchStartY: 0
 };
 
 function updateDynamicSizes() {
@@ -79,7 +81,7 @@ function cleanupHover() {
 
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null });
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, touchStartX: 0, touchStartY: 0 });
 }
 
 function startHover() {
@@ -151,7 +153,6 @@ function startHover() {
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
     
-    // التعديل لحل مشكلة ربط النص بالـ Rect
     let baseText = rect.nextElementSibling;
     if (baseText && !baseText.matches('text.rect-label')) {
         baseText = null;
@@ -196,10 +197,29 @@ function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
-    rect.addEventListener('touchstart', startHover);
+    
+    // التعديل 1: تسجيل نقطة بداية اللمس
+    rect.addEventListener('touchstart', function(event) {
+        startHover.call(this);
+        const touch = event.touches[0];
+        activeState.touchStartX = touch.clientX;
+        activeState.touchStartY = touch.clientY;
+    });
 
+    // التعديل 2: فحص المسافة عند رفع الإصبع
     rect.addEventListener('touchend', function(event) {
-        handleLinkOpen(event); 
+        const touch = event.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - activeState.touchStartX);
+        const deltaY = Math.abs(touch.clientY - activeState.touchStartY);
+        const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        const TAP_THRESHOLD = 10; 
+        
+        // لو الحركة أقل من 10 بكسل، يبقى دي ضغطة (Tap)
+        if (distanceMoved < TAP_THRESHOLD) {
+            handleLinkOpen(event); 
+        }
+
         cleanupHover(); 
     });
 
@@ -235,7 +255,6 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
     
-    // التعديل: إضافة كلاس مميز للنص وإضافته بعد الـ Rect مباشرة
     text.setAttribute('class', 'rect-label');
     rect.parentNode.insertBefore(text, rect.nextSibling);
 });
