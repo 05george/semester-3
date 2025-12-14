@@ -388,6 +388,9 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
 
 function finishLoading() {
     if (loadingOverlay) {
+        // حط هنا شرط بسيط عشان الدالة متشتغلش مرتين
+        if (loadingOverlay.style.display === 'none') return;
+        
         loadingOverlay.style.opacity = '0';
         setTimeout(() => {
             loadingOverlay.style.display = 'none';
@@ -419,6 +422,7 @@ const rootObserver = new MutationObserver(mutations => {
     });
 
     if (newRectsFound) {  
+        // بعد ظهور الـ Rects لأول مرة، ننهي شاشة التحميل
         setTimeout(finishLoading, 100);   
     }
 
@@ -426,6 +430,7 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
+// الدالة المسؤولة عن التحميل الأولي والـ Timeout
 const handleInitialLoad = () => {
     updateDynamicSizes(); 
     
@@ -433,6 +438,15 @@ const handleInitialLoad = () => {
     const mainSvgImages = document.querySelectorAll('#main-svg image[href]:not([data-src])'); 
     const totalImagesToLoad = mainSvgImages.length; 
     let loadedImagesCount = 0;
+    
+    // 🆕 إضافة Timeout قوي علشان يضمن إن الـ Overlay تختفي بعد زمن محدد (2 ثانية)
+    let forcedTimeout = setTimeout(() => {
+        // لو فات ثانيتين والصفحة معلّقة، هننطلق ونظهر الخريطة
+        if (loadedImagesCount < totalImagesToLoad) {
+             // console.warn("Forcing finishLoading() due to initial load delay."); // رسالة للمطور
+             finishLoading();
+        }
+    }, 2000); // ثانيتين كحد أقصى
 
     function checkAllImagesLoaded() {
         loadedImagesCount++;
@@ -443,11 +457,13 @@ const handleInitialLoad = () => {
         }
 
         if (loadedImagesCount === totalImagesToLoad) {
+            clearTimeout(forcedTimeout); // إلغاء الـ Timeout لو التحميل خلص بشكل طبيعي
             finishLoading();
         }
     }
 
     if (totalImagesToLoad === 0) {
+        clearTimeout(forcedTimeout); 
         setTimeout(finishLoading, 100);
     } else {
         mainSvgImages.forEach(img => {
