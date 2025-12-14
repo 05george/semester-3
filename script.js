@@ -19,6 +19,9 @@ const activeState = {
     touchStartTime: 0
 };
 
+// 🆕 تعريف بسيط لمشكلة الـLoading اللي بتحصل أكتر من مرة
+const loadingQueue = new Set(); // عشان متتكررش محاولات تحميل نفس الصورة
+
 function debounce(func, delay) {
     let timeoutId;
     return function() {
@@ -35,8 +38,12 @@ function updateDynamicSizes() {
     const firstImage = images[0];
     const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
     const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
-    const totalWidth = images.length * imageWidth;
+    // 🆕 نحسب العرض بناء على عدد مجموعات G اللي بتحدد كل أسبوع
+    const totalWeeks = mainSvg.querySelectorAll('g').length; 
+    const totalWidth = totalWeeks * imageWidth;
+    
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
+    // ⚠️ نستخدم innerWidth عشان تكون قيمة ديناميكية
     window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
 }
 
@@ -53,6 +60,9 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
     const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
     
+    if (loadingQueue.has(weekNumber)) return; // 🆕 الصورة دي بالفعل في قائمة الانتظار
+
+    loadingQueue.add(weekNumber); 
     imgElement.setAttribute('data-loading', 'true');
     imgElement.removeAttribute('data-src'); 
 
@@ -70,6 +80,8 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     };
 
     xhr.onload = () => {
+        loadingQueue.delete(weekNumber); // 🆕 تم التحميل نشيلها من قائمة الانتظار
+        
         if (xhr.status === 200) {
             if (text) text.textContent = '100%';
             
@@ -96,7 +108,7 @@ function lazyLoadImageWithProgress(imgElement, weekNumber) {
     xhr.send();
 }
 
-function checkLazyLoad() {
+const debouncedCheckLazyLoad = debounce(function() {
     const scrollLeft = scrollContainer.scrollLeft;
     const viewportWidth = window.innerWidth;
     
@@ -108,17 +120,19 @@ function checkLazyLoad() {
         const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
         const imageX = match ? parseFloat(match[1]) : 0;
         
-        const LOAD_THRESHOLD = 2048; 
+        // مسافة الأمان: تحميل الأسبوع اللي بعد الشاشة المرئية مباشرة
+        const LOAD_THRESHOLD = viewportWidth; // 🆕 تم تعديل المسافة لأمان أكبر (عرض شاشة كامل)
         
         if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
-            const weekNumber = g.getAttribute('transform').match(/translate\(([\d]+)/) ? (imageX / 1024) + 1 : null;
+            // حساب رقم الأسبوع من قيمة translate
+            const weekNumber = (imageX / 1024) + 1;
             
             if (weekNumber !== null) {
                 lazyLoadImageWithProgress(img, weekNumber);
             }
         }
     });
-}
+}, 100); // 🆕 نستعمل الـdebounce عشان متشتغلش كتير جداً أثناء الـScroll
 
 
 scrollContainer.addEventListener('scroll', function () {
@@ -137,10 +151,11 @@ scrollContainer.addEventListener('scroll', function () {
         }  
     }
     
-    checkLazyLoad();
+    debouncedCheckLazyLoad();
 });
 
-checkLazyLoad(); 
+// 🆕 نستخدم debounce عشان نضمن إن الـLoading يبدأ صح في البداية
+setTimeout(debouncedCheckLazyLoad, 100);
 
 
 function getCumulativeTranslate(element) {
