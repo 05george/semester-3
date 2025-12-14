@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* 🛠️ CSS المعدّل لضمان السكرول الأفقي وعدم التعليق */
 html, body {
     margin: 0;
     padding: 0;
     height: 100svh;
-    overflow: hidden; /* منع الـ scroll من الـ body نفسه */
+    overflow: hidden;
     background: black;
 }
 body {
@@ -22,9 +21,9 @@ body {
     display: block;
     width: 100%; 
     height: 100svh;
-    overflow-x: auto; /* 🟢 ده اللي هيخلي السكرول الأفقي يشتغل */
+    overflow-x: auto;
     overflow-y: hidden; 
-    white-space: nowrap; /* مهم عشان الـ SVG ميتقسمش */
+    white-space: nowrap;
 }
 #loading-overlay {
     position: fixed;
@@ -43,7 +42,7 @@ body {
 }
 #main-svg {
     height: 100svh;
-    display: inline-block; /* 🟢 مهم عشان الـ SVG تبقى في صف واحد */
+    display: inline-block;
     background: black;
     width: auto;
     opacity: 0; 
