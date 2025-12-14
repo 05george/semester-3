@@ -9,8 +9,8 @@ const activeState = {
     baseText: null,
     animationId: null,
     clipPathId: null,
-    // تم حذف خاصيتي touchStartX/Y القديمتين
-    initialScrollLeft: 0 // خاصية جديدة لتسجيل قيمة شريط التمرير
+    initialScrollLeft: 0,
+    isScrolling: false // Flag جديد للتحقق من حركة السحب/الـ Scroll
 };
 
 function updateDynamicSizes() {
@@ -29,6 +29,16 @@ updateDynamicSizes();
 scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
+    }
+    
+    // التعديل (3): إنهاء الـ Hover والـ Zoom فوراً عند أي سكرول
+    if (activeState.rect) {
+        cleanupHover();
+    }
+    
+    // التعديل (1): تفعيل Flag السحب لو الـ ScrollContainer اتحرك
+    if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 2) { 
+        activeState.isScrolling = true;
     }
 });
 
@@ -81,7 +91,9 @@ function cleanupHover() {
 
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0 });
+    
+    // التعديل: تصفير كل الـ Flags
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false });
 }
 
 function startHover() {
@@ -153,6 +165,7 @@ function startHover() {
         if (activeState.zoomText) activeState.zoomText.style.filter = glow;
     }, 100);
     
+    // التعديل: إيجاد النص الصحيح المرتبط بالـ rect
     let baseText = rect.nextElementSibling;
     if (baseText && !baseText.matches('text.rect-label')) {
         baseText = null;
@@ -198,18 +211,17 @@ function attachHover(rect, i) {
     rect.addEventListener('mouseover', startHover);
     rect.addEventListener('mouseout', stopHover);
     
-    // تسجيل قيمة scrollLeft عند بداية اللمس
+    // تسجيل قيمة scrollLeft عند بداية اللمس وإعادة تصفير الـ Flag
     rect.addEventListener('touchstart', function(event) {
         startHover.call(this);
         activeState.initialScrollLeft = scrollContainer.scrollLeft;
+        activeState.isScrolling = false;
     });
 
-    // فحص قيمة scrollLeft عند رفع الإصبع
+    // فحص الـ Flag عند رفع الإصبع
     rect.addEventListener('touchend', function(event) {
-        const currentScrollLeft = scrollContainer.scrollLeft;
-        
-        // إذا كان الفرق صفراً، يعني لم يحدث سحب أفقي، فنفتح الرابط
-        if (Math.abs(currentScrollLeft - activeState.initialScrollLeft) < 2) { 
+        // نفتح الرابط فقط لو مفيش أي سحب أفقي حصل
+        if (activeState.isScrolling === false) { 
             handleLinkOpen(event); 
         }
 
@@ -221,6 +233,7 @@ function attachHover(rect, i) {
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
+    // التعديل (4): دعم خاصية data-title
     const title = rect.getAttribute('data-title');
     let textContent;
     
@@ -248,6 +261,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
     
+    // التعديل (4): إضافة كلاس مميز للنص وإضافته بعد الـ Rect مباشرة
     text.setAttribute('class', 'rect-label');
     rect.parentNode.insertBefore(text, rect.nextSibling);
 });
