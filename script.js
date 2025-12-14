@@ -48,6 +48,79 @@ const debouncedCleanupHover = debounce(function() {
     }
 }, 50);
 
+function lazyLoadImageWithProgress(imgElement, weekNumber) {
+    const src = imgElement.getAttribute('data-src');
+    const overlay = mainSvg.querySelector(`.lazy-loading-overlay[data-loading-week="${weekNumber}"]`);
+    const text = mainSvg.querySelector(`.lazy-loading-text[data-loading-week="${weekNumber}"]`);
+    
+    imgElement.setAttribute('data-loading', 'true');
+    imgElement.removeAttribute('data-src'); 
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', src, true);
+    xhr.responseType = 'blob'; 
+    
+    xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+            const percentage = Math.round((event.loaded / event.total) * 100);
+            if (text) {
+                text.textContent = `${percentage}%`;
+            }
+        }
+    };
+
+    xhr.onload = () => {
+        if (xhr.status === 200) {
+            if (text) text.textContent = '100%';
+            
+            const blob = xhr.response;
+            const objectURL = URL.createObjectURL(blob);
+            
+            imgElement.setAttribute('href', objectURL);
+            
+            if (overlay) overlay.style.opacity = '0';
+            if (text) text.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (overlay) overlay.remove();
+                if (text) text.remove();
+                imgElement.removeAttribute('data-loading');
+            }, 300);
+
+        } else {
+            if (text) text.textContent = 'Failed';
+            if (overlay) overlay.style.fill = 'red';
+        }
+    };
+    
+    xhr.send();
+}
+
+function checkLazyLoad() {
+    const scrollLeft = scrollContainer.scrollLeft;
+    const viewportWidth = window.innerWidth;
+    
+    const lazyImages = mainSvg.querySelectorAll('image[data-src]:not([data-loading])'); 
+
+    lazyImages.forEach(img => {
+        const g = img.closest('g');
+        const transformAttr = g.getAttribute('transform');
+        const match = transformAttr ? transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/) : null;
+        const imageX = match ? parseFloat(match[1]) : 0;
+        
+        const LOAD_THRESHOLD = 2048; 
+        
+        if (imageX < scrollLeft + viewportWidth + LOAD_THRESHOLD) {
+            const weekNumber = g.getAttribute('transform').match(/translate\(([\d]+)/) ? (imageX / 1024) + 1 : null;
+            
+            if (weekNumber !== null) {
+                lazyLoadImageWithProgress(img, weekNumber);
+            }
+        }
+    });
+}
+
+
 scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
@@ -63,7 +136,12 @@ scrollContainer.addEventListener('scroll', function () {
              cleanupHover();   
         }  
     }
+    
+    checkLazyLoad();
 });
+
+checkLazyLoad(); 
+
 
 function getCumulativeTranslate(element) {
     let x = 0, y = 0;
@@ -128,6 +206,11 @@ function startHover() {
     cleanupHover();
     activeState.rect = rect;
 
+    const imageElement = rect.closest('g').querySelector('image');
+    if (!imageElement || !imageElement.getAttribute('href')) {
+        return; 
+    }
+    
     const i = rect.getAttribute('data-index') || Date.now();  
     const clipPathId = `clip-${i}-${Date.now()}`;  
     activeState.clipPathId = clipPathId;  
@@ -193,7 +276,7 @@ function startHover() {
 
     let baseText = rect.nextElementSibling;  
     if (baseText && !baseText.matches('text.rect-label')) {  
-        baseText = null;  
+        baseText = null;
     }  
 
     if (baseText) {  
@@ -333,8 +416,8 @@ const rootObserver = new MutationObserver(mutations => {
 
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
-const mainSvgImages = document.querySelectorAll('#main-svg image');
-const totalImagesToLoad = mainSvgImages.length;
+const mainSvgImages = document.querySelectorAll('#main-svg image[href]');
+const totalImagesToLoad = mainSvgImages.length; 
 let loadedImagesCount = 0;
 
 function checkAllImagesLoaded() {
