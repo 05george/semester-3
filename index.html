@@ -5,19 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* CSS بتاعك زي ما هو */
+/* 🛠️ CSS المعدّل لضمان السكرول الأفقي وعدم التعليق */
 html, body {
     margin: 0;
     padding: 0;
     height: 100svh;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: hidden; /* منع الـ scroll من الـ body نفسه */
     background: black;
 }
 body {
  display: block;
- width: auto; 
+ width: 100%; 
  height: 100svh;
+}
+#scroll-container {
+    display: block;
+    width: 100%; 
+    height: 100svh;
+    overflow-x: auto; /* 🟢 ده اللي هيخلي السكرول الأفقي يشتغل */
+    overflow-y: hidden; 
+    white-space: nowrap; /* مهم عشان الـ SVG ميتقسمش */
 }
 #loading-overlay {
     position: fixed;
@@ -36,7 +43,7 @@ body {
 }
 #main-svg {
     height: 100svh;
-    display: block;
+    display: inline-block; /* 🟢 مهم عشان الـ SVG تبقى في صف واحد */
     background: black;
     width: auto;
     opacity: 0; 
@@ -61,7 +68,6 @@ body {
     transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
     image-rendering: auto;
 }
-/* 🆕 تنسيق الـOverlay اللي هيظهر أثناء التحميل الجزئي */
 .lazy-loading-overlay {
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -154,7 +160,7 @@ body {
     <image data-src="image/9.png" width="1024" height="2454"/>
     <rect x="0" y="0" width="1024" height="2454" fill="#111" class="lazy-loading-overlay" data-loading-week="9" />
     <text x="512" y="1227" fill="white" font-size="32" text-anchor="middle" class="lazy-loading-text" data-loading-week="9">0%</text>
-    
+
     <g transform="translate(140,0)">
         <rect x="0" y="308.91" width="113.14" height="340.63" class="image-mapper-shape l" href="rrs-pharma-1.pdf"/>
         <rect x="0" y="876" width="115" height="349" class="image-mapper-shape ipc" href="ipc/book.pdf"/>
