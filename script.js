@@ -1,9 +1,31 @@
+// 🆕 الجزء الأول: دالة finishLoading وخطة الطوارئ (توضع في بداية ملف script.js)
+
+function finishLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const mainSvg = document.getElementById('main-svg');
+    
+    if (loadingOverlay) {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+        }, 500);
+    }
+    if (mainSvg) {
+        mainSvg.style.opacity = '1';
+    }
+    // تحديث الأبعاد يتم داخل DOMContentLoaded لمنع الأخطاء الأولية
+}
+
+// 🆕 خطة الطوارئ: هتشتغل بعد 3 ثواني عشان لو الكود كله وقف
+setTimeout(finishLoading, 3000); 
+
+// 🛑 يبدأ الكود الرئيسي هنا 🛑
 Document.addEventListener('DOMContentLoaded', () => {
 
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container'); 
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
-const loadingOverlay = document.getElementById('loading-overlay');
+// ملاحظة: loadingOverlay و finishLoading() تم التعامل معاهم في الجزء العلوي
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
@@ -33,7 +55,7 @@ function debounce(func, delay) {
 }
 
 function updateDynamicSizes() {
-    if (!mainSvg) return; // 🆕 تأكيد وجود الـSVG
+    if (!mainSvg) return; 
     const images = mainSvg.querySelectorAll('image');
     if (!images.length) return; 
     const totalWeeks = mainSvg.querySelectorAll('g').length; 
@@ -132,7 +154,7 @@ function checkLazyLoad() {
 const debouncedCheckLazyLoad = debounce(checkLazyLoad, 100);
 
 
-if (scrollContainer) { // 🆕 تأكيد وجود الـScroll Container قبل إضافة الـEvent Listener
+if (scrollContainer) { 
     scrollContainer.addEventListener('scroll', function () {
         if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
             this.scrollLeft = window.MAX_SCROLL_LEFT;
@@ -410,16 +432,8 @@ document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
     attachHover(rect, i);
 });
 
-function finishLoading() {
-    if (loadingOverlay) {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-            updateDynamicSizes(); 
-        }, 500);
-    }
-    mainSvg.style.opacity = '1';
-}
+// دالة تحديث الحجم يتم استدعاؤها هنا لتعيين MAX_SCROLL_LEFT بعد التحميل
+updateDynamicSizes(); 
 
 const rootObserver = new MutationObserver(mutations => {
     let newRectsFound = false;
@@ -444,16 +458,16 @@ const rootObserver = new MutationObserver(mutations => {
     });
 
     if (newRectsFound) {  
-        setTimeout(finishLoading, 100);   
+        // ❌ تم حذف استدعاء finishLoading هنا لمنع التكرار والأخطاء
     }
 
 });
 
-if (mainSvg) { // 🆕 تأكيد وجود الـSVG قبل إضافة الـObserver
+if (mainSvg) { 
     rootObserver.observe(mainSvg, { childList: true, subtree: true });
 }
 
-// 🆕 تشغيل finishLoading() فوراً بعد انتهاء الـDOMContent
+// 🆕 استدعاء finishLoading بعد الانتهاء من إعداد DOM
 finishLoading(); 
 
-});
+}); // نهاية Document.addEventListener('DOMContentLoaded', ...
