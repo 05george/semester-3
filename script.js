@@ -1,17 +1,18 @@
-// كامل السكربت محدث طبق طلبك:
-// - الخلفية السوداء تصبح بعرض المستطيل الأساسي والحافة العلوية تلامس حافته العلوية.
-// - الخلفية قصيرة (جزء علوي فقط).
-// - النص المكبّر يصبح بحجم ضعف النص الأساسي (2x).
-// - العنصر المكبّر (zoomPart) والنص يتوسعان للضعف ويستطيعا الخروج من حدود المستطيل الأساسي (لا نستخدم clipPath الآن).
-// - يتم تنظيف كل العناصر المضافة عند إنهاء الـ hover/touch.
+// كامل السكربت المحدث
 window.onload = function() {
   const mainSvg = document.getElementById('main-svg');
   const scrollContainer = document.getElementById('scroll-container');
-  const clipDefs = mainSvg.querySelector('defs');
   const loadingOverlay = document.getElementById('loading-overlay');
   const loadingText = document.getElementById('loading-text');
   const jsToggle = document.getElementById('js-toggle');
   const searchInput = document.getElementById('search-input');
+
+  // Allow overflow so zoomed image/text can extend outside original rect
+  try {
+    mainSvg.setAttribute('overflow', 'visible');
+    mainSvg.style.overflow = 'visible';
+  } catch (e) {}
+
   let interactionEnabled = jsToggle.checked;
   const isTouchDevice = window.matchMedia('(hover: none)').matches;
   const TAP_THRESHOLD_MS = 300;
@@ -53,9 +54,7 @@ window.onload = function() {
 
   const debouncedCleanupHover = debounce(function() {
     if (!interactionEnabled || !activeState.rect) return;
-    if (activeState.rect) {
-      cleanupHover();
-    }
+    if (activeState.rect) cleanupHover();
   }, 50);
 
   scrollContainer.addEventListener('scroll', function() {
@@ -131,7 +130,6 @@ window.onload = function() {
     if (baseTextToClean) baseTextToClean.style.opacity = '1';
     if (zoomTextToClean) zoomTextToClean.style.opacity = '0';
 
-    // إزالة عناصر التكبير
     if (zoomPartToClean) zoomPartToClean.remove();
     if (zoomTextToClean) zoomTextToClean.remove();
     if (zoomBgToClean) zoomBgToClean.remove();
@@ -157,9 +155,7 @@ window.onload = function() {
     cleanupHover();
     activeState.rect = rect;
 
-    // الآن نكبر إلى الضعف كما طلبت
-    const scale = 2.0;
-
+    const scale = 2.0; // نكبر للضعف كما طلبتي
     const x = parseFloat(rect.getAttribute('x'));
     const y = parseFloat(rect.getAttribute('y'));
     const width = parseFloat(rect.getAttribute('width'));
@@ -172,32 +168,33 @@ window.onload = function() {
     const centerY = absoluteY + height / 2;
 
     rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
-    rect.style.transform = `scale(${scale})`;
+    rect.style.transform = `scale(${1.05})`; // نافذة بصريّة للمستطيل نفسه (خفيفة)
     rect.style.strokeWidth = '4px';
 
     const imageData = getGroupImage(rect);
     let zoomPartElement = null;
     if (imageData) {
-      // لم نستخدم clipPath هنا لأنك طلبت أن التكبير يخرج من حدود المستطيل الأساسي
+      // لا ننشئ clipPath لكي يسمح للـ zoom-part بالخروج من حدود المستطيل
       const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
       zoomPart.setAttribute('href', imageData.src);
       zoomPart.setAttribute('width', imageData.width);
       zoomPart.setAttribute('height', imageData.height);
       zoomPart.setAttribute('class', 'zoom-part');
-      // ضع الصورة في نفس مكان المجموعة
+
+      // وضع الصورة بنفس مكان المجموعة ليتطابق الإحداثي عند التكبير
       const groupTransform = imageData.group.getAttribute('transform');
       const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
       const groupX = match ? parseFloat(match[1]) : 0;
       const groupY = match ? parseFloat(match[2]) : 0;
       zoomPart.setAttribute('x', groupX);
       zoomPart.setAttribute('y', groupY);
+
+      // اظهرها واعمل تكبير حول مركز المستطيل (سيخرج من الحدود لعدم وجود clip)
       zoomPart.style.opacity = 0;
-      zoomPart.style.pointerEvents = 'none';
       mainSvg.appendChild(zoomPart);
       activeState.zoomPart = zoomPart;
-
-      // نضع نقطة التكبير origin إلى مركز صندوق الـ rect حتى يكبر ويخرج
       zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+      // تطبيق التحويل داخل style ليقوم بالتكبير من المركز
       zoomPart.style.transform = `scale(${scale})`;
       zoomPart.style.opacity = 1;
       zoomPartElement = zoomPart;
@@ -212,15 +209,14 @@ window.onload = function() {
       activeState.baseText = baseText;
 
       const zoomText = baseText.cloneNode(true);
-      const rectFullText = rect.getAttribute('data-full-text') || baseText.getAttribute('data-original-text');
-      zoomText.textContent = rectFullText;
-      zoomText.removeAttribute('data-original-text');
-      while (zoomText.firstChild) { zoomText.removeChild(zoomText.firstChild); }
+      const rectFullText = rect.getAttribute('data-full-text') || baseText.getAttribute('data-original-text') || baseText.textContent;
+      // remove children and set single text
+      while (zoomText.firstChild) zoomText.removeChild(zoomText.firstChild);
       zoomText.textContent = rectFullText;
 
-      // حجم النص يصبح ضعف النص الأساسي كما طلبت
+      // تكبير النص ×2 كما طلبتي
       const baseFont = parseFloat(baseText.style.fontSize) || parseFloat(window.getComputedStyle(baseText).fontSize) || 12;
-      zoomText.style.fontSize = (baseFont * 2.0) + 'px';
+      zoomText.style.fontSize = (baseFont * 2) + 'px';
       zoomText.style.fill = 'white';
       zoomText.style.pointerEvents = 'none';
       zoomText.style.userSelect = 'none';
@@ -228,25 +224,29 @@ window.onload = function() {
       zoomText.setAttribute('text-anchor', 'middle');
       zoomText.setAttribute('class', 'rect-label zoom-text');
 
-      // نضع النص مبدئياً ثم نضيف الخلفية السوداء بعرض المستطيل الأساسي والحافة العلوية ملامسة
-      // ثم نضبط موضع النص داخلياً بحيث يظهر في الجزء العلوي داخل ذلك المستطيل الصغير.
+      // سنضع النص أفقياً في منتصف المستطيل الأساسي (عرض الخلفية يساوي عرض المستطيل)
+      const textX = absoluteX + width / 2;
+      // أضف النص أولاً ثم نحسب ثم نضيف الخلفية القصيرة في الأعلى
+      zoomText.setAttribute('x', textX);
+      // مؤقتاً ضع y لتتم إضافته إلى DOM
+      zoomText.setAttribute('y', absoluteY + 10);
       mainSvg.appendChild(zoomText);
       activeState.zoomText = zoomText;
 
-      // حساب وإضافة الخلفية طبق المواصفات المطلوبة
+      // انتظر إطار لقياس البوكس ثم نرسم الخلفية بالعرض الكامل للمستطيل وبحافة علوية تلامس المستطيل الأساسي
       requestAnimationFrame(() => {
         try {
           const bbox = zoomText.getBBox();
           const fontSizePx = parseFloat(zoomText.style.fontSize) || (bbox.height || 12);
           const padding = fontSizePx * 0.18;
 
-          // ارتفاع الخلفية: نريده قصيرًا (جزء علوي فقط)
-          const minBgHeight = Math.max(Math.round(fontSizePx * 0.9), 14); // على الأقل تقريباً ارتفاع سطر
-          const maxBgHeight = Math.max(Math.round(height * 0.28), minBgHeight); // لا تزيد عن نسبة من ارتفاع المستطيل
+          // ارتفاع الخلفية: صغير (جزء علوي فقط) — بين حد أدنى وحد أقصى
+          const minBgHeight = Math.max(Math.round(fontSizePx * 1.0), 14);
+          const maxBgHeight = Math.max(Math.round(height * 0.28), minBgHeight);
           const desiredBgHeight = Math.round(fontSizePx + padding * 2);
           const bgHeight = Math.max(minBgHeight, Math.min(maxBgHeight, desiredBgHeight));
 
-          // عرض الخلفية = عرض المستطيل الأساسي، والحافة العلوية تتطابق مع الحافة العلوية للمستطيل
+          // الخلفية تمتد بعرض المستطيل الأساسي، وتلامس الحافة العلوية
           const bgX = absoluteX;
           const bgY = absoluteY;
           const bgWidth = width;
@@ -266,33 +266,24 @@ window.onload = function() {
           mainSvg.insertBefore(bg, zoomText);
           activeState.zoomBg = bg;
 
-          // ضبط موضع النص داخل الخلفية: منتصف أفقيًا، وموضع رأسي قريب من المنتصف العلوي للغلاف
-          const textX = bgX + bgWidth / 2;
-          // نضع النص بحيث يكون في منتصف عمودي نسبيًا داخل الخلفية (قليلًا للأسفل من الحافة العليا)
+          // اضبط y للنص ليكون في منتصف الخلفية تقريباً (قريب من الأعلى كما طلبت)
           const textY = bgY + Math.round(bgHeight * 0.62);
-
-          zoomText.setAttribute('x', textX);
           zoomText.setAttribute('y', textY);
-
-          // نجعل النص أيضاً يكبر بالتحويل (حتى يتطابق مع التكبير العام)
-          // لكن نستخدم التحويل بحيث يبقى موقعه مضبوطًا (transformOrigin يتعامل مع الإحداثيات المطلقة)
-          zoomText.style.transformOrigin = `${textX}px ${textY}px`;
-          zoomText.style.transform = `scale(${1})`; // حجم النص مضبوط عن طريق fontSize، transform هنا نترك 1
         } catch (e) {
           console.warn('unable to measure zoomText bbox', e);
         }
       });
     }
 
-    // تأثير glow متحرك
+    // تأثير الـ glow (متحرك)
     let hue = 0;
     activeState.animationId = setInterval(() => {
       hue = (hue + 10) % 360;
-      const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
+      const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
       rect.style.filter = glow;
-      if (zoomPartElement) { zoomPartElement.style.filter = glow; }
-      if (activeState.zoomText) { activeState.zoomText.style.filter = glow; }
-      if (activeState.zoomBg) { activeState.zoomBg.style.filter = glow; }
+      if (zoomPartElement) zoomPartElement.style.filter = glow;
+      if (activeState.zoomText) activeState.zoomText.style.filter = glow;
+      if (activeState.zoomBg) activeState.zoomBg.style.filter = glow;
     }, 100);
   }
 
