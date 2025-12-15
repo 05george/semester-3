@@ -24,7 +24,7 @@ display:block;
     stroke: transparent;
     stroke-width: 2px;
     transform-origin: center center;
-    transition: ease, filter 0.3s ease, stroke-width 0.3s ease;
+    transition: filter 0.3s ease, stroke-width 0.3s ease;
     cursor: pointer; 
 }
 .q { stroke: red; }               /*الأسئله*🔴*/
