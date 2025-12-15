@@ -1,52 +1,6 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خريطة الكلية التفاعلية</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        #main-svg { opacity: 0; }
-        
-        .rect-label {
-            opacity: 1;
-            transition: opacity .2s ease;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="js-toggle-container">
-        <label class="switch">
-            <input type="checkbox" id="js-toggle" checked>
-            <span class="slider round"></span>
-        </label>
-        <span id="toggle-label">تفعيل التفاعل (Zoom)</span>
-    </div>
-
-    <div id="loading-overlay">
-        <div id="loading-content">
-            
-            <img id="splash-image" src="image/o.webp" alt="شعار جامعة ميريت والمستوى" /> 
-            
-            <h1 style="color: #ffcc00; margin-bottom: 5px; margin-top: 15px;">خريطة الكلية التفاعلية</h1>
-            
-            <div id="loader-lights">
-                <div class="light-bulb" id="bulb-1"></div>
-                <div class="light-bulb" id="bulb-2"></div>
-                <div class="light-bulb" id="bulb-3"></div>
-                <div class="light-bulb" id="bulb-4"></div>
-            </div>
-            
-            <p id="loading-text">نُجهز لك بيئة العمل الآن...</p>
-        </div>
-    </div>
-
-    <div id="scroll-container">
-        
-        <svg id="main-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" 
+<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Interactive Map</title><link rel="stylesheet" href="style.css"><style>#main-svg{opacity:0;}.rect-label{opacity:1;transition:opacity .2s ease;}</style></head><body><div id="js-toggle-container" class="right"><span id="move-toggle" title="Move Toggle Position">↔️</span><label class="switch"><input type="checkbox" id="js-toggle" checked><span class="slider round"></span></label><span id="toggle-label">Interaction Enabled</span></div><div id="loading-overlay"><div id="loading-content"><img id="splash-image" src="image/154884.jpg" alt="Merit University Level 2 Group B Section 15" /><h1 style="color: #ffcc00; margin-bottom: 5px; margin-top: 15px;">Interactive College Map</h1><div id="loader-lights"><div class="light-bulb" id="bulb-1"></div><div class="light-bulb" id="bulb-2"></div><div class="light-bulb" id="bulb-3"></div><div class="light-bulb" id="bulb-4"></div></div><p id="loading-text">Preparing the environment...</p></div></div><div id="scroll-container"><svg id="main-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet"><defs></defs>        <svg id="main-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" 
              xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
-            
+
             <defs></defs>
 <!-- الاسبوع الأول -->
 <g transform="translate(0,0)">
@@ -152,11 +106,4 @@
     <image data-src="image/13.webp" width="1024" height="2454" />
 </g>
 
-</svg>
-   
-    </div>
-
-    <script src="script.js"></script>
-
-</body>
-</html>
+</svg>></div><script src="script.js"></script></body></html>
