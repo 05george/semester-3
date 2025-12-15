@@ -128,30 +128,14 @@ function cleanupHover() {
         zoomTextToClean.style.opacity = '0';
     }
 
-    function removeZoomElements() {
-        rectToClean.removeEventListener('transitionend', removeZoomElements);
-        
-        if (zoomPartToClean) zoomPartToClean.remove(); 
-        
-        const currentClip = document.getElementById(clipPathIdToClean);
-        if (currentClip) currentClip.remove();
+    if (zoomPartToClean) zoomPartToClean.remove(); 
+    
+    const currentClip = document.getElementById(clipPathIdToClean);
+    if (currentClip) currentClip.remove();
 
-        if (zoomTextToClean) zoomTextToClean.remove();
-        
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
-    }
+    if (zoomTextToClean) zoomTextToClean.remove();
     
-    if (rectToClean.style.transitionDuration === '0s') {
-        removeZoomElements();
-    } else {
-        rectToClean.addEventListener('transitionend', removeZoomElements);
-    }
-    
-    setTimeout(() => {
-        if (activeState.rect === rectToClean) {
-            removeZoomElements();
-        }
-    }, 500);
+    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
 function startHover() {
