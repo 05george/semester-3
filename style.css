@@ -176,3 +176,21 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+/* ======================================= */
+/* تنسيق صورة الترحيب الجديدة */
+/* ======================================= */
+#splash-image {
+    max-width: 85%; /* خليها تاخد 85% من عرض الشاشة كحد أقصى */
+    height: auto;
+    display: block;
+    margin: 0 auto; /* للتوسيط الأفقي للصورة */
+    margin-bottom: 30px; /* مسافة كافية بين الصورة وعنوان الخريطة */
+    border-radius: 8px; 
+}
+
+/* ممكن تعدل تنسيق الـ h1 كمان عشان يتشال الـ margin-top: 15px; اللي حطيناه في الـ HTML */
+#loading-content h1 {
+    color: #ffcc00;
+    margin-top: 5px; /* مسافة صغيرة بعد الصورة */
+    margin-bottom: 5px;
+}
