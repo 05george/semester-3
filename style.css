@@ -17,6 +17,7 @@ overflow-y:hidden;
 height:100%;
 width:auto;
 display:block;
+transition: opacity 0.3s ease-out; /* حركة إظهار الخريطة */
 }
 
 .image-mapper-shape {
@@ -37,6 +38,9 @@ display:block;
 pointer-events:none;
 }
 
+/* ======================================= */
+/* تنسيق شاشة الترحيب والمصابيح */
+/* ======================================= */
 #loading-overlay{
 position:fixed;
 inset:0;
@@ -45,11 +49,16 @@ display:flex;
 align-items:center;
 justify-content:center;
 z-index:9999;
+transition: opacity 0.3s ease-out; /* حركة إخفاء الشاشة */
+}
+
+#loading-content{
+    text-align: center;
 }
 
 #loading-text{
 color:white;
-font-size:32px;
+font-size:24px;
 font-family:Arial,Helvetica,sans-serif;
 }
 
@@ -57,6 +66,7 @@ font-family:Arial,Helvetica,sans-serif;
 #loading-text{
 pointer-events:none;
 }
+
 /* تنسيق المصابيح نفسها */
 #loader-lights {
     display: flex;
@@ -85,4 +95,84 @@ pointer-events:none;
         0 0 30px #ff9900, 
         0 0 40px #ff6600;
     border-color: #ff9900;
+}
+
+
+/* ======================================= */
+/* تنسيق مفتاح التحكم (Toggle Switch) */
+/* ======================================= */
+
+#js-toggle-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000; 
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white; 
+    font-family: 'Arial', sans-serif;
+    background-color: rgba(0, 0, 0, 0.5); 
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 45px; 
+    height: 25px; 
+}
+
+/* إخفاء التشيك بوكس الأصلي */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* تصميم الـ Slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 17px;
+    width: 17px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+/* حالة السويتش وهو ON */
+input:checked + .slider {
+    background-color: #2196F3; 
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+/* حركة الدائرة لما يكون ON */
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* شكل الـ Round */
+.slider.round {
+    border-radius: 25px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
 }
