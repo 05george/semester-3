@@ -57,3 +57,32 @@ font-family:Arial,Helvetica,sans-serif;
 #loading-text{
 pointer-events:none;
 }
+/* تنسيق المصابيح نفسها */
+#loader-lights {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* المسافة بين المصابيح */
+    margin-bottom: 20px;
+}
+
+.light-bulb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #333; /* لون المصباح وهو مطفي */
+    border: 2px solid #555;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease-in-out; /* عشان الإضاءة تبقى ناعمة */
+}
+
+/* حالة الإضاءة ON */
+.light-bulb.on {
+    background-color: #ffcc00; /* لون اللمبة وهي منورة (أصفر) */
+    /* تأثير الإضاءة - Glow */
+    box-shadow: 
+        0 0 10px #ffcc00, 
+        0 0 20px #ffcc00, 
+        0 0 30px #ff9900, 
+        0 0 40px #ff6600;
+    border-color: #ff9900;
+}
