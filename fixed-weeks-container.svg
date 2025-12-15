@@ -1,14 +1,14 @@
 <!-- الاسبوع الأول -->
 <g transform="translate(0,0)">
-<image data-src="image/1.webp" x="0" y="0" width="1024" height="2454" />
+<image data-src="https://05george.github.io/semester-3/image/1.webp" x="0" y="0" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثاني -->
 <g transform="translate(1024,0)">
-<image data-src="image/2.png" width="1024" height="2454" />
+<image data-src="https://05george.github.io/semester-3/image/2.png" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثالث -->
 <g transform="translate(2048,0)">
-<image data-src="image/3.png" width="1024" height="2454" />
+<image data-src="https://05george.github.io/semester-3/image/3.png" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الرابع -->
 <g transform="translate(3072,0)">
