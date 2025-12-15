@@ -136,12 +136,12 @@ function cleanupHover() {
     }
 
     if (zoomPartToClean) zoomPartToClean.remove(); 
-    
+
     const currentClip = document.getElementById(clipPathIdToClean);
     if (currentClip) currentClip.remove();
 
     if (zoomTextToClean) zoomTextToClean.remove();
-    
+
     Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
@@ -240,7 +240,7 @@ function startHover() {
     activeState.animationId = setInterval(() => {
         hue = (hue + 10) % 360;
         const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
-        
+
         rect.style.filter = glow;
 
         if (zoomPartElement) {
@@ -281,7 +281,7 @@ function attachHover(rect, i) {
 
     rect.addEventListener('mouseover', handleMouseOver);
     rect.addEventListener('mouseout', handleMouseOut);
-    
+
     rect.addEventListener('click', handleLinkOpen); 
 
     rect.addEventListener('touchstart', function(event) {
@@ -315,7 +315,7 @@ const MINIMUM_DISPLAY_TIME_MS = 1000;
 
 function updateLoader() {
     const percent = Math.round((loadedCount / totalCount) * 100);
-    
+
     if (loadingText) loadingText.textContent = `نُجهز لك بيئة العمل الآن...`;
 
     if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
