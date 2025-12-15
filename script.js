@@ -316,7 +316,8 @@ function updateLoader() {
 function finishLoading() {
     if (loadingOverlay) {
         loadingOverlay.style.opacity = 0;
-        setTimeout(() => { loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; }, 300);
+        loadingOverlay.style.display = 'none';
+        mainSvg.style.opacity = 1;
     }
 }
 
