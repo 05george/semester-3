@@ -83,11 +83,16 @@ const scaleFactor=0.12;
 let fontSize=rectWidth*scaleFactor;
 fontSize=Math.max(minFont,Math.min(maxFont,fontSize));
 
+// ** التعديلات هنا للرجوع للموضع الأصلي والحجم الصغير للخلفية **
+const TEXT_BACKGROUND_PADDING = 3; // بادئ حول النص داخل الشريط الأسود
+const TEXT_BOX_HEIGHT = 1.4 * fontSize; // ارتفاع حوالي سطر ونصف
+
 const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
 foreignObject.setAttribute('x', rectX + 1); 
-foreignObject.setAttribute('y', rectY + 1);
+// الإزاحة العلوية: مسافة بادئة + (مسافة لتجنب ارتفاع النص نفسه)
+foreignObject.setAttribute('y', rectY + (fontSize * 0.2)); 
 foreignObject.setAttribute('width', rectWidth - 2);
-foreignObject.setAttribute('height', rectHeight - 2);
+foreignObject.setAttribute('height', rectHeight - 2); // نستخدم ارتفاع المستطيل الأساسي ونعتمد على الـ CSS للتحكم في الشريط الأسود
 foreignObject.setAttribute('class', 'rect-label');
 foreignObject.setAttribute('data-original-text', textContent);
 
@@ -96,16 +101,25 @@ htmlDiv.style.width = '100%';
 htmlDiv.style.height = '100%';
 htmlDiv.style.backgroundColor = 'black'; 
 htmlDiv.style.color = 'white';
+// استخدام Flexbox لكن مع محاذاة النص للأعلى بدلاً من المنتصف
 htmlDiv.style.display = 'flex';
-htmlDiv.style.alignItems = 'center';
 htmlDiv.style.justifyContent = 'center';
+htmlDiv.style.alignItems = 'flex-start'; // محاذاة النص للأعلى
 htmlDiv.style.textAlign = 'center';
 htmlDiv.style.fontSize = fontSize + 'px';
-htmlDiv.style.padding = '2px';
+htmlDiv.style.paddingTop = '1px'; // بادئ علوي بسيط داخل الشريط الأسود
 htmlDiv.style.borderRadius = '2px';
 htmlDiv.style.overflow = 'hidden';
 
-htmlDiv.textContent = textContent;
+// إضافة الشريط الأسود الأصغر حجماً خلف النص فقط
+const textWrapper = document.createElement('span');
+textWrapper.textContent = textContent;
+textWrapper.style.backgroundColor = 'black'; // الخلفية السوداء المعتمة
+textWrapper.style.padding = `${TEXT_BACKGROUND_PADDING}px`; // بادئ صغير حول النص داخل الشريط
+textWrapper.style.lineHeight = '1.2'; // لضبط ارتفاع السطر
+textWrapper.style.boxDecorationBreak = 'clone'; // للحفاظ على الشريط الأسود مع الالتفاف
+
+htmlDiv.appendChild(textWrapper);
 foreignObject.appendChild(htmlDiv);
 
 rect.parentNode.insertBefore(foreignObject, rect); 
