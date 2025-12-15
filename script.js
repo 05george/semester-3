@@ -6,6 +6,8 @@ const clipDefs = mainSvg.querySelector('defs');
 const loadingOverlay = document.getElementById('loading-overlay'); 
 const loadingText = document.getElementById('loading-text');
 
+// ... (باقي الـ activeState و الدوال المساعدة زي debounce و getCumulativeTranslate بدون تغيير)
+
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300; 
 
@@ -290,14 +292,16 @@ const svgImages = Array.from(mainSvg.querySelectorAll('image'));
 const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
 let loadedCount = 0;
 const totalCount = urls.length;
+// 💡 ده متغير جديد لتسجيل وقت البدء 💡
+const startTime = Date.now();
+const MINIMUM_DISPLAY_TIME_MS = 1000; // ثانية واحدة كحد أدنى للعرض
 
 function updateLoader() {
     const percent = Math.round((loadedCount / totalCount) * 100);
     
-    // مش هنعرض النسبة المئوية هنا تاني، بس هنخلي النص موجود لو حبيت تعرض رسالة ثابتة
-    if (loadingText) loadingText.textContent = `Loading Map...`;
+    // سيب النص ده ثابت كجزء من رسالة الترحيب
+    if (loadingText) loadingText.textContent = `نُجهز لك بيئة العمل الآن...`;
 
-    // 💡 تفعيل المصابيح بناءً على الـ 25% 💡
     if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
     if (percent >= 50) document.getElementById('bulb-2').classList.add('on');
     if (percent >= 75) document.getElementById('bulb-3').classList.add('on');
@@ -306,9 +310,17 @@ function updateLoader() {
 
 function finishLoading() {
     if (loadingOverlay) {
-        loadingOverlay.style.opacity = 0;
-        loadingOverlay.style.display = 'none';
-        mainSvg.style.opacity = 1;
+        const timeElapsed = Date.now() - startTime;
+        const remainingTime = Math.max(0, MINIMUM_DISPLAY_TIME_MS - timeElapsed);
+
+        // 💡 بنستخدم remainingTime عشان نضمن إن الشاشة ظاهرة لـ 1000 مللي ثانية على الأقل 💡
+        setTimeout(() => { 
+            loadingOverlay.style.opacity = 0;
+            setTimeout(() => { 
+                loadingOverlay.style.display = 'none'; 
+                mainSvg.style.opacity = 1; 
+            }, 300); // 300ms عشان الـ fade out يتم بسلاسة
+        }, remainingTime);
     }
 }
 
