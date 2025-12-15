@@ -17,6 +17,7 @@ html,body{
   height:100%;
   width:auto;
   display:block;
+  transition:opacity .3s ease;
 }
 
 .image-mapper-shape{
@@ -43,18 +44,5 @@ html,body{
 }
 
 #splash-image{
-  max-width:85%;
-  border-radius:8px;
-}
-
-#js-toggle-container{
-  position:fixed;
-  right:20px;
-  top:20px;
-  z-index:10000;
-  background:rgba(0,0,0,.6);
-  padding:10px;
-  border-radius:6px;
-  color:white;
-  font-family:Arial;
+  max-width:80%;
 }
