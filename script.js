@@ -55,11 +55,11 @@ scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
     }
-    
+
     if (activeState.rect && !isTouchDevice) {
         debouncedCleanupHover();
     }
-    
+
     if (activeState.rect && isTouchDevice) {
         if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) { 
              activeState.isScrolling = true;
@@ -117,7 +117,7 @@ function cleanupHover() {
 
     const currentClip = document.getElementById(activeState.clipPathId);
     if (currentClip) currentClip.remove();
-    
+
     Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
 }
 
@@ -126,10 +126,6 @@ function startHover() {
     if (activeState.rect === rect) return;
     cleanupHover();
     activeState.rect = rect;
-
-    const i = rect.getAttribute('data-index') || Date.now();
-    const clipPathId = `clip-${i}-${Date.now()}`;
-    activeState.clipPathId = clipPathId;
 
     const scale = 1.1;
     const x = parseFloat(rect.getAttribute('x'));
@@ -140,56 +136,55 @@ function startHover() {
     const cumulative = getCumulativeTranslate(rect);
     const absoluteX = x + cumulative.x;
     const absoluteY = y + cumulative.y;
-
-    const imageData = getGroupImage(rect);
-    if (!imageData) return;
-
-    const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
-    clip.setAttribute('id', clipPathId);
-    const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    clipRect.setAttribute('x', absoluteX);
-    clipRect.setAttribute('y', absoluteY);
-    clipRect.setAttribute('width', width);
-    clipRect.setAttribute('height', height);
-    clipDefs.appendChild(clip).appendChild(clipRect);
-
-    const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-    zoomPart.setAttribute('href', imageData.src);
-    zoomPart.setAttribute('width', imageData.width);
-    zoomPart.setAttribute('height', imageData.height);
-    zoomPart.setAttribute('class', 'zoom-part');
-    zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
-
-    const groupTransform = imageData.group.getAttribute('transform');
-    const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
-    const groupX = match ? parseFloat(match[1]) : 0;
-    const groupY = match ? parseFloat(match[2]) : 0;
-
-    zoomPart.setAttribute('x', groupX);
-    zoomPart.setAttribute('y', groupY);
-    zoomPart.style.opacity = 0;
-    mainSvg.appendChild(zoomPart);
-    activeState.zoomPart = zoomPart;
-
     const centerX = absoluteX + width / 2;
     const centerY = absoluteY + height / 2;
 
     rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
     rect.style.transform = `scale(${scale})`;
     rect.style.strokeWidth = '4px';
-    zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-    zoomPart.style.transform = `scale(${scale})`;
-    zoomPart.style.opacity = 1;
 
-    let hue = 0;
-    activeState.animationId = setInterval(() => {
-        hue = (hue + 10) % 360;
-        const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
-        rect.style.filter = glow;
-        zoomPart.style.filter = glow;
-        if (activeState.zoomText) activeState.zoomText.style.filter = glow;
-    }, 100);
-    
+    const imageData = getGroupImage(rect);
+    let zoomPartElement = null;
+
+    if (imageData) {
+        const i = rect.getAttribute('data-index') || Date.now();
+        const clipPathId = `clip-${i}-${Date.now()}`;
+        activeState.clipPathId = clipPathId;
+
+        const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+        clip.setAttribute('id', clipPathId);
+        const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        clipRect.setAttribute('x', absoluteX);
+        clipRect.setAttribute('y', absoluteY);
+        clipRect.setAttribute('width', width);
+        clipRect.setAttribute('height', height);
+        clipDefs.appendChild(clip).appendChild(clipRect);
+
+        const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        zoomPart.setAttribute('href', imageData.src);
+        zoomPart.setAttribute('width', imageData.width);
+        zoomPart.setAttribute('height', imageData.height);
+        zoomPart.setAttribute('class', 'zoom-part');
+        zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
+
+        const groupTransform = imageData.group.getAttribute('transform');
+        const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
+        const groupX = match ? parseFloat(match[1]) : 0;
+        const groupY = match ? parseFloat(match[2]) : 0;
+
+        zoomPart.setAttribute('x', groupX);
+        zoomPart.setAttribute('y', groupY);
+        zoomPart.style.opacity = 0;
+        mainSvg.appendChild(zoomPart);
+        activeState.zoomPart = zoomPart;
+
+        zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+        zoomPart.style.transform = `scale(${scale})`;
+        zoomPart.style.opacity = 1;
+
+        zoomPartElement = zoomPart;
+    }
+
     let baseText = rect.nextElementSibling;
     if (baseText && !baseText.matches('text.rect-label')) {
         baseText = null;
@@ -214,6 +209,22 @@ function startHover() {
         mainSvg.appendChild(zoomText);
         activeState.zoomText = zoomText;
     }
+
+    let hue = 0;
+    activeState.animationId = setInterval(() => {
+        hue = (hue + 10) % 360;
+        const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
+        
+        rect.style.filter = glow;
+
+        if (zoomPartElement) {
+            zoomPartElement.style.filter = glow;
+        }
+
+        if (activeState.zoomText) {
+            activeState.zoomText.style.filter = glow;
+        }
+    }, 100);
 }
 
 function stopHover() {
@@ -232,7 +243,7 @@ function handleLinkOpen(event) {
 
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
-    
+
     if (!isTouchDevice) {
         rect.addEventListener('mouseover', startHover);
         rect.addEventListener('mouseout', stopHover);
@@ -243,7 +254,7 @@ function attachHover(rect, i) {
         activeState.touchStartTime = Date.now(); 
         activeState.initialScrollLeft = scrollContainer.scrollLeft;
         activeState.isScrolling = false;
-        
+
         if (!isTouchDevice) startHover.call(this);
     });
 
@@ -294,10 +305,10 @@ urls.forEach((url, index) => {
 
 document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     const href = rect.getAttribute('data-href') || '';
-    
+
     const fileName = href.split('/').pop().split('#')[0] || '';
     const textContent = fileName;
-    
+
     const rectWidth = parseFloat(rect.getAttribute('width'));
     const rectX = parseFloat(rect.getAttribute('x'));
     const rectY = parseFloat(rect.getAttribute('y'));
@@ -314,7 +325,7 @@ document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
     text.style.fontSize = fontSize + 'px';
     text.style.fill = 'white';
     text.style.pointerEvents = 'none';
-    
+
     text.setAttribute('class', 'rect-label');
     rect.parentNode.insertBefore(text, rect.nextSibling);
 });
