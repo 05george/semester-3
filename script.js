@@ -6,7 +6,8 @@ const clipDefs = mainSvg.querySelector('defs');
 const loadingOverlay = document.getElementById('loading-overlay'); 
 const loadingText = document.getElementById('loading-text');
 
-// ... (باقي الـ activeState و الدوال المساعدة زي debounce و getCumulativeTranslate بدون تغيير)
+const jsToggle = document.getElementById('js-toggle');
+let interactionEnabled = jsToggle.checked;
 
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300; 
@@ -48,6 +49,8 @@ updateDynamicSizes();
 
 
 const debouncedCleanupHover = debounce(function() {
+    if (!interactionEnabled || !activeState.rect) return; 
+
     if (activeState.rect) {
         cleanupHover();
     }
@@ -57,6 +60,8 @@ scrollContainer.addEventListener('scroll', function () {
     if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
         this.scrollLeft = window.MAX_SCROLL_LEFT;
     }
+
+    if (!interactionEnabled) return; 
 
     if (activeState.rect && !isTouchDevice) {
         debouncedCleanupHover();
@@ -141,6 +146,8 @@ function cleanupHover() {
 }
 
 function startHover() {
+    if (!interactionEnabled) return; 
+
     const rect = this;
     if (activeState.rect === rect) return;
     cleanupHover();
@@ -247,6 +254,8 @@ function startHover() {
 }
 
 function stopHover() {
+    if (!interactionEnabled) return; 
+
     if (activeState.rect === this) cleanupHover();
 }
 
@@ -263,13 +272,20 @@ function handleLinkOpen(event) {
 function attachHover(rect, i) {
     rect.setAttribute('data-index', i);
 
-    if (!isTouchDevice) {
-        rect.addEventListener('mouseover', startHover);
-        rect.addEventListener('mouseout', stopHover);
-        rect.addEventListener('click', handleLinkOpen); 
+    function handleMouseOver() {
+        if (interactionEnabled) startHover.call(rect);
+    }
+    function handleMouseOut() {
+        if (interactionEnabled) stopHover.call(rect);
     }
 
+    rect.addEventListener('mouseover', handleMouseOver);
+    rect.addEventListener('mouseout', handleMouseOut);
+    
+    rect.addEventListener('click', handleLinkOpen); 
+
     rect.addEventListener('touchstart', function(event) {
+        if (!interactionEnabled) return;
         activeState.touchStartTime = Date.now(); 
         activeState.initialScrollLeft = scrollContainer.scrollLeft;
         activeState.isScrolling = false;
@@ -278,6 +294,8 @@ function attachHover(rect, i) {
     });
 
     rect.addEventListener('touchend', function(event) {
+        if (!interactionEnabled) return;
+
         const timeElapsed = Date.now() - activeState.touchStartTime;
 
         if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) { 
@@ -292,14 +310,12 @@ const svgImages = Array.from(mainSvg.querySelectorAll('image'));
 const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
 let loadedCount = 0;
 const totalCount = urls.length;
-// 💡 ده متغير جديد لتسجيل وقت البدء 💡
 const startTime = Date.now();
-const MINIMUM_DISPLAY_TIME_MS = 1000; // ثانية واحدة كحد أدنى للعرض
+const MINIMUM_DISPLAY_TIME_MS = 1000;
 
 function updateLoader() {
     const percent = Math.round((loadedCount / totalCount) * 100);
     
-    // سيب النص ده ثابت كجزء من رسالة الترحيب
     if (loadingText) loadingText.textContent = `نُجهز لك بيئة العمل الآن...`;
 
     if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
@@ -313,13 +329,12 @@ function finishLoading() {
         const timeElapsed = Date.now() - startTime;
         const remainingTime = Math.max(0, MINIMUM_DISPLAY_TIME_MS - timeElapsed);
 
-        // 💡 بنستخدم remainingTime عشان نضمن إن الشاشة ظاهرة لـ 1000 مللي ثانية على الأقل 💡
         setTimeout(() => { 
             loadingOverlay.style.opacity = 0;
             setTimeout(() => { 
                 loadingOverlay.style.display = 'none'; 
                 mainSvg.style.opacity = 1; 
-            }, 300); // 300ms عشان الـ fade out يتم بسلاسة
+            }, 300); 
         }, remainingTime);
     }
 }
@@ -392,5 +407,18 @@ const rootObserver = new MutationObserver(mutations => {
     });
 });
 rootObserver.observe(mainSvg, { childList: true, subtree: true });
+
+
+jsToggle.addEventListener('change', function() {
+    interactionEnabled = this.checked;
+    const label = document.getElementById('toggle-label');
+
+    if (interactionEnabled) {
+        label.textContent = 'تفعيل التفاعل (Zoom)';
+    } else {
+        label.textContent = 'إلغاء التفاعل (Zoom)';
+        cleanupHover(); 
+    }
+});
 
 };
