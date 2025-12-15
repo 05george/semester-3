@@ -293,8 +293,15 @@ const totalCount = urls.length;
 
 function updateLoader() {
     const percent = Math.round((loadedCount / totalCount) * 100);
-    const displayedPercent = [0, 25, 50, 75, 100].reduce((prev, curr) => curr <= percent ? curr : prev, 0);
-    if (loadingText) loadingText.textContent = `Loading Map... ${displayedPercent}%`;
+    
+    // مش هنعرض النسبة المئوية هنا تاني، بس هنخلي النص موجود لو حبيت تعرض رسالة ثابتة
+    if (loadingText) loadingText.textContent = `Loading Map...`;
+
+    // 💡 تفعيل المصابيح بناءً على الـ 25% 💡
+    if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
+    if (percent >= 50) document.getElementById('bulb-2').classList.add('on');
+    if (percent >= 75) document.getElementById('bulb-3').classList.add('on');
+    if (percent === 100) document.getElementById('bulb-4').classList.add('on');
 }
 
 function finishLoading() {
