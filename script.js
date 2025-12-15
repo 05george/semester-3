@@ -104,21 +104,54 @@ function getGroupImage(element) {
 
 function cleanupHover() {
     if (!activeState.rect) return;
-    if (activeState.animationId) clearInterval(activeState.animationId);
-    activeState.rect.style.transform = 'scale(1)';
-    activeState.rect.style.filter = 'none';
-    activeState.rect.style.strokeWidth = '2px';
-    if (activeState.zoomPart) activeState.zoomPart.remove();
-    if (activeState.zoomText) activeState.zoomText.remove();
 
-    if (activeState.baseText) {
-        activeState.baseText.style.opacity = '1';
+    const rectToClean = activeState.rect;
+    const clipPathIdToClean = activeState.clipPathId;
+    const zoomPartToClean = activeState.zoomPart;
+    const zoomTextToClean = activeState.zoomText;
+    const baseTextToClean = activeState.baseText;
+    const animationIdToClean = activeState.animationId;
+
+    if (animationIdToClean) clearInterval(animationIdToClean);
+    rectToClean.style.filter = 'none';
+    if (zoomPartToClean) zoomPartToClean.style.filter = 'none';
+    if (zoomTextToClean) zoomTextToClean.style.filter = 'none';
+
+    rectToClean.style.transform = 'scale(1)';
+    rectToClean.style.strokeWidth = '2px';
+    if (zoomPartToClean) zoomPartToClean.style.transform = 'scale(1)';
+
+    if (baseTextToClean) {
+        baseTextToClean.style.opacity = '1';
+    }
+    if (zoomTextToClean) {
+        zoomTextToClean.style.opacity = '0';
     }
 
-    const currentClip = document.getElementById(activeState.clipPathId);
-    if (currentClip) currentClip.remove();
+    function removeZoomElements() {
+        rectToClean.removeEventListener('transitionend', removeZoomElements);
+        
+        if (zoomPartToClean) zoomPartToClean.remove(); 
+        
+        const currentClip = document.getElementById(clipPathIdToClean);
+        if (currentClip) currentClip.remove();
 
-    Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
+        if (zoomTextToClean) zoomTextToClean.remove();
+        
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 });
+    }
+    
+    if (rectToClean.style.transitionDuration === '0s') {
+        removeZoomElements();
+    } else {
+        rectToClean.addEventListener('transitionend', removeZoomElements);
+    }
+    
+    setTimeout(() => {
+        if (activeState.rect === rectToClean) {
+            removeZoomElements();
+        }
+    }, 500);
 }
 
 function startHover() {
