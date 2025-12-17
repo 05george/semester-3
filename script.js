@@ -1,4 +1,4 @@
-window.onload = function () {
+window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -11,27 +11,20 @@ window.onload = function () {
     const TAP_THRESHOLD_MS = 300;
 
     const activeState = {
-        rect: null,
-        zoomPart: null,
-        zoomText: null,
-        baseText: null,
-        animationId: null,
-        clipPathId: null,
-        initialScrollLeft: 0,
-        isScrolling: false,
-        touchStartTime: 0
+        rect: null, zoomPart: null, zoomText: null, baseText: null,
+        animationId: null, clipPathId: null, initialScrollLeft: 0,
+        isScrolling: false, touchStartTime: 0
     };
 
     function debounce(func, delay) {
         let timeoutId;
-        return function () {
-            const context = this;
-            const args = arguments;
+        return function() {
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(context, args), delay);
-        }
+            timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+        };
     }
 
+    // =================== Dynamic ViewBox based on images ===================
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
@@ -42,22 +35,17 @@ window.onload = function () {
         mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
         window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
     }
-
     updateDynamicSizes();
 
-    const debouncedCleanupHover = debounce(function () {
+    const debouncedCleanupHover = debounce(function() {
         if (!interactionEnabled || !activeState.rect) return;
         cleanupHover();
     }, 50);
 
-    scrollContainer.addEventListener('scroll', function () {
-        if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
-            this.scrollLeft = window.MAX_SCROLL_LEFT;
-        }
+    scrollContainer.addEventListener('scroll', function() {
+        if (this.scrollLeft > window.MAX_SCROLL_LEFT) this.scrollLeft = window.MAX_SCROLL_LEFT;
         if (!interactionEnabled) return;
-        if (activeState.rect && !isTouchDevice) {
-            debouncedCleanupHover();
-        }
+        if (activeState.rect && !isTouchDevice) debouncedCleanupHover();
         if (activeState.rect && isTouchDevice) {
             if (Math.abs(this.scrollLeft - activeState.initialScrollLeft) > 5) {
                 activeState.isScrolling = true;
@@ -69,14 +57,11 @@ window.onload = function () {
     function getCumulativeTranslate(element) {
         let x = 0, y = 0;
         let current = element;
-        while (current && current.tagName !== 'svg') {
+        while(current && current.tagName !== 'svg') {
             const transformAttr = current.getAttribute('transform');
             if (transformAttr) {
                 const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (match) {
-                    x += parseFloat(match[1]);
-                    y += parseFloat(match[2]);
-                }
+                if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
             }
             current = current.parentNode;
         }
@@ -85,7 +70,7 @@ window.onload = function () {
 
     function getGroupImage(element) {
         let current = element;
-        while (current && current.tagName !== 'svg') {
+        while(current && current.tagName !== 'svg') {
             if (current.tagName === 'g') {
                 const images = [...current.children].filter(c => c.tagName === 'image');
                 if (images.length) {
@@ -105,32 +90,24 @@ window.onload = function () {
 
     function cleanupHover() {
         if (!activeState.rect) return;
-        const rectToClean = activeState.rect;
-        const clipPathIdToClean = activeState.clipPathId;
-        const zoomPartToClean = activeState.zoomPart;
-        const zoomTextToClean = activeState.zoomText;
-        const baseTextToClean = activeState.baseText;
-        const animationIdToClean = activeState.animationId;
-
-        if (animationIdToClean) clearInterval(animationIdToClean);
-        rectToClean.style.filter = 'none';
-        if (zoomPartToClean) zoomPartToClean.style.filter = 'none';
-        if (zoomTextToClean) zoomTextToClean.style.filter = 'none';
-        rectToClean.style.transform = 'scale(1)';
-        rectToClean.style.strokeWidth = '3px'; // مطابق للـ CSS الأساسي
-        if (zoomPartToClean) zoomPartToClean.style.transform = 'scale(1)';
-        if (baseTextToClean) baseTextToClean.style.opacity = '1';
-        if (zoomTextToClean) zoomTextToClean.style.opacity = '0';
-        if (zoomPartToClean) zoomPartToClean.remove();
-        const currentClip = document.getElementById(clipPathIdToClean);
-        if (currentClip) currentClip.remove();
-        if (zoomTextToClean) zoomTextToClean.remove();
-
-        Object.assign(activeState, {
-            rect: null, zoomPart: null, zoomText: null, baseText: null,
-            animationId: null, clipPathId: null, initialScrollLeft: 0,
-            isScrolling: false, touchStartTime: 0
-        });
+        const rect = activeState.rect;
+        const clipPathId = activeState.clipPathId;
+        const zoomPart = activeState.zoomPart;
+        const zoomText = activeState.zoomText;
+        const baseText = activeState.baseText;
+        if (activeState.animationId) clearInterval(activeState.animationId);
+        rect.style.filter = 'none';
+        if (zoomPart) zoomPart.style.filter = 'none';
+        if (zoomText) zoomText.style.opacity = '0';
+        rect.style.transform = 'scale(1)';
+        rect.style.strokeWidth = '2px';
+        if (zoomPart) zoomPart.style.transform = 'scale(1)';
+        if (baseText) baseText.style.opacity = '1';
+        if (zoomPart) zoomPart.remove();
+        const clip = document.getElementById(clipPathId);
+        if (clip) clip.remove();
+        if (zoomText) zoomText.remove();
+        Object.assign(activeState, {rect:null, zoomPart:null, zoomText:null, baseText:null, animationId:null, clipPathId:null, initialScrollLeft:0, isScrolling:false, touchStartTime:0});
     }
 
     function startHover() {
@@ -151,33 +128,31 @@ window.onload = function () {
         const centerX = absoluteX + width / 2;
         const centerY = absoluteY + height / 2;
 
-        rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
         rect.style.transform = `scale(${scale})`;
-        rect.style.strokeWidth = '5px';
+        rect.style.strokeWidth = '4px';
 
         const imageData = getGroupImage(rect);
         let zoomPartElement = null;
         if (imageData) {
-            const i = rect.getAttribute('data-index') || Date.now();
-            const clipPathId = `clip-${i}-${Date.now()}`;
+            const clipPathId = `clip-${Date.now()}`;
             activeState.clipPathId = clipPathId;
-
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            const clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
             clip.setAttribute('id', clipPathId);
-            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            const clipRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
             clipRect.setAttribute('x', absoluteX);
             clipRect.setAttribute('y', absoluteY);
             clipRect.setAttribute('width', width);
             clipRect.setAttribute('height', height);
-            clipDefs.appendChild(clip).appendChild(clipRect);
+            clip.appendChild(clipRect);
+            clipDefs.appendChild(clip);
 
-            const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            const zoomPart = document.createElementNS('http://www.w3.org/2000/svg','image');
             zoomPart.setAttribute('href', imageData.src);
             zoomPart.setAttribute('width', imageData.width);
             zoomPart.setAttribute('height', imageData.height);
-            zoomPart.setAttribute('class', 'zoom-part');
             zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
-
+            zoomPart.setAttribute('class','zoom-part');
             const groupTransform = imageData.group.getAttribute('transform');
             const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
             const groupX = match ? parseFloat(match[1]) : 0;
@@ -187,53 +162,44 @@ window.onload = function () {
             zoomPart.style.opacity = 0;
             mainSvg.appendChild(zoomPart);
             activeState.zoomPart = zoomPart;
-
             zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
             zoomPart.style.transform = `scale(${scale})`;
             zoomPart.style.opacity = 1;
             zoomPartElement = zoomPart;
         }
 
+        // =================== Text Zoom ===================
         let baseText = rect.nextElementSibling;
-        if (baseText && !baseText.matches('text.rect-label')) {
-            baseText = null;
-        }
+        if (baseText && !baseText.matches('text.rect-label')) baseText = null;
         if (baseText) {
             baseText.style.opacity = '0';
             activeState.baseText = baseText;
-
             const zoomText = baseText.cloneNode(true);
-            const rectFullText = rect.getAttribute('data-full-text') || baseText.getAttribute('data-original-text') || baseText.textContent;
-            while (zoomText.firstChild) zoomText.removeChild(zoomText.firstChild);
-            zoomText.textContent = rectFullText;
-
-            const baseFont = parseFloat(baseText.style.fontSize || 12);
-            zoomText.style.fontSize = (baseFont * 2) + 'px';
-            zoomText.style.fill = 'white';
-            zoomText.style.pointerEvents = 'none';
-            zoomText.style.userSelect = 'none';
-            zoomText.style.opacity = '1';
-            zoomText.setAttribute('x', absoluteX + width / 2);
-            zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
-            zoomText.setAttribute('text-anchor', 'middle');
+            zoomText.removeAttribute('data-original-text');
+            zoomText.style.fontSize = (parseFloat(baseText.style.fontSize)*2)+'px';
+            zoomText.style.fill='white';
+            zoomText.style.pointerEvents='none';
+            zoomText.style.userSelect='none';
+            zoomText.style.opacity='1';
+            zoomText.setAttribute('x', absoluteX + width/2);
+            zoomText.setAttribute('y', absoluteY + parseFloat(baseText.style.fontSize)*1.5);
+            zoomText.setAttribute('text-anchor','middle');
             mainSvg.appendChild(zoomText);
             activeState.zoomText = zoomText;
         }
 
+        // =================== Glow Animation ===================
         let hue = 0;
         activeState.animationId = setInterval(() => {
             hue = (hue + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;
             rect.style.filter = glow;
             if (zoomPartElement) zoomPartElement.style.filter = glow;
             if (activeState.zoomText) activeState.zoomText.style.filter = glow;
         }, 100);
     }
 
-    function stopHover() {
-        if (!interactionEnabled) return;
-        if (activeState.rect === this) cleanupHover();
-    }
+    function stopHover() { if (interactionEnabled) cleanupHover(); }
 
     function handleLinkOpen(event) {
         const href = event.currentTarget.getAttribute('data-href');
@@ -244,151 +210,46 @@ window.onload = function () {
         }
     }
 
-    function attachHover(rect, i) {
-        rect.setAttribute('data-index', i);
-
+    // =================== Hover & Click Attach ===================
+    function attachHover(rect) {
         if (!isTouchDevice) {
-            rect.addEventListener('mouseover', () => interactionEnabled && startHover.call(rect));
-            rect.addEventListener('mouseout', () => interactionEnabled && stopHover.call(rect));
+            rect.addEventListener('mouseover', startHover);
+            rect.addEventListener('mouseout', stopHover);
         }
-
         rect.addEventListener('click', handleLinkOpen);
-
-        rect.addEventListener('touchstart', function (event) {
-            if (!interactionEnabled) return;
+        rect.addEventListener('touchstart', function(event) {
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             activeState.isScrolling = false;
             startHover.call(this);
         });
-
-        rect.addEventListener('touchend', function (event) {
-            if (!interactionEnabled) return;
+        rect.addEventListener('touchend', function(event) {
             const timeElapsed = Date.now() - activeState.touchStartTime;
-            if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) {
-                handleLinkOpen(event);
-            }
+            if (!activeState.isScrolling && timeElapsed < TAP_THRESHOLD_MS) handleLinkOpen(event);
             cleanupHover();
         });
     }
 
-    // --------------------------------------------------
-    // البحث - تم تعديله ليعمل مع rect.m بدلاً من image-mapper-shape
-    // --------------------------------------------------
-    const allRects = Array.from(mainSvg.querySelectorAll('rect.m'));
-    const allLabels = Array.from(mainSvg.querySelectorAll('text.rect-label'));
-    const allRectsAndLabels = [...allRects, ...allLabels];
-
-    function filterRects(query) {
-        const lowerQuery = query.toLowerCase();
-        allRectsAndLabels.forEach(element => {
-            let match = false;
-            if (element.tagName === 'rect') {
-                const href = element.getAttribute('data-href') || '';
-                if (href.toLowerCase().includes(lowerQuery)) match = true;
-            } else if (element.tagName === 'text') {
-                if (element.textContent.toLowerCase().includes(lowerQuery)) match = true;
-            }
-
-            const rectShape = (element.tagName === 'rect') ? element : element.previousElementSibling;
-            if (rectShape && rectShape.classList.contains('m')) {
-                const correspondingLabel = rectShape.nextElementSibling;
-                if (query.length > 0 && !match) {
-                    rectShape.style.opacity = '0.1';
-                    rectShape.style.pointerEvents = 'none';
-                    if (correspondingLabel) correspondingLabel.style.opacity = '0.1';
-                } else {
-                    rectShape.style.opacity = '1';
-                    rectShape.style.pointerEvents = 'auto';
-                    if (correspondingLabel) correspondingLabel.style.opacity = '1';
-                    if (query.length > 0 && match) {
-                        rectShape.style.filter = 'drop-shadow(0 0 8px #00FFFF) drop-shadow(0 0 14px #00FFFF)';
-                    } else {
-                        rectShape.style.filter = 'none';
-                    }
-                }
-            }
-        });
-    }
-
-    const debouncedFilter = debounce(filterRects, 150);
-    searchInput.addEventListener('input', function () {
-        debouncedFilter(this.value);
-    });
-
-    // --------------------------------------------------
-    // Lazy Loading للصور + تحديث viewBox
-    // --------------------------------------------------
-    const svgImages = Array.from(mainSvg.querySelectorAll('image.lazy-map'));
-    const urls = svgImages.map(img => img.getAttribute('data-src')).filter(Boolean);
-    let loadedCount = 0;
-    const totalCount = urls.length;
-
-    function updateLoader() {
-        const percent = Math.round((loadedCount / totalCount) * 100);
-        if (loadingText) loadingText.textContent = `Preparing the environment...`;
-        if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
-        if (percent >= 50) document.getElementById('bulb-2').classList.add('on');
-        if (percent >= 75) document.getElementById('bulb-3').classList.add('on');
-        if (percent === 100) document.getElementById('bulb-4').classList.add('on');
-    }
-
-    function finishLoading() {
-        if (loadingOverlay) {
-            setTimeout(() => {
-                loadingOverlay.style.opacity = 0;
-                setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                    mainSvg.style.opacity = 1;
-                    setTimeout(() => {
-                        scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
-                    }, 50);
-                }, 300);
-            }, 0);
-        }
-    }
-
-    if (urls.length > 0) {
-        urls.forEach((url, index) => {
-            const img = new Image();
-            img.onload = img.onerror = () => {
-                loadedCount++;
-                updateLoader();
-                if (loadedCount === totalCount) {
-                    finishLoading();
-                    svgImages.forEach((svgImg, i) => {
-                        svgImg.setAttribute('href', urls[i]);
-                        svgImg.classList.remove('lazy-map');
-                    });
-                    updateDynamicSizes(); // تحديث نهائي بعد التحميل
-                }
-            };
-            img.src = url;
-        });
-    } else {
-        finishLoading();
-    }
-
-    // --------------------------------------------------
-    // إنشاء النصوص + إضافة كلاس w أو hw
-    // --------------------------------------------------
+    // =================== Auto Width, Auto Font, Wrap ===================
     function wrapTextInSvg(textElement, maxWidth, padding = 5) {
         const text = textElement.textContent;
         const words = text.split(/\s+/).filter(w => w.length > 0);
         textElement.textContent = null;
+
         let tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         tspan.setAttribute('x', textElement.getAttribute('x'));
         tspan.setAttribute('dy', '0');
         textElement.appendChild(tspan);
+
         let currentLine = '';
         const lineHeight = parseFloat(textElement.style.fontSize) * 1.2;
         for (let i = 0; i < words.length; i++) {
             const word = words[i];
             const lineTest = currentLine + (currentLine.length ? ' ' : '') + word;
             tspan.textContent = lineTest;
-            if (tspan.getComputedTextLength() > maxWidth - (padding * 2) && currentLine.length > 0) {
+            if (tspan.getComputedTextLength() > maxWidth - padding*2 && currentLine.length>0) {
                 tspan.textContent = currentLine;
-                tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
                 tspan.setAttribute('x', textElement.getAttribute('x'));
                 tspan.setAttribute('dy', `${lineHeight}px`);
                 textElement.appendChild(tspan);
@@ -400,83 +261,96 @@ window.onload = function () {
         }
     }
 
-    mainSvg.querySelectorAll('rect.m').forEach(rect => {
+    function processRect(rect) {
+        // =================== Width based on Class ===================
+        let width = 80;
+        if (rect.classList.contains('w')) width = 114;
+        if (rect.classList.contains('hw')) width = 57;
+        rect.setAttribute('width', width);
+
+        // =================== Add Text Label ===================
         const href = rect.getAttribute('data-href') || '';
         const fileName = href.split('/').pop().split('#')[0] || '';
-        const baseName = fileName.split('.');
-        const textContent = baseName.slice(0, baseName.length - 1).join('.');
-
-        const rectWidth = parseFloat(rect.getAttribute('width'));
+        const baseName = fileName.split('.').slice(0, -1).join('.');
         const rectX = parseFloat(rect.getAttribute('x'));
         const rectY = parseFloat(rect.getAttribute('y'));
-
-        const minFont = 8;
-        const maxFont = 16;
-        const scaleFactor = 0.12;
-        let fontSize = rectWidth * scaleFactor;
-        fontSize = Math.max(minFont, Math.min(maxFont, fontSize));
-
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', rectX + rectWidth / 2);
-        const padding = fontSize * 0.2;
-        const initialY = rectY + padding + fontSize * 0.8;
-        text.setAttribute('y', initialY);
-        text.setAttribute('text-anchor', 'middle');
-        text.textContent = textContent;
+        const fontSize = Math.max(8, Math.min(16, width*0.12));
+        const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+        text.setAttribute('x', rectX + width/2);
+        text.setAttribute('y', rectY + fontSize);
+        text.setAttribute('text-anchor','middle');
+        text.textContent = baseName;
         text.style.fontSize = fontSize + 'px';
         text.style.fill = 'white';
         text.style.pointerEvents = 'none';
-        text.setAttribute('class', 'rect-label');
-        text.setAttribute('data-original-text', textContent);
-
+        text.setAttribute('class','rect-label');
         rect.parentNode.insertBefore(text, rect.nextSibling);
-        wrapTextInSvg(text, rectWidth);
+        wrapTextInSvg(text, width);
 
-        // إضافة كلاس w أو hw
-        if (href && href !== '#') {
-            if (rect.classList.contains('hw')) {
-                rect.classList.add('hw');
-            } else {
-                rect.classList.add('w');
-            }
-        }
+        attachHover(rect);
+        rect.setAttribute('data-processed','true');
+    }
 
-        // ربط التفاعل
-        attachHover(rect, Date.now());
-    });
+    // =================== Process existing rects ===================
+    const rects = Array.from(mainSvg.querySelectorAll('rect.m'));
+    rects.forEach(processRect);
 
-    // --------------------------------------------------
-    // مراقب التغييرات (في حال إضافة rects ديناميكيًا)
-    // --------------------------------------------------
-    const rootObserver = new MutationObserver(mutations => {
+    // =================== Observer for future rects ===================
+    const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => {
             mutation.addedNodes.forEach(node => {
-                if (node.nodeType === 1) {
-                    if (node.matches('rect.m') && !node.hasAttribute('data-processed')) {
-                        // معالجة الـ rect الجديد (نص + كلاس + تفاعل)
-                        // (نفس الكود أعلاه لكن مختصر)
-                        // ... (يمكنك نسخه إذا كنت تضيف ديناميكيًا)
-                        node.setAttribute('data-processed', 'true');
-                    }
+                if (node.nodeType === 1 && node.matches('rect.m') && !node.hasAttribute('data-processed')) {
+                    processRect(node);
+                }
+                if (node.querySelector) {
+                    node.querySelectorAll('rect.m:not([data-processed])').forEach(processRect);
                 }
             });
         });
     });
-    rootObserver.observe(mainSvg, { childList: true, subtree: true });
+    observer.observe(mainSvg, { childList: true, subtree: true });
 
-    // تبديل التفاعل
-    jsToggle.addEventListener('change', function () {
+    // =================== Lazy Load Images ===================
+    const svgImages = Array.from(mainSvg.querySelectorAll('image.lazy-map'));
+    const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+    let loadedCount = 0;
+    const totalCount = urls.length;
+    function updateLoader() {
+        const percent = Math.round((loadedCount / totalCount) * 100);
+        if (loadingText) loadingText.textContent = `Preparing the environment... ${percent}%`;
+        if (percent>=25) document.getElementById('bulb-1').classList.add('on');
+        if (percent>=50) document.getElementById('bulb-2').classList.add('on');
+        if (percent>=75) document.getElementById('bulb-3').classList.add('on');
+        if (percent===100) document.getElementById('bulb-4').classList.add('on');
+    }
+    function finishLoading() {
+        if (!loadingOverlay) return;
+        setTimeout(()=>{
+            loadingOverlay.style.opacity=0;
+            setTimeout(()=>{
+                loadingOverlay.style.display='none';
+                mainSvg.style.opacity=1;
+            },300);
+        },0);
+    }
+    urls.forEach((url,i)=>{
+        const img=new Image();
+        img.onload=img.onerror=()=>{
+            loadedCount++;
+            updateLoader();
+            if(loadedCount===totalCount){
+                finishLoading();
+                svgImages.forEach((svgImg,j)=>{svgImg.setAttribute('href', urls[j]);});
+            }
+        };
+        img.src = url;
+    });
+
+    // =================== Toggle Interaction ===================
+    jsToggle.addEventListener('change', function() {
         interactionEnabled = this.checked;
         const label = document.getElementById('toggle-label');
         label.textContent = interactionEnabled ? 'Interaction Enabled' : 'Interaction Disabled';
         if (!interactionEnabled) cleanupHover();
     });
-
-    // تحريك القائمة العلوية/السفلية
-    const moveToggle = document.getElementById('move-toggle');
-    const toggleContainer = document.getElementById('js-toggle-container');
-    moveToggle.addEventListener('click', function () {
-        toggleContainer.classList.toggle('top');
-        toggleContainer.classList.toggle('bottom');
-    });
-}
+};
