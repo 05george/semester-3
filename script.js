@@ -1,94 +1,126 @@
 window.onload = function () {
+
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
-    const loadingText = document.getElementById('loading-text');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-    const moveToggle = document.getElementById('move-toggle');
-    const toggleContainer = document.getElementById('js-toggle-container');
 
     let interactionEnabled = jsToggle ? jsToggle.checked : true;
-    const isTouchDevice = window.matchMedia('(hover: none)').matches;
-    const TAP_THRESHOLD_MS = 300;
 
-    const activeState = {
-        rect: null, zoomPart: null, zoomText: null, baseText: null,
-        animationId: null, clipPathId: null, initialScrollLeft: 0,
-        isScrolling: false, touchStartTime: 0
+    /* =========================
+       WIDTH MAP (بديل width)
+    ========================== */
+    const RECT_WIDTH_MAP = {
+        w: 114
     };
 
-    function debounce(func, delay) {
-        let timeoutId;
-        return function (...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
+    const activeState = {
+        rect: null,
+        zoomPart: null,
+        baseText: null,
+        zoomText: null,
+        clipPathId: null,
+        animationId: null
+    };
+
+    /* =========================
+       HELPERS
+    ========================== */
+    function debounce(fn, delay) {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), delay);
         };
     }
 
     function getRectSize(rect) {
-        let width = parseFloat(rect.getAttribute('width'));
-        if (isNaN(width) && rect.classList.contains('w')) width = 114;
-        if (isNaN(width)) {
-            try { width = rect.getBBox().width || 114; } catch(e) { width = 114; }
+        let width = NaN;
+
+        if (rect.hasAttribute('width')) {
+            width = parseFloat(rect.getAttribute('width'));
         }
-        let height = parseFloat(rect.getAttribute('height')) || 100;
+
+        if (isNaN(width)) {
+            for (const cls in RECT_WIDTH_MAP) {
+                if (rect.classList.contains(cls)) {
+                    width = RECT_WIDTH_MAP[cls];
+                    break;
+                }
+            }
+        }
+
+        if (isNaN(width)) width = 114;
+
+        const height = parseFloat(rect.getAttribute('height')) || 100;
         return { width, height };
     }
 
-    function getCumulativeTranslate(element) {
+    function getCumulativeTranslate(el) {
         let x = 0, y = 0;
-        let current = element;
-        while (current && current.tagName !== 'svg') {
-            const transformAttr = current.getAttribute('transform');
-            if (transformAttr) {
-                const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (match) { x += parseFloat(match[1]); y += parseFloat(match[2]); }
+        while (el && el.tagName !== 'svg') {
+            const t = el.getAttribute('transform');
+            if (t) {
+                const m = t.match(/translate\(([\d.-]+)[ ,]+([\d.-]+)\)/);
+                if (m) {
+                    x += parseFloat(m[1]);
+                    y += parseFloat(m[2]);
+                }
             }
-            current = current.parentNode;
+            el = el.parentNode;
         }
         return { x, y };
     }
 
-    function getGroupImage(element) {
-        let current = element;
-        while (current && current.tagName !== 'svg') {
-            if (current.tagName === 'g') {
-                const images = [...current.children].filter(c => c.tagName === 'image');
-                if (images.length) {
-                    const baseImage = images[0];
+    function getGroupImage(rect) {
+        let el = rect;
+        while (el && el.tagName !== 'svg') {
+            if (el.tagName === 'g') {
+                const img = el.querySelector('image');
+                if (img) {
                     return {
-                        src: baseImage.getAttribute('data-src') || baseImage.getAttribute('href'),
-                        width: parseFloat(baseImage.getAttribute('width')),
-                        height: parseFloat(baseImage.getAttribute('height')),
-                        group: current
+                        src: img.getAttribute('data-src') || img.getAttribute('href'),
+                        width: parseFloat(img.getAttribute('width')),
+                        height: parseFloat(img.getAttribute('height')),
+                        group: el
                     };
                 }
             }
-            current = current.parentNode;
+            el = el.parentNode;
         }
         return null;
     }
 
     function cleanupHover() {
         if (!activeState.rect) return;
+
         if (activeState.animationId) clearInterval(activeState.animationId);
-        activeState.rect.style.filter = 'none';
+
         activeState.rect.style.transform = 'scale(1)';
+        activeState.rect.style.filter = 'none';
         activeState.rect.style.strokeWidth = '2px';
+
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.baseText) activeState.baseText.style.opacity = '1';
+
         const clip = document.getElementById(activeState.clipPathId);
         if (clip) clip.remove();
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null });
+
+        Object.keys(activeState).forEach(k => activeState[k] = null);
     }
 
+    /* =========================
+       HOVER EFFECT
+    ========================== */
     function startHover() {
         if (!interactionEnabled) return;
+
         const rect = this;
         if (activeState.rect === rect) return;
+
         cleanupHover();
         activeState.rect = rect;
 
@@ -96,11 +128,10 @@ window.onload = function () {
         const size = getRectSize(rect);
         const x = parseFloat(rect.getAttribute('x')) || 0;
         const y = parseFloat(rect.getAttribute('y')) || 0;
-        const cumulative = getCumulativeTranslate(rect);
-        const absoluteX = x + cumulative.x;
-        const absoluteY = y + cumulative.y;
-        const centerX = absoluteX + size.width / 2;
-        const centerY = absoluteY + size.height / 2;
+
+        const t = getCumulativeTranslate(rect);
+        const absX = x + t.x;
+        const absY = y + t.y;
 
         rect.style.transformOrigin = `${x + size.width / 2}px ${y + size.height / 2}px`;
         rect.style.transform = `scale(${scale})`;
@@ -110,106 +141,130 @@ window.onload = function () {
         if (imageData) {
             const clipId = `clip-${Date.now()}`;
             activeState.clipPathId = clipId;
+
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
-            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            clipRect.setAttribute('x', absoluteX); clipRect.setAttribute('y', absoluteY);
-            clipRect.setAttribute('width', size.width); clipRect.setAttribute('height', size.height);
-            clipDefs.appendChild(clip).appendChild(clipRect);
 
-            const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-            zoomPart.setAttribute('href', imageData.src);
-            zoomPart.setAttribute('width', imageData.width);
-            zoomPart.setAttribute('height', imageData.height);
-            zoomPart.setAttribute('clip-path', `url(#${clipId})`);
-            const groupMatch = imageData.group.getAttribute('transform')?.match(/translate\(([\d.-]+),([\d.-]+)\)/);
-            zoomPart.setAttribute('x', groupMatch ? groupMatch[1] : 0);
-            zoomPart.setAttribute('y', groupMatch ? groupMatch[2] : 0);
-            mainSvg.appendChild(zoomPart);
-            activeState.zoomPart = zoomPart;
-            zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-            zoomPart.style.transform = `scale(${scale})`;
+            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            clipRect.setAttribute('x', absX);
+            clipRect.setAttribute('y', absY);
+            clipRect.setAttribute('width', size.width);
+            clipRect.setAttribute('height', size.height);
+
+            clip.appendChild(clipRect);
+            clipDefs.appendChild(clip);
+
+            const zoomImg = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            zoomImg.setAttribute('href', imageData.src);
+            zoomImg.setAttribute('width', imageData.width);
+            zoomImg.setAttribute('height', imageData.height);
+            zoomImg.setAttribute('clip-path', `url(#${clipId})`);
+
+            const gT = imageData.group.getAttribute('transform');
+            if (gT) {
+                const m = gT.match(/translate\(([\d.-]+),([\d.-]+)\)/);
+                if (m) {
+                    zoomImg.setAttribute('x', m[1]);
+                    zoomImg.setAttribute('y', m[2]);
+                }
+            }
+
+            zoomImg.style.transformOrigin = `${absX + size.width / 2}px ${absY + size.height / 2}px`;
+            zoomImg.style.transform = `scale(${scale})`;
+
+            mainSvg.appendChild(zoomImg);
+            activeState.zoomPart = zoomImg;
         }
 
-        let baseText = rect.nextElementSibling;
-        if (baseText && baseText.classList.contains('rect-label')) {
-            baseText.style.opacity = '0';
-            activeState.baseText = baseText;
-            const zoomText = baseText.cloneNode(true);
-            zoomText.style.opacity = '1';
-            zoomText.style.fontSize = (parseFloat(baseText.style.fontSize) * 1.4) + 'px';
-            zoomText.setAttribute('y', absoluteY - 10);
-            zoomText.setAttribute('x', centerX);
-            mainSvg.appendChild(zoomText);
-            activeState.zoomText = zoomText;
+        const label = rect.nextElementSibling;
+        if (label && label.classList.contains('rect-label')) {
+            label.style.opacity = '0';
+            activeState.baseText = label;
+
+            const clone = label.cloneNode(true);
+            clone.style.opacity = '1';
+            clone.setAttribute('x', absX + size.width / 2);
+            clone.setAttribute('y', absY - 10);
+
+            mainSvg.appendChild(clone);
+            activeState.zoomText = clone;
         }
 
         let hue = 0;
         activeState.animationId = setInterval(() => {
-            hue = (hue + 15) % 360;
+            hue = (hue + 20) % 360;
             const glow = `drop-shadow(0 0 8px hsl(${hue},100%,60%))`;
             rect.style.filter = glow;
             if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
         }, 100);
     }
 
+    /* =========================
+       IMAGE LOADING
+    ========================== */
+    const images = mainSvg.querySelectorAll('image');
+    let loaded = 0;
+
     function finishLoading() {
-        if (loadingOverlay) {
-            loadingOverlay.style.opacity = '0';
-            setTimeout(() => {
-                loadingOverlay.style.display = 'none';
-                mainSvg.style.opacity = '1';
-                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-            }, 500);
-        }
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+            mainSvg.style.opacity = '1';
+            scrollContainer.scrollLeft = 0;
+        }, 400);
     }
 
-    // إدارة تحميل الصور وإخفاء شاشة التحميل
-    const svgImages = mainSvg.querySelectorAll('image');
-    let loadedCount = 0;
-    if (svgImages.length === 0) finishLoading();
-    svgImages.forEach(img => {
+    images.forEach(img => {
         const src = img.getAttribute('data-src') || img.getAttribute('href');
         const temp = new Image();
         temp.onload = temp.onerror = () => {
-            loadedCount++;
-            if (img.getAttribute('data-src')) img.setAttribute('href', src);
-            if (loadedCount >= svgImages.length) finishLoading();
+            loaded++;
+            if (img.hasAttribute('data-src')) img.setAttribute('href', src);
+            if (loaded === images.length) finishLoading();
         };
         temp.src = src;
     });
 
-    // معالجة المستطيلات الموجودة
-    document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
+    /* =========================
+       INIT RECTANGLES
+    ========================== */
+    document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
+
         const size = getRectSize(rect);
-        const href = rect.getAttribute('data-href') || "";
-        const name = href.split('/').pop().split('.')[0] || "Link";
-        
+        const href = rect.getAttribute('data-href') || '';
+        const name = href.split('/').pop().replace('.pdf', '');
+
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        const fontSize = Math.max(9, Math.min(14, size.width * 0.12));
-        text.setAttribute('x', parseFloat(rect.getAttribute('x')) + size.width / 2);
-        text.setAttribute('y', parseFloat(rect.getAttribute('y')) + fontSize + 5);
+        text.setAttribute('x', (parseFloat(rect.getAttribute('x')) || 0) + size.width / 2);
+        text.setAttribute('y', (parseFloat(rect.getAttribute('y')) || 0) + 14);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('class', 'rect-label');
-        text.style.fontSize = fontSize + 'px';
         text.style.fill = 'white';
+        text.style.fontSize = '12px';
         text.textContent = name;
-        
+
         rect.parentNode.insertBefore(text, rect.nextSibling);
-        
+
         rect.addEventListener('mouseenter', startHover);
         rect.addEventListener('mouseleave', cleanupHover);
-        rect.addEventListener('click', () => { if(href && href !== '#') window.open(href, '_blank'); });
+        rect.addEventListener('click', () => {
+            if (href && href !== '#') window.open(href, '_blank');
+        });
     });
 
+    /* =========================
+       SEARCH
+    ========================== */
     if (searchInput) {
-        searchInput.addEventListener('input', debounce((e) => {
+        searchInput.addEventListener('input', debounce(e => {
             const q = e.target.value.toLowerCase();
             document.querySelectorAll('rect.image-mapper-shape').forEach(r => {
-                const match = (r.getAttribute('data-href') || "").toLowerCase().includes(q);
-                r.style.opacity = q ? (match ? "1" : "0.1") : "1";
-                if(r.nextElementSibling) r.nextElementSibling.style.opacity = r.style.opacity;
+                const match = (r.getAttribute('data-href') || '').toLowerCase().includes(q);
+                const o = q ? (match ? '1' : '0.15') : '1';
+                r.style.opacity = o;
+                if (r.nextElementSibling) r.nextElementSibling.style.opacity = o;
             });
         }, 200));
     }
+
 };
