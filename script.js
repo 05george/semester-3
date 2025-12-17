@@ -14,7 +14,7 @@ window.onload = function () {
     ========================== */
     const RECT_WIDTH_MAP = {
         w: 114
-     0.5w: 57
+       w2: 57
     };
 
     const activeState = {
