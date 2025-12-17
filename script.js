@@ -24,9 +24,9 @@ window.onload = function () {
     touchStartTime: 0
   };
 
-  /* =========================
-     🔧 FIX: قراءة أبعاد rect
-     ========================= */
+  /* =================================================
+     SAFE rect size reader (GitHub Pages friendly)
+     ================================================= */
   function getRectSize(rect) {
     const w = rect.getAttribute('width');
     const h = rect.getAttribute('height');
@@ -38,10 +38,20 @@ window.onload = function () {
       };
     }
 
-    const bbox = rect.getBBox();
+    try {
+      const bbox = rect.getBBox();
+      if (bbox.width && bbox.height) {
+        return {
+          width: bbox.width,
+          height: bbox.height
+        };
+      }
+    } catch (e) {}
+
+    // fallback ثابت (لـ .w)
     return {
-      width: bbox.width,
-      height: bbox.height
+      width: 114,
+      height: parseFloat(rect.getAttribute('height')) || 100
     };
   }
 
@@ -57,9 +67,9 @@ window.onload = function () {
     const images = mainSvg.querySelectorAll('image');
     if (!images.length) return;
 
-    const first = images[0];
-    const w = parseFloat(first.getAttribute('width')) || 1024;
-    const h = parseFloat(first.getAttribute('height')) || 2454;
+    const img = images[0];
+    const w = parseFloat(img.getAttribute('width')) || 1024;
+    const h = parseFloat(img.getAttribute('height')) || 2454;
     const totalW = images.length * w;
 
     mainSvg.setAttribute('viewBox', `0 0 ${totalW} ${h}`);
@@ -67,10 +77,32 @@ window.onload = function () {
   }
   updateDynamicSizes();
 
+  function cleanupHover() {
+    if (!activeState.rect) return;
+
+    if (activeState.animationId) clearInterval(activeState.animationId);
+    activeState.rect.style.transform = 'scale(1)';
+    activeState.rect.style.filter = 'none';
+    activeState.rect.style.strokeWidth = '2px';
+
+    if (activeState.zoomPart) activeState.zoomPart.remove();
+    if (activeState.zoomText) activeState.zoomText.remove();
+    if (activeState.baseText) activeState.baseText.style.opacity = '1';
+
+    const clip = document.getElementById(activeState.clipPathId);
+    if (clip) clip.remove();
+
+    Object.assign(activeState, {
+      rect: null,
+      zoomPart: null,
+      zoomText: null,
+      baseText: null,
+      animationId: null,
+      clipPathId: null
+    });
+  }
+
   scrollContainer.addEventListener('scroll', function () {
-    if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
-      this.scrollLeft = window.MAX_SCROLL_LEFT;
-    }
     if (!interactionEnabled) return;
 
     if (activeState.rect && !isTouchDevice) cleanupHover();
@@ -115,31 +147,6 @@ window.onload = function () {
       el = el.parentNode;
     }
     return null;
-  }
-
-  function cleanupHover() {
-    if (!activeState.rect) return;
-
-    if (activeState.animationId) clearInterval(activeState.animationId);
-    activeState.rect.style.transform = 'scale(1)';
-    activeState.rect.style.filter = 'none';
-    activeState.rect.style.strokeWidth = '2px';
-
-    if (activeState.zoomPart) activeState.zoomPart.remove();
-    if (activeState.zoomText) activeState.zoomText.remove();
-    if (activeState.baseText) activeState.baseText.style.opacity = '1';
-
-    const clip = document.getElementById(activeState.clipPathId);
-    if (clip) clip.remove();
-
-    Object.assign(activeState, {
-      rect: null,
-      zoomPart: null,
-      zoomText: null,
-      baseText: null,
-      animationId: null,
-      clipPathId: null
-    });
   }
 
   function startHover() {
@@ -206,10 +213,9 @@ window.onload = function () {
     let hue = 0;
     activeState.animationId = setInterval(() => {
       hue = (hue + 10) % 360;
-      rect.style.filter = `drop-shadow(0 0 8px hsl(${hue},100%,60%))`;
-      if (activeState.zoomPart) {
-        activeState.zoomPart.style.filter = rect.style.filter;
-      }
+      const glow = `drop-shadow(0 0 8px hsl(${hue},100%,60%))`;
+      rect.style.filter = glow;
+      if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
     }, 100);
   }
 
@@ -230,49 +236,59 @@ window.onload = function () {
       rect.addEventListener('mouseover', startHover);
       rect.addEventListener('mouseout', stopHover);
     }
-
     rect.addEventListener('click', handleLinkOpen);
+  }
 
-    rect.addEventListener('touchstart', () => {
-      activeState.initialScrollLeft = scrollContainer.scrollLeft;
-      activeState.isScrolling = false;
-      activeState.touchStartTime = Date.now();
-      startHover.call(rect);
-    });
+  /* =========================
+     CREATE LABELS (AFTER LOAD)
+     ========================= */
+  function createLabels() {
+    document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
+      const { width } = getRectSize(rect);
+      const x = parseFloat(rect.getAttribute('x'));
+      const y = parseFloat(rect.getAttribute('y'));
 
-    rect.addEventListener('touchend', e => {
-      const dt = Date.now() - activeState.touchStartTime;
-      if (!activeState.isScrolling && dt < TAP_THRESHOLD_MS) {
-        handleLinkOpen(e);
-      }
-      cleanupHover();
+      const fontSize = Math.max(8, Math.min(16, width * 0.12));
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+
+      text.setAttribute('x', x + width / 2);
+      text.setAttribute('y', y + fontSize);
+      text.setAttribute('text-anchor', 'middle');
+      text.textContent = (rect.getAttribute('data-href') || '').split('/').pop();
+      text.style.fontSize = fontSize + 'px';
+      text.style.fill = 'white';
+      text.style.pointerEvents = 'none';
+      text.setAttribute('class', 'rect-label');
+
+      rect.parentNode.insertBefore(text, rect.nextSibling);
+      attachHover(rect);
     });
   }
 
   /* =========================
-     Labels
+     LOADING IMAGES
      ========================= */
-  document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-    const { width } = getRectSize(rect);
-    const x = parseFloat(rect.getAttribute('x'));
-    const y = parseFloat(rect.getAttribute('y'));
+  const svgImages = Array.from(mainSvg.querySelectorAll('image'));
+  let loaded = 0;
 
-    const fontSize = Math.max(8, Math.min(16, width * 0.12));
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  function finishLoading() {
+    loadingOverlay.style.opacity = 0;
+    setTimeout(() => {
+      loadingOverlay.style.display = 'none';
+      mainSvg.style.opacity = 1;
+      createLabels();
+    }, 300);
+  }
 
-    text.setAttribute('x', x + width / 2);
-    text.setAttribute('y', y + fontSize);
-    text.setAttribute('text-anchor', 'middle');
-    text.textContent = (rect.getAttribute('data-href') || '').split('/').pop();
-    text.style.fontSize = fontSize + 'px';
-    text.style.fill = 'white';
-    text.style.pointerEvents = 'none';
-    text.setAttribute('class', 'rect-label');
-
-    rect.parentNode.insertBefore(text, rect.nextSibling);
+  svgImages.forEach(img => {
+    const src = img.getAttribute('data-src') || img.getAttribute('href');
+    const temp = new Image();
+    temp.onload = temp.onerror = () => {
+      loaded++;
+      if (loaded === svgImages.length) finishLoading();
+    };
+    temp.src = src;
   });
-
-  document.querySelectorAll('rect.image-mapper-shape').forEach(attachHover);
 
   jsToggle.addEventListener('change', function () {
     interactionEnabled = this.checked;
