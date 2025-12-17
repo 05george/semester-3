@@ -1,5 +1,16 @@
-Window.onload=function(){
+window.onload = function() {
+    const criticalFiles = ['o.webp', '1.webp', '2.webp']; 
     const dimensions = { 'w': 115, 'hw': 57 };
+    const mainSvg = document.getElementById('main-svg');
+    const scrollContainer = document.getElementById('scroll-container');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const jsToggle = document.getElementById('js-toggle');
+    const searchInput = document.getElementById('search-input');
+    const loadingText = document.getElementById('loading-text');
+
+    if (!mainSvg) return;
+
+    const clipDefs = mainSvg.querySelector('defs') || mainSvg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
 
     Object.keys(dimensions).forEach(className => {
         document.querySelectorAll(`rect.${className}`).forEach(rect => {
@@ -7,8 +18,160 @@ Window.onload=function(){
         });
     });
 
-const mainSvg=document.getElementById('main-svg');const scrollContainer=document.getElementById('scroll-container');const clipDefs=mainSvg.querySelector('defs');const loadingOverlay=document.getElementById('loading-overlay');const loadingText=document.getElementById('loading-text');const jsToggle=document.getElementById('js-toggle');const searchInput=document.getElementById('search-input');let interactionEnabled=jsToggle.checked;const isTouchDevice=window.matchMedia('(hover: none)').matches;const TAP_THRESHOLD_MS=300;const activeState={rect:null,zoomPart:null,zoomText:null,baseText:null,animationId:null,clipPathId:null,initialScrollLeft:0,isScrolling:false,touchStartTime:0};function debounce(func,delay){let timeoutId;return function(){const context=this;const args=arguments;clearTimeout(timeoutId);timeoutId=setTimeout(()=>func.apply(context,args),delay)}}function updateDynamicSizes(){const images=mainSvg.querySelectorAll('image');if(!images.length)return;const firstImage=images[0];const imageWidth=parseFloat(firstImage.getAttribute('width'))||1024;const imageHeight=parseFloat(firstImage.getAttribute('height'))||2454;const totalWidth=images.length*imageWidth;mainSvg.setAttribute('viewBox',`0 0 ${totalWidth} ${imageHeight}`);window.MAX_SCROLL_LEFT=totalWidth-window.innerWidth}updateDynamicSizes();const debouncedCleanupHover=debounce(function(){if(!interactionEnabled||!activeState.rect)return;if(activeState.rect){cleanupHover()}},50);scrollContainer.addEventListener('scroll',function(){if(this.scrollLeft>window.MAX_SCROLL_LEFT){this.scrollLeft=window.MAX_SCROLL_LEFT}if(!interactionEnabled)return;if(activeState.rect&&!isTouchDevice){debouncedCleanupHover()}if(activeState.rect&&isTouchDevice){if(Math.abs(this.scrollLeft-activeState.initialScrollLeft)>5){activeState.isScrolling=true;cleanupHover()}}});function getCumulativeTranslate(element){let x=0,y=0;let current=element;while(current&&current.tagName!=='svg'){const transformAttr=current.getAttribute('transform');if(transformAttr){const match=transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);if(match){x+=parseFloat(match[1]);y+=parseFloat(match[2])}}current=current.parentNode}return{x,y}}function getGroupImage(element){let current=element;while(current&&current.tagName!=='svg'){if(current.tagName==='g'){const images=[...current.children].filter(c=>c.tagName==='image');if(images.length){const baseImage=images[0];return{src:baseImage.getAttribute('data-src')||baseImage.getAttribute('href'),width:parseFloat(baseImage.getAttribute('width')),height:parseFloat(baseImage.getAttribute('height')),group:current}}}current=current.parentNode}return null}function cleanupHover(){if(!activeState.rect)return;const rectToClean=activeState.rect;const clipPathIdToClean=activeState.clipPathId;const zoomPartToClean=activeState.zoomPart;const zoomTextToClean=activeState.zoomText;const baseTextToClean=activeState.baseText;const animationIdToClean=activeState.animationId;if(animationIdToClean)clearInterval(animationIdToClean);rectToClean.style.filter='none';if(zoomPartToClean)zoomPartToClean.style.filter='none';if(zoomTextToClean)zoomTextToClean.style.filter='none';rectToClean.style.transform='scale(1)';rectToClean.style.strokeWidth='2px';if(zoomPartToClean)zoomPartToClean.style.transform='scale(1)';if(baseTextToClean){baseTextToClean.style.opacity='1'}if(zoomTextToClean){zoomTextToClean.style.opacity='0'}if(zoomPartToClean)zoomPartToClean.remove();const currentClip=document.getElementById(clipPathIdToClean);if(currentClip)currentClip.remove();if(zoomTextToClean)zoomTextToClean.remove();Object.assign(activeState,{rect:null,zoomPart:null,zoomText:null,baseText:null,animationId:null,clipPathId:null,initialScrollLeft:0,isScrolling:false,touchStartTime:0})}function startHover(){if(!interactionEnabled)return;const rect=this;if(activeState.rect===rect)return;cleanupHover();activeState.rect=rect;const scale=1.1;const x=parseFloat(rect.getAttribute('x'));const y=parseFloat(rect.getAttribute('y'));const width=parseFloat(rect.getAttribute('width'));const height=parseFloat(rect.getAttribute('height'));const cumulative=getCumulativeTranslate(rect);const absoluteX=x+cumulative.x;const absoluteY=y+cumulative.y;const centerX=absoluteX+width/2;const centerY=absoluteY+height/2;rect.style.transformOrigin=`${x+width/2}px ${y+height/2}px`;rect.style.transform=`scale(${scale})`;rect.style.strokeWidth='4px';const imageData=getGroupImage(rect);let zoomPartElement=null;if(imageData){const i=rect.getAttribute('data-index')||Date.now();const clipPathId=`clip-${i}-${Date.now()}`;activeState.clipPathId=clipPathId;const clip=document.createElementNS('http://www.w3.org/2000/svg','clipPath');clip.setAttribute('id',clipPathId);const clipRect=document.createElementNS('http://www.w3.org/2000/svg','rect');clipRect.setAttribute('x',absoluteX);clipRect.setAttribute('y',absoluteY);clipRect.setAttribute('width',width);clipRect.setAttribute('height',height);clipDefs.appendChild(clip).appendChild(clipRect);const zoomPart=document.createElementNS('http://www.w3.org/2000/svg','image');zoomPart.setAttribute('href',imageData.src);zoomPart.setAttribute('width',imageData.width);zoomPart.setAttribute('height',imageData.height);zoomPart.setAttribute('class','zoom-part');zoomPart.setAttribute('clip-path',`url(#${clipPathId})`);const groupTransform=imageData.group.getAttribute('transform');const match=groupTransform?groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/):null;const groupX=match?parseFloat(match[1]):0;const groupY=match?parseFloat(match[2]):0;zoomPart.setAttribute('x',groupX);zoomPart.setAttribute('y',groupY);zoomPart.style.opacity=0;mainSvg.appendChild(zoomPart);activeState.zoomPart=zoomPart;zoomPart.style.transformOrigin=`${centerX}px ${centerY}px`;zoomPart.style.transform=`scale(${scale})`;zoomPart.style.opacity=1;zoomPartElement=zoomPart}let baseText=rect.nextElementSibling;if(baseText&&!baseText.matches('text.rect-label')){baseText=null}if(baseText){baseText.style.opacity='0';activeState.baseText=baseText;const zoomText=baseText.cloneNode(true);const rectFullText=rect.getAttribute('data-full-text')||baseText.getAttribute('data-original-text');zoomText.textContent=rectFullText;zoomText.removeAttribute('data-original-text');while(zoomText.firstChild){zoomText.removeChild(zoomText.firstChild)}zoomText.textContent=rectFullText;const baseFont=parseFloat(baseText.style.fontSize);zoomText.style.fontSize=(baseFont*2)+'px';zoomText.style.fill='white';zoomText.style.pointerEvents='none';zoomText.style.userSelect='none';zoomText.style.opacity='1';zoomText.setAttribute('x',absoluteX+width/2);zoomText.setAttribute('y',absoluteY+baseFont*1.5);zoomText.setAttribute('text-anchor','middle');mainSvg.appendChild(zoomText);activeState.zoomText=zoomText}let hue=0;activeState.animationId=setInterval(()=>{hue=(hue+10)%360;const glow=`drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue+60)%360},100%,60%))`;rect.style.filter=glow;if(zoomPartElement){zoomPartElement.style.filter=glow}if(activeState.zoomText){activeState.zoomText.style.filter=glow}},100)}function stopHover(){if(!interactionEnabled)return;if(activeState.rect===this)cleanupHover()}function handleLinkOpen(event){const href=event.currentTarget.getAttribute('data-href');if(href&&href!=='#'){window.open(href,'_blank');event.preventDefault();event.stopPropagation()}}function attachHover(rect,i){rect.setAttribute('data-index',i);if (!isTouchDevice) {function handleMouseOver(){if(interactionEnabled)startHover.call(rect)}function handleMouseOut(){if(interactionEnabled)stopHover.call(rect)}rect.addEventListener('mouseover',handleMouseOver);rect.addEventListener('mouseout',handleMouseOut);}rect.addEventListener('click',handleLinkOpen);rect.addEventListener('touchstart',function(event){if(!interactionEnabled)return;activeState.touchStartTime=Date.now();activeState.initialScrollLeft=scrollContainer.scrollLeft;activeState.isScrolling=false;startHover.call(this);});rect.addEventListener('touchend',function(event){if(!interactionEnabled)return;const timeElapsed=Date.now()-activeState.touchStartTime;if(activeState.isScrolling===false&&timeElapsed<TAP_THRESHOLD_MS){handleLinkOpen(event)}cleanupHover()})}const svgImages=Array.from(mainSvg.querySelectorAll('image'));const rectShapes=Array.from(mainSvg.querySelectorAll('rect.m'));const rectLabels=Array.from(mainSvg.querySelectorAll('text.rect-label'));const allRectsAndLabels=[...rectShapes,...rectLabels];function filterRects(query){const lowerQuery=query.toLowerCase();allRectsAndLabels.forEach(element=>{let match=false;if(element.tagName==='rect'){const href=element.getAttribute('data-href')||'';if(href.toLowerCase().includes(lowerQuery)){match=true}}else if(element.tagName==='text'){if(element.textContent.toLowerCase().includes(lowerQuery)){match=true}}const rectShape=(element.tagName==='rect')?element:element.previousElementSibling;if(rectShape&&rectShape.matches('rect.m')){const correspondingLabel=rectShape.nextElementSibling;if(query.length>0&&!match){rectShape.style.opacity='0.1';rectShape.style.pointerEvents='none';if(correspondingLabel)correspondingLabel.style.opacity='0.1'}else{rectShape.style.opacity='1';rectShape.style.pointerEvents='auto';if(correspondingLabel)correspondingLabel.style.opacity='1';if(query.length>0&&match){rectShape.style.filter='drop-shadow(0 0 8px #00FFFF) drop-shadow(0 0 14px #00FFFF)';}else{rectShape.style.filter='none'}}}})}const debouncedFilter=debounce(filterRects,150);searchInput.addEventListener('input',function(){debouncedFilter(this.value)});const urls=svgImages.map(img=>img.getAttribute('data-src')||img.getAttribute('href'));let loadedCount=0;const totalCount=urls.length;function updateLoader(){const percent=Math.round((loadedCount/totalCount)*100);if(loadingText)loadingText.textContent=`Preparing the environment...`;if(percent>=25)document.getElementById('bulb-1').classList.add('on');if(percent>=50)document.getElementById('bulb-2').classList.add('on');if(percent>=75)document.getElementById('bulb-3').classList.add('on');if(percent===100)document.getElementById('bulb-4').classList.add('on')}function finishLoading(){if(loadingOverlay){setTimeout(()=>{loadingOverlay.style.opacity=0;setTimeout(()=>{loadingOverlay.style.display='none';mainSvg.style.opacity=1;setTimeout(()=>{scrollContainer.scrollLeft=scrollContainer.scrollWidth;scrollContainer.scrollTo({left:scrollContainer.scrollWidth,behavior:'smooth'});},50);},300)},0)}}urls.forEach((url,index)=>{const img=new Image();img.onload=img.onerror=()=>{loadedCount++;updateLoader();if(loadedCount===totalCount){finishLoading();svgImages.forEach((svgImg,i)=>{svgImg.setAttribute('href',urls[i])})}};img.src=url});function wrapTextInSvg(textElement,maxWidth,padding=5){const text=textElement.textContent;const words=text.split(/\s+/).filter(w=>w.length>0);textElement.textContent=null;let tspan=document.createElementNS('http://www.w3.org/2000/svg','tspan');tspan.setAttribute('x',textElement.getAttribute('x'));tspan.setAttribute('dy','0');textElement.appendChild(tspan);let currentLine='';const lineHeight=parseFloat(textElement.style.fontSize)*1.2;let lineNumber=0;for(let i=0;i<words.length;i++){const word=words[i];const lineTest=currentLine+(currentLine.length?' ':'')+word;tspan.textContent=lineTest;if(tspan.getComputedTextLength()>maxWidth-(padding*2)&&currentLine.length>0){tspan.textContent=currentLine;lineNumber++;tspan=document.createElementNS('http://www.w3.org/2000/svg','tspan');tspan.setAttribute('x',textElement.getAttribute('x'));tspan.setAttribute('dy',`${lineHeight}px`);textElement.appendChild(tspan);currentLine=word;tspan.textContent=word;}else{currentLine=lineTest;}}}document.querySelectorAll('rect.m').forEach(rect=>{const href=rect.getAttribute('data-href')||'';const fileName=href.split('/').pop().split('#')[0]||'';const baseName=fileName.split('.');const textContent=baseName.slice(0,baseName.length-1).join('.');const rectWidth=parseFloat(rect.getAttribute('width'));const rectX=parseFloat(rect.getAttribute('x'));const rectY=parseFloat(rect.getAttribute('y'));const minFont=8;const maxFont=16;const scaleFactor=0.12;let fontSize=rectWidth*scaleFactor;fontSize=Math.max(minFont,Math.min(maxFont,fontSize));const text=document.createElementNS('http://www.w3.org/2000/svg','text');text.setAttribute('x',rectX+rectWidth/2);
-const padding = fontSize * 0.2;
-const initialY = rectY + padding + fontSize * 0.8;
-text.setAttribute('y', initialY);
-text.setAttribute('text-anchor','middle');text.textContent=textContent;text.style.fontSize=fontSize+'px';text.style.fill='white';text.style.pointerEvents='none';text.setAttribute('class','rect-label');text.setAttribute('data-original-text',textContent);rect.parentNode.insertBefore(text,rect.nextSibling);wrapTextInSvg(text,rectWidth)});document.querySelectorAll('rect.m').forEach((rect,i)=>{rect.setAttribute('data-processed','true');attachHover(rect,i)});const rootObserver=new MutationObserver(mutations=>{mutations.forEach(mutation=>{mutation.addedNodes.forEach(node=>{if(node.nodeType===1){if(node.matches('rect.m')&&!node.hasAttribute('data-processed')){attachHover(node,Date.now());node.setAttribute('data-processed','true')}if(node.querySelector){node.querySelectorAll('rect.m:not([data-processed])').forEach(rect=>{attachHover(rect,Date.now());rect.setAttribute('data-processed','true')})}}})})});rootObserver.observe(mainSvg,{childList:true,subtree:true});jsToggle.addEventListener('change',function(){interactionEnabled=this.checked;const label=document.getElementById('toggle-label');if(interactionEnabled){label.textContent='Interaction Enabled'}else{label.textContent='Interaction Disabled';cleanupHover()}});const moveToggle=document.getElementById('move-toggle');const toggleContainer=document.getElementById('js-toggle-container');moveToggle.addEventListener('click',function(){if(toggleContainer.classList.contains('top')){toggleContainer.classList.remove('top');toggleContainer.classList.add('bottom')}else{toggleContainer.classList.remove('bottom');toggleContainer.classList.add('top')}})}
+    let interactionEnabled = jsToggle ? jsToggle.checked : true;
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+    const TAP_THRESHOLD_MS = 300;
+    const activeState = { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null, clipPathId: null, initialScrollLeft: 0, isScrolling: false, touchStartTime: 0 };
+
+    function updateDynamicSizes() {
+        const images = mainSvg.querySelectorAll('image');
+        if (!images.length) return;
+        const firstImage = images[0];
+        const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
+        const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+        const totalWidth = images.length * imageWidth;
+        mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
+        window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
+    }
+    updateDynamicSizes();
+
+    const svgImages = Array.from(mainSvg.querySelectorAll('image'));
+    const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+    let loadedCount = 0;
+    let criticalLoaded = 0;
+
+    function finishLoading() {
+        if (loadingOverlay && loadingOverlay.style.display !== 'none') {
+            loadingOverlay.style.opacity = 0;
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                mainSvg.style.opacity = 1;
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            }, 300);
+        }
+    }
+
+    urls.forEach((url) => {
+        if (!url) return;
+        const img = new Image();
+        const fileName = url.split('/').pop();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            if (criticalFiles.includes(fileName)) criticalLoaded++;
+            if (criticalLoaded >= criticalFiles.length || loadedCount === urls.length) finishLoading();
+        };
+        img.src = url;
+    });
+
+    setTimeout(finishLoading, 6000);
+
+    function cleanupHover() {
+        if (!activeState.rect) return;
+        if (activeState.animationId) clearInterval(activeState.animationId);
+        activeState.rect.style.filter = 'none';
+        activeState.rect.style.transform = 'scale(1)';
+        activeState.rect.style.strokeWidth = '2px';
+        if (activeState.zoomPart) activeState.zoomPart.remove();
+        if (activeState.zoomText) activeState.zoomText.remove();
+        if (activeState.baseText) activeState.baseText.style.opacity = '1';
+        const currentClip = document.getElementById(activeState.clipPathId);
+        if (currentClip) currentClip.remove();
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, baseText: null, animationId: null });
+    }
+
+    function startHover() {
+        if (!interactionEnabled) return;
+        const rect = this;
+        if (activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
+        const scale = 1.1;
+        const x = parseFloat(rect.getAttribute('x')), y = parseFloat(rect.getAttribute('y'));
+        const width = parseFloat(rect.getAttribute('width')), height = parseFloat(rect.getAttribute('height'));
+        
+        let cx = 0, cy = 0, curr = rect;
+        while(curr && curr.tagName !== 'svg') {
+            const t = curr.getAttribute('transform');
+            if(t) {
+                const m = t.match(/translate\(([\d.-]+),? ([\d.-]+)\)/);
+                if(m) { cx += parseFloat(m[1]); cy += parseFloat(m[2]); }
+            }
+            curr = curr.parentNode;
+        }
+
+        const absX = x + cx, absY = y + cy;
+        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        rect.style.transform = `scale(${scale})`;
+        rect.style.strokeWidth = '4px';
+
+        let imageData = null, gCurr = rect;
+        while(gCurr && gCurr.tagName !== 'svg') {
+            if(gCurr.tagName === 'g') {
+                const img = Array.from(gCurr.children).find(c => c.tagName === 'image');
+                if(img) { imageData = { src: img.getAttribute('data-src') || img.getAttribute('href'), w: parseFloat(img.getAttribute('width')), h: parseFloat(img.getAttribute('height')), group: gCurr }; break; }
+            }
+            gCurr = gCurr.parentNode;
+        }
+
+        if (imageData) {
+            const clipId = `clip-${Date.now()}`;
+            activeState.clipPathId = clipId;
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clip.setAttribute('id', clipId);
+            const cr = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            cr.setAttribute('x', absX); cr.setAttribute('y', absY); cr.setAttribute('width', width); cr.setAttribute('height', height);
+            clipDefs.appendChild(clip).appendChild(cr);
+
+            const zp = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            zp.setAttribute('href', imageData.src); zp.setAttribute('width', imageData.w); zp.setAttribute('height', imageData.h);
+            zp.setAttribute('clip-path', `url(#${clipId})`); zp.setAttribute('class', 'zoom-part');
+            mainSvg.appendChild(zp);
+            activeState.zoomPart = zp;
+            zp.style.transformOrigin = `${absX + width/2}px ${absY + height/2}px`;
+            zp.style.transform = `scale(${scale})`;
+        }
+
+        let hue = 0;
+        activeState.animationId = setInterval(() => {
+            hue = (hue + 10) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%))`;
+            rect.style.filter = glow;
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
+        }, 100);
+    }
+
+    document.querySelectorAll('rect.m').forEach((rect, i) => {
+        const href = rect.getAttribute('data-href') || '';
+        const fileName = href.split('/').pop().split('#')[0] || '';
+        const textContent = fileName.split('.')[0] || '';
+        const rectWidth = parseFloat(rect.getAttribute('width')), rectX = parseFloat(rect.getAttribute('x')), rectY = parseFloat(rect.getAttribute('y'));
+        const fontSize = Math.max(8, Math.min(14, rectWidth * 0.12));
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', rectX + rectWidth / 2);
+        text.setAttribute('y', rectY + fontSize * 1.5);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('class', 'rect-label');
+        text.style.fontSize = fontSize + 'px';
+        text.style.fill = 'white';
+        text.style.pointerEvents = 'none';
+        text.textContent = textContent;
+        rect.parentNode.insertBefore(text, rect.nextSibling);
+
+        rect.addEventListener('mouseenter', function() { if(interactionEnabled) startHover.call(this); });
+        rect.addEventListener('mouseleave', cleanupHover);
+        rect.addEventListener('click', function() { if(href && href !== '#') window.open(href, '_blank'); });
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('rect.m').forEach(r => {
+                const l = r.nextElementSibling;
+                const m = r.getAttribute('data-href')?.toLowerCase().includes(q) || l?.textContent.toLowerCase().includes(q);
+                r.style.opacity = (q === "" || m) ? "1" : "0.1";
+                if(l) l.style.opacity = (q === "" || m) ? "1" : "0.1";
+            });
+        });
+    }
+};
