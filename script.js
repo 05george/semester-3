@@ -13,7 +13,7 @@ window.onload = function () {
        WIDTH MAP (بديل width)
     ========================== */
     const RECT_WIDTH_MAP = {
-        w: 114
+        w: 114,
        wh: 57
     };
 
