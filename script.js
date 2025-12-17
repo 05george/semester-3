@@ -6,7 +6,7 @@ window.onload = function () {
     };
 
     Object.keys(dimensions).forEach(className => {
-        document.querySelectorAll(`rect.${className}`).forEach(rect => {
+        document.querySelectorAll(`rect.${className}}).forEach(rect => {
             rect.setAttribute('width', dimensions[className]);
         });
     });
