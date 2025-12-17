@@ -14,7 +14,7 @@ window.onload = function () {
     ========================== */
     const RECT_WIDTH_MAP = {
         w: 114,
-       wh: 57
+        wh: 57
     };
 
     const activeState = {
@@ -163,7 +163,7 @@ window.onload = function () {
 
             const gT = imageData.group.getAttribute('transform');
             if (gT) {
-                const m = gT.match(/translate\(([\d.-]+),([\d.-]+)\)/);
+                const m = gT.match(/translate\(([\d.-]+)[ ,]+([\d.-]+)\)/);
                 if (m) {
                     zoomImg.setAttribute('x', m[1]);
                     zoomImg.setAttribute('y', m[2]);
@@ -186,6 +186,7 @@ window.onload = function () {
             clone.style.opacity = '1';
             clone.setAttribute('x', absX + size.width / 2);
             clone.setAttribute('y', absY - 10);
+            clone.setAttribute('text-anchor', 'middle');
 
             mainSvg.appendChild(clone);
             activeState.zoomText = clone;
