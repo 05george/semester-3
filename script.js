@@ -17,7 +17,6 @@ window.onload = function() {
     };
 
     // --- Utility Functions ---
-
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -67,7 +66,6 @@ window.onload = function() {
     }
 
     // --- Interaction Core ---
-
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -172,7 +170,7 @@ window.onload = function() {
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
             zBg.setAttribute('rx', '8');
-            zBg.style.fill = 'rgba(0, 0, 0, 0.85)';
+            zBg.style.fill = 'black'; // معتم تماماً 100%
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
@@ -194,7 +192,6 @@ window.onload = function() {
     }
 
     // --- Processing ---
-
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
@@ -257,7 +254,7 @@ window.onload = function() {
             bg.setAttribute('width', w);
             bg.setAttribute('height', bbox.height + 8);
             bg.setAttribute('class', 'label-bg');
-            bg.style.fill = 'black';
+            bg.style.fill = 'black'; // معتم تماماً 100%
             bg.style.pointerEvents = 'none';
 
             r.parentNode.insertBefore(bg, txt);
@@ -294,7 +291,7 @@ window.onload = function() {
     }
     scan();
 
-    // --- البحث المطور (الأدق) ---
+    // --- نظام البحث الصارم (معتم 100% أو شفاف 100%) ---
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase();
         const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
@@ -306,34 +303,34 @@ window.onload = function() {
             
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
             const text = (label ? label.getAttribute('data-original-text') : '').toLowerCase();
-            
             const isMatch = href.includes(query) || text.includes(query);
 
             if (query.length > 0) {
                 if (isMatch) {
                     rect.style.opacity = '1';
                     rect.style.pointerEvents = 'auto';
-                    rect.style.filter = 'drop-shadow(0 0 8px #00FFFF)';
-                    if (label) label.style.opacity = '1';
-                    if (bg) bg.style.opacity = '1';
+                    rect.style.filter = 'drop-shadow(0 0 10px #00FFFF)';
+                    if (label) { label.style.opacity = '1'; label.style.fill = 'white'; }
+                    if (bg) { bg.style.opacity = '1'; bg.style.fill = 'black'; }
                 } else {
-                    rect.style.opacity = '0.1';
+                    // إخفاء تام (شفافية 100%)
+                    rect.style.opacity = '0';
                     rect.style.pointerEvents = 'none';
-                    rect.style.filter = 'none';
-                    if (label) label.style.opacity = '0.1';
-                    if (bg) bg.style.opacity = '0.1';
+                    if (label) label.style.opacity = '0';
+                    if (bg) bg.style.opacity = '0';
                 }
             } else {
+                // العودة للحالة الطبيعية المعتمة
                 rect.style.opacity = '1';
                 rect.style.pointerEvents = 'auto';
                 rect.style.filter = 'none';
                 if (label) label.style.opacity = '1';
-                if (bg) bg.style.opacity = '1';
+                if (bg) { bg.style.opacity = '1'; bg.style.fill = 'black'; }
             }
         });
     }, 150));
 
-    // --- الباقي من الكود (تحميل وصيانة) ---
+    // --- Loading Logic ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
