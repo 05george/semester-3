@@ -1,10 +1,35 @@
 /* تنسيقات الصفحة الأساسية */
+/* التعديل الذهبي للآيفون (أضفه في بداية ملف الـ CSS) */
 html, body {
     margin: 0;
     padding: 0;
     height: 100%;
+    /* لضمان ملء الشاشة بالكامل خلف النوتش */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     overflow: hidden;
     background: black;
+    box-sizing: border-box;
+}
+
+/* تعديل حاوية التمرير للآيفون */
+#scroll-container {
+    width: 100vw;
+    /* الطول 100svh هو الحل الأفضل للآيفون لمنع القفز عند ظهور شريط العناوين */
+    height: 100svh; 
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; 
+}
+
+/* تحريك القائمة الجانبية لتجنب النوتش في الوضع الأفقي (Landscape) */
+#js-toggle-container {
+    position: fixed;
+    /* استخدام الـ env يضمن ابتعاد القائمة عن حافة الشاشة في الآيفون */
+    right: calc(20px + env(safe-area-inset-right));
+    z-index: 10000;
 }
 
 /* حاوية التمرير - تحسين دعم اللمس */
