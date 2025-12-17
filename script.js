@@ -2,7 +2,7 @@ window.onload = function () {
     // 1. تحديد العرض للكلاسات المختلفة أولاً
     const dimensions = {
         'w': 115,
-        'half-w': 57 // استبدلنا 0.5w بـ half-w لتجنب مشاكل التسمية الرقمية
+        'hw': 57 // استبدلنا 0.5w بـ half-w لتجنب مشاكل التسمية الرقمية
     };
 
     Object.keys(dimensions).forEach(className => {
