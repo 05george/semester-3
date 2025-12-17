@@ -13,9 +13,10 @@ window.onload = function() {
     const activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null,
         animationId: null, clipPathId: null, initialScrollLeft: 0,
-        isScrolling: false, touchStartTime: 0
+        touchStartTime: 0
     };
 
+    // --- Utility Functions ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -31,7 +32,6 @@ window.onload = function() {
         const imgW = parseFloat(images[0].getAttribute('width')) || 1024;
         const imgH = parseFloat(images[0].getAttribute('height')) || 2454;
         mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
-        window.MAX_SCROLL_LEFT = (images.length * imgW) - window.innerWidth;
     }
     updateDynamicSizes();
 
@@ -65,6 +65,7 @@ window.onload = function() {
         return null;
     }
 
+    // --- Interaction Core ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -85,7 +86,7 @@ window.onload = function() {
 
         Object.assign(activeState, {
             rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null,
-            animationId: null, clipPathId: null, isScrolling: false
+            animationId: null, clipPathId: null
         });
     }
 
@@ -104,10 +105,12 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
+        // Scale Original
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
 
+        // Zoom Image
         const imgData = getGroupImage(rect);
         if (imgData) {
             const clipId = `clip-${Date.now()}`;
@@ -132,6 +135,7 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
+        // Zoom Label
         let bText = rect.nextElementSibling;
         while(bText && !bText.classList.contains('rect-label')) bText = bText.nextElementSibling;
         let bBg = bText ? bText.previousElementSibling : null;
@@ -143,10 +147,8 @@ window.onload = function() {
             activeState.baseBg = bBg;
 
             const zText = bText.cloneNode(true);
-            const fullTxt = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
-            zText.textContent = fullTxt;
-            const fs = parseFloat(bText.style.fontSize) * 2;
-            zText.style.fontSize = fs + 'px';
+            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
+            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
             zText.style.opacity = '1';
             zText.setAttribute('x', centerX);
             zText.style.alignmentBaseline = 'central';
@@ -175,15 +177,16 @@ window.onload = function() {
             activeState.zoomBg = zBg;
         }
 
-        let hueAnim = 0;
+        let hue = 0;
         activeState.animationId = setInterval(() => {
-            hueAnim = (hueAnim + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hueAnim},100%,55%)) drop-shadow(0 0 15px hsl(${(hueAnim+60)%360},100%,60%))`;
+            hue = (hue + 10) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 15px hsl(${(hue+60)%360},100%,60%))`;
             rect.style.filter = glow;
             if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
         }, 100);
     }
 
+    // --- Processing ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
@@ -210,54 +213,51 @@ window.onload = function() {
         });
     }
 
-    function processRect(r, i) {
+    function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
         
-        // Handle Class Shortcuts
-        if(r.classList.contains('w')) r.setAttribute('width', '114');
-        if(r.classList.contains('hw')) r.setAttribute('width', '57');
+        // Handle Logic Shortcuts
+        if(r.classList.contains('w')) r.setAttribute('width', '113.5');
+        if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
         const href = r.getAttribute('data-href') || '';
-        const name = r.getAttribute('data-full-text') || href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') || '';
-        const w = parseFloat(r.getAttribute('width')) || 114;
+        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+        
+        const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
+        const h = parseFloat(r.getAttribute('height')) || r.getBBox().height;
         const x = parseFloat(r.getAttribute('x'));
         const y = parseFloat(r.getAttribute('y'));
-        const fs = Math.max(8, Math.min(14, w * 0.12));
 
-        // Ensure Visibility
-        r.style.fill = 'transparent';
-        if (!r.style.stroke) r.style.strokeWidth = '2px';
+        if (name && name.trim() !== '') {
+            const fs = Math.max(8, Math.min(14, w * 0.12));
 
-        // 1. Permanent BG
-        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bg.setAttribute('x', x);
-        bg.setAttribute('y', y);
-        bg.setAttribute('width', w);
-        bg.setAttribute('class', 'label-bg');
-        bg.style.fill = 'black';
-        bg.style.pointerEvents = 'none';
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', w);
+            bg.setAttribute('height', h);
+            bg.setAttribute('class', 'label-bg');
+            bg.style.fill = 'black';
+            bg.style.pointerEvents = 'none';
 
-        // 2. Text
-        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        txt.setAttribute('x', x + w / 2);
-        txt.setAttribute('text-anchor', 'middle');
-        txt.setAttribute('class', 'rect-label');
-        txt.setAttribute('data-original-text', name);
-        txt.style.fontSize = fs + 'px';
-        txt.style.fill = 'white';
-        txt.style.pointerEvents = 'none';
-        txt.style.alignmentBaseline = 'central';
-        txt.style.dominantBaseline = 'central';
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', x + w / 2);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('class', 'rect-label');
+            txt.setAttribute('data-original-text', name);
+            txt.style.fontSize = fs + 'px';
+            txt.style.fill = 'white';
+            txt.style.pointerEvents = 'none';
+            txt.style.alignmentBaseline = 'central';
+            txt.style.dominantBaseline = 'central';
 
-        r.parentNode.insertBefore(bg, r.nextSibling);
-        r.parentNode.insertBefore(txt, bg.nextSibling);
+            r.parentNode.insertBefore(bg, r.nextSibling);
+            r.parentNode.insertBefore(txt, bg.nextSibling);
 
-        wrapText(txt, w);
-        
-        const bbox = txt.getBBox();
-        const finalBgH = Math.max(bbox.height + 6, 20); 
-        bg.setAttribute('height', finalBgH);
-        txt.setAttribute('y', y + (finalBgH / 2));
+            wrapText(txt, w);
+            const bbox = txt.getBBox();
+            txt.setAttribute('y', y + (h / 2));
+        }
 
         if (!isTouchDevice) {
             r.addEventListener('mouseover', startHover);
@@ -265,7 +265,6 @@ window.onload = function() {
         }
         r.addEventListener('click', (e) => { 
             if (href && href !== '#') window.open(href, '_blank'); 
-            e.preventDefault();
         });
         r.addEventListener('touchstart', function(e) {
             if(!interactionEnabled) return;
@@ -285,10 +284,11 @@ window.onload = function() {
     }
 
     function scan() { 
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach((r, i) => processRect(r, i)); 
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); 
     }
     scan();
 
+    // --- Loading & Search ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loaded = 0;
     urls.forEach(u => {
@@ -324,7 +324,6 @@ window.onload = function() {
             r.style.opacity = (q && !match) ? '0.1' : '1';
             if(bg) bg.style.opacity = (q && !match) ? '0.1' : '1';
             if(label) label.style.opacity = (q && !match) ? '0.1' : '1';
-            r.style.filter = (q && match) ? 'drop-shadow(0 0 10px #00FFFF)' : 'none';
         });
     }, 150));
 
