@@ -10,6 +10,7 @@ window.onload = function () {
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
     const moveToggle = document.getElementById('move-toggle');
+    const toggleContainer = document.getElementById('js-toggle-container');
 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -18,92 +19,25 @@ window.onload = function () {
     const activeState = {
         rect: null,
         zoomPart: null,
+        zoomText: null,
+        baseText: null,
         animationId: null,
         clipPathId: null,
         initialScrollLeft: 0,
         isScrolling: false,
-        touchStartTime: 0,
-        labels: []
+        touchStartTime: 0
     };
 
     // ====================
-    // تحريك زر التبديل
+    // دالة Debounce
     // ====================
-    let toggleAtTop = true;
-    if (moveToggle) {
-        moveToggle.addEventListener('click', function() {
-            const container = document.getElementById('js-toggle-container');
-            if (toggleAtTop) {
-                container.classList.remove('top');
-                container.classList.add('bottom');
-            } else {
-                container.classList.remove('bottom');
-                container.classList.add('top');
-            }
-            toggleAtTop = !toggleAtTop;
-        });
-    }
-
-    // ====================
-    // مؤشرات التحميل المتحركة
-    // ====================
-    function animateLoadingLights() {
-        const bulbs = document.querySelectorAll('.light-bulb');
-        if (bulbs.length === 0) return null;
-        
-        let current = 0;
-        
-        const interval = setInterval(() => {
-            bulbs.forEach(bulb => bulb.classList.remove('on'));
-            bulbs[current].classList.add('on');
-            current = (current + 1) % bulbs.length;
-        }, 300);
-
-        return interval;
-    }
-
-    const loadingInterval = animateLoadingLights();
-
-    // ====================
-    // دالة قراءة حجم المستطيل
-    // ====================
-    function getRectSize(rect) {
-        const w = rect.getAttribute('width');
-        const h = rect.getAttribute('height');
-
-        if (w && h) {
-            return {
-                width: parseFloat(w),
-                height: parseFloat(h)
-            };
-        }
-
-        try {
-            const bbox = rect.getBBox();
-            if (bbox.width && bbox.height) {
-                return {
-                    width: bbox.width,
-                    height: bbox.height
-                };
-            }
-        } catch (e) {
-            console.warn('Could not get BBox for rect:', e);
-        }
-
-        return {
-            width: 114,
-            height: parseFloat(rect.getAttribute('height')) || 100
-        };
-    }
-
-    // ====================
-    // Debounce للتحسين
-    // ====================
-    function debounce(fn, delay) {
-        let t;
+    function debounce(func, delay) {
+        let timeoutId;
         return function () {
-            clearTimeout(t);
-            t = setTimeout(() => fn.apply(this, arguments), delay);
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(context, args), delay);
         };
     }
 
@@ -114,61 +48,40 @@ window.onload = function () {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
 
-        let totalW = 0;
-        images.forEach(img => {
-            const w = parseFloat(img.getAttribute('width')) || 1024;
-            totalW += w;
-        });
+        const firstImage = images[0];
+        const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
+        const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
+        const totalWidth = images.length * imageWidth;
 
-        const firstImg = images[0];
-        const h = parseFloat(firstImg.getAttribute('height')) || 2454;
-        
-        mainSvg.setAttribute('viewBox', `0 0 ${totalW} ${h}`);
-        mainSvg.setAttribute('width', totalW);
-        mainSvg.setAttribute('height', h);
-        
-        window.MAX_SCROLL_LEFT = totalW - window.innerWidth;
+        mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
+        window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
     }
 
-    // ====================
-    // تنظيف تأثيرات التكبير
-    // ====================
-    function cleanupHover() {
-        if (!activeState.rect) return;
+    updateDynamicSizes();
 
-        if (activeState.animationId) {
-            clearInterval(activeState.animationId);
-            activeState.animationId = null;
-        }
-        
+    // ====================
+    // Debounced Cleanup
+    // ====================
+    const debouncedCleanupHover = debounce(function () {
+        if (!interactionEnabled || !activeState.rect) return;
         if (activeState.rect) {
-            activeState.rect.style.transform = 'scale(1)';
-            activeState.rect.style.filter = 'none';
-            activeState.rect.style.strokeWidth = '2px';
+            cleanupHover();
         }
-
-        if (activeState.zoomPart) {
-            activeState.zoomPart.remove();
-            activeState.zoomPart = null;
-        }
-
-        if (activeState.clipPathId) {
-            const clip = document.getElementById(activeState.clipPathId);
-            if (clip) clip.remove();
-            activeState.clipPathId = null;
-        }
-
-        activeState.rect = null;
-    }
+    }, 50);
 
     // ====================
     // حدث Scroll
     // ====================
     scrollContainer.addEventListener('scroll', function () {
+        // منع التمرير بعد الحد الأقصى
+        if (this.scrollLeft > window.MAX_SCROLL_LEFT) {
+            this.scrollLeft = window.MAX_SCROLL_LEFT;
+        }
+
         if (!interactionEnabled) return;
 
         if (activeState.rect && !isTouchDevice) {
-            cleanupHover();
+            debouncedCleanupHover();
         }
 
         if (activeState.rect && isTouchDevice) {
@@ -182,20 +95,19 @@ window.onload = function () {
     // ====================
     // حساب الترجمة التراكمية
     // ====================
-    function getCumulativeTranslate(el) {
+    function getCumulativeTranslate(element) {
         let x = 0, y = 0;
-        let currentEl = el;
-        
-        while (currentEl && currentEl.tagName !== 'svg') {
-            const t = currentEl.getAttribute('transform');
-            if (t) {
-                const m = t.match(/translate\(([\d.-]+)[ ,]+([\d.-]+)\)/);
-                if (m) {
-                    x += parseFloat(m[1]);
-                    y += parseFloat(m[2]);
+        let current = element;
+        while (current && current.tagName !== 'svg') {
+            const transformAttr = current.getAttribute('transform');
+            if (transformAttr) {
+                const match = transformAttr.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+                if (match) {
+                    x += parseFloat(match[1]);
+                    y += parseFloat(match[2]);
                 }
             }
-            currentEl = currentEl.parentNode;
+            current = current.parentNode;
         }
         return { x, y };
     }
@@ -203,24 +115,76 @@ window.onload = function () {
     // ====================
     // الحصول على بيانات الصورة في المجموعة
     // ====================
-    function getGroupImage(el) {
-        let currentEl = el;
-        
-        while (currentEl && currentEl.tagName !== 'svg') {
-            if (currentEl.tagName === 'g') {
-                const img = currentEl.querySelector('image');
-                if (img) {
+    function getGroupImage(element) {
+        let current = element;
+        while (current && current.tagName !== 'svg') {
+            if (current.tagName === 'g') {
+                const images = [...current.children].filter(c => c.tagName === 'image');
+                if (images.length) {
+                    const baseImage = images[0];
                     return {
-                        src: img.getAttribute('data-src') || img.getAttribute('href') || img.getAttribute('xlink:href'),
-                        width: parseFloat(img.getAttribute('width')) || 1024,
-                        height: parseFloat(img.getAttribute('height')) || 2454,
-                        group: currentEl
+                        src: baseImage.getAttribute('data-src') || baseImage.getAttribute('href'),
+                        width: parseFloat(baseImage.getAttribute('width')),
+                        height: parseFloat(baseImage.getAttribute('height')),
+                        group: current
                     };
                 }
             }
-            currentEl = currentEl.parentNode;
+            current = current.parentNode;
         }
         return null;
+    }
+
+    // ====================
+    // تنظيف تأثيرات التكبير
+    // ====================
+    function cleanupHover() {
+        if (!activeState.rect) return;
+
+        const rectToClean = activeState.rect;
+        const clipPathIdToClean = activeState.clipPathId;
+        const zoomPartToClean = activeState.zoomPart;
+        const zoomTextToClean = activeState.zoomText;
+        const baseTextToClean = activeState.baseText;
+        const animationIdToClean = activeState.animationId;
+
+        if (animationIdToClean) clearInterval(animationIdToClean);
+
+        rectToClean.style.filter = 'none';
+        if (zoomPartToClean) zoomPartToClean.style.filter = 'none';
+        if (zoomTextToClean) zoomTextToClean.style.filter = 'none';
+
+        rectToClean.style.transform = 'scale(1)';
+        rectToClean.style.strokeWidth = '2px';
+
+        if (zoomPartToClean) zoomPartToClean.style.transform = 'scale(1)';
+
+        if (baseTextToClean) {
+            baseTextToClean.style.opacity = '1';
+        }
+
+        if (zoomTextToClean) {
+            zoomTextToClean.style.opacity = '0';
+        }
+
+        if (zoomPartToClean) zoomPartToClean.remove();
+        
+        const currentClip = document.getElementById(clipPathIdToClean);
+        if (currentClip) currentClip.remove();
+
+        if (zoomTextToClean) zoomTextToClean.remove();
+
+        Object.assign(activeState, {
+            rect: null,
+            zoomPart: null,
+            zoomText: null,
+            baseText: null,
+            animationId: null,
+            clipPathId: null,
+            initialScrollLeft: 0,
+            isScrolling: false,
+            touchStartTime: 0
+        });
     }
 
     // ====================
@@ -228,75 +192,119 @@ window.onload = function () {
     // ====================
     function startHover() {
         if (!interactionEnabled) return;
-        cleanupHover();
-
+        
         const rect = this;
+        if (activeState.rect === rect) return;
+        
+        cleanupHover();
         activeState.rect = rect;
 
-        const { width, height } = getRectSize(rect);
-        const x = parseFloat(rect.getAttribute('x')) || 0;
-        const y = parseFloat(rect.getAttribute('y')) || 0;
         const scale = 1.1;
+        const x = parseFloat(rect.getAttribute('x'));
+        const y = parseFloat(rect.getAttribute('y'));
+        const width = parseFloat(rect.getAttribute('width'));
+        const height = parseFloat(rect.getAttribute('height'));
 
-        const c = getCumulativeTranslate(rect);
-        const absX = x + c.x;
-        const absY = y + c.y;
-        const cx = absX + width / 2;
-        const cy = absY + height / 2;
+        const cumulative = getCumulativeTranslate(rect);
+        const absoluteX = x + cumulative.x;
+        const absoluteY = y + cumulative.y;
+        const centerX = absoluteX + width / 2;
+        const centerY = absoluteY + height / 2;
 
-        // تطبيق تأثير التكبير
-        rect.style.transformOrigin = `${cx}px ${cy}px`;
+        rect.style.transformOrigin = `${x + width / 2}px ${y + height / 2}px`;
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
 
-        // إنشاء clip path للتكبير
         const imageData = getGroupImage(rect);
-        if (imageData && imageData.src) {
-            const clipId = `clip-${Date.now()}`;
-            activeState.clipPathId = clipId;
+        let zoomPartElement = null;
+
+        if (imageData) {
+            const i = rect.getAttribute('data-index') || Date.now();
+            const clipPathId = `clip-${i}-${Date.now()}`;
+            activeState.clipPathId = clipPathId;
 
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
-            clip.setAttribute('id', clipId);
+            clip.setAttribute('id', clipPathId);
 
-            const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            r.setAttribute('x', absX);
-            r.setAttribute('y', absY);
-            r.setAttribute('width', width);
-            r.setAttribute('height', height);
+            const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            clipRect.setAttribute('x', absoluteX);
+            clipRect.setAttribute('y', absoluteY);
+            clipRect.setAttribute('width', width);
+            clipRect.setAttribute('height', height);
 
-            clip.appendChild(r);
-            clipDefs.appendChild(clip);
+            clipDefs.appendChild(clip).appendChild(clipRect);
 
-            // إنشاء صورة مكبرة
-            const zoom = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-            zoom.setAttribute('href', imageData.src);
-            zoom.setAttribute('xlink:href', imageData.src);
-            zoom.setAttribute('width', imageData.width);
-            zoom.setAttribute('height', imageData.height);
-            zoom.setAttribute('clip-path', `url(#${clipId})`);
-            zoom.setAttribute('class', 'zoom-part');
+            const zoomPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            zoomPart.setAttribute('href', imageData.src);
+            zoomPart.setAttribute('width', imageData.width);
+            zoomPart.setAttribute('height', imageData.height);
+            zoomPart.setAttribute('class', 'zoom-part');
+            zoomPart.setAttribute('clip-path', `url(#${clipPathId})`);
 
-            // تطبيق نفس تحويل المجموعة
-            const gt = imageData.group.getAttribute('transform');
-            if (gt) {
-                zoom.setAttribute('transform', gt);
-            }
+            const groupTransform = imageData.group.getAttribute('transform');
+            const match = groupTransform ? groupTransform.match(/translate\(([\d.-]+),([\d.-]+)\)/) : null;
+            const groupX = match ? parseFloat(match[1]) : 0;
+            const groupY = match ? parseFloat(match[2]) : 0;
 
-            zoom.style.transformOrigin = `${cx}px ${cy}px`;
-            zoom.style.transform = `scale(${scale})`;
-            zoom.style.filter = 'none';
-            mainSvg.appendChild(zoom);
-            activeState.zoomPart = zoom;
+            zoomPart.setAttribute('x', groupX);
+            zoomPart.setAttribute('y', groupY);
+            zoomPart.style.opacity = 0;
+            mainSvg.appendChild(zoomPart);
+            activeState.zoomPart = zoomPart;
+
+            zoomPart.style.transformOrigin = `${centerX}px ${centerY}px`;
+            zoomPart.style.transform = `scale(${scale})`;
+            zoomPart.style.opacity = 1;
+            zoomPartElement = zoomPart;
         }
 
-        // تأثير الوميض بالألوان
+        // معالجة النص
+        let baseText = rect.nextElementSibling;
+        if (baseText && !baseText.matches('text.rect-label')) {
+            baseText = null;
+        }
+
+        if (baseText) {
+            baseText.style.opacity = '0';
+            activeState.baseText = baseText;
+
+            const zoomText = baseText.cloneNode(true);
+            const rectFullText = rect.getAttribute('data-full-text') || baseText.getAttribute('data-original-text');
+            zoomText.textContent = rectFullText;
+            zoomText.removeAttribute('data-original-text');
+            
+            while (zoomText.firstChild) {
+                zoomText.removeChild(zoomText.firstChild);
+            }
+            zoomText.textContent = rectFullText;
+
+            const baseFont = parseFloat(baseText.style.fontSize);
+            zoomText.style.fontSize = (baseFont * 2) + 'px';
+            zoomText.style.fill = 'white';
+            zoomText.style.pointerEvents = 'none';
+            zoomText.style.userSelect = 'none';
+            zoomText.style.opacity = '1';
+            zoomText.setAttribute('x', absoluteX + width / 2);
+            zoomText.setAttribute('y', absoluteY + baseFont * 1.5);
+            zoomText.setAttribute('text-anchor', 'middle');
+
+            mainSvg.appendChild(zoomText);
+            activeState.zoomText = zoomText;
+        }
+
+        // تأثير الوميض
         let hue = 0;
         activeState.animationId = setInterval(() => {
             hue = (hue + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,60%))`;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 14px hsl(${(hue + 60) % 360},100%,60%))`;
             rect.style.filter = glow;
-            if (activeState.zoomPart) {
-                activeState.zoomPart.style.filter = glow;
+            
+            if (zoomPartElement) {
+                zoomPartElement.style.filter = glow;
+            }
+            
+            if (activeState.zoomText) {
+                activeState.zoomText.style.filter = glow;
             }
         }, 100);
     }
@@ -305,341 +313,319 @@ window.onload = function () {
     // إيقاف تأثير التكبير
     // ====================
     function stopHover() {
-        if (interactionEnabled) cleanupHover();
+        if (!interactionEnabled) return;
+        if (activeState.rect === this) cleanupHover();
     }
 
     // ====================
     // فتح الرابط
     // ====================
-    function handleLinkOpen(e) {
-        const href = e.currentTarget.getAttribute('data-href');
+    function handleLinkOpen(event) {
+        const href = event.currentTarget.getAttribute('data-href');
         if (href && href !== '#') {
             window.open(href, '_blank');
-            e.preventDefault();
+            event.preventDefault();
+            event.stopPropagation();
         }
-    }
-
-    // ====================
-    // تقسيم النص الطويل
-    // ====================
-    function wrapText(text, maxLength) {
-        if (!text) return [];
-        
-        const words = text.split(/[\/\-_]/);
-        const result = [];
-        let currentLine = '';
-        
-        for (const word of words) {
-            if (!word.trim()) continue;
-            
-            if (currentLine.length + word.length + 1 <= maxLength) {
-                currentLine += (currentLine ? ' ' : '') + word;
-            } else {
-                if (currentLine) result.push(currentLine);
-                currentLine = word;
-            }
-        }
-        
-        if (currentLine) result.push(currentLine);
-        
-        // إذا كان النص قصيراً، نرجعه كما هو
-        if (result.length === 0) return [text];
-        return result;
-    }
-
-    // ====================
-    // إنشاء التسميات متعددة الأسطر
-    // ====================
-    function createMultiLineLabel(rect, filename) {
-        const { width, height } = getRectSize(rect);
-        const x = parseFloat(rect.getAttribute('x')) || 0;
-        const y = parseFloat(rect.getAttribute('y')) || 0;
-        
-        // حجم الخط بناءً على عرض المستطيل
-        const baseFontSize = Math.max(8, Math.min(14, width * 0.1));
-        const lineHeight = baseFontSize * 1.2;
-        
-        // تقسيم النص
-        const lines = wrapText(filename, 15);
-        const totalTextHeight = lines.length * lineHeight;
-        
-        // إنشاء مجموعة للنصوص
-        const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        textGroup.setAttribute('class', 'rect-label-group');
-        
-        // إضافة كل سطر
-        lines.forEach((line, index) => {
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', x + width / 2);
-            text.setAttribute('y', y + height / 2 + (index - (lines.length - 1) / 2) * lineHeight);
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('dominant-baseline', 'middle');
-            text.textContent = line;
-            text.style.fontSize = `${baseFontSize}px`;
-            text.style.fill = 'white';
-            text.style.pointerEvents = 'none';
-            text.style.fontFamily = 'Arial, sans-serif';
-            text.style.fontWeight = 'bold';
-            text.style.textShadow = '1px 1px 2px black';
-            
-            textGroup.appendChild(text);
-        });
-        
-        return textGroup;
     }
 
     // ====================
     // إرفاق أحداث للمستطيل
     // ====================
-    function attachRectEvents(rect) {
-        if (!isTouchDevice) {
-            rect.addEventListener('mouseover', startHover);
-            rect.addEventListener('mouseout', stopHover);
-        }
-        
-        rect.addEventListener('click', handleLinkOpen);
-        
-        // إضافة حدث للشاشات التي تعمل باللمس
-        if (isTouchDevice) {
-            let touchStart = 0;
-            
-            rect.addEventListener('touchstart', function(e) {
-                touchStart = Date.now();
-                activeState.initialScrollLeft = scrollContainer.scrollLeft;
-                activeState.isScrolling = false;
-                
-                // بدء الهوفر على اللمس
-                if (interactionEnabled) {
-                    startHover.call(this);
-                }
-                e.preventDefault();
-            }, { passive: false });
-            
-            rect.addEventListener('touchend', function(e) {
-                const touchDuration = Date.now() - touchStart;
-                
-                if (touchDuration < TAP_THRESHOLD_MS && !activeState.isScrolling) {
-                    handleLinkOpen.call(this, e);
-                }
-                
-                // تنظيف الهوفر بعد تأخير
-                setTimeout(() => {
-                    if (interactionEnabled) {
-                        stopHover();
-                    }
-                }, 500);
-                
-                e.preventDefault();
-            }, { passive: false });
-        }
-    }
+    function attachHover(rect, i) {
+        rect.setAttribute('data-index', i);
 
-    // ====================
-    // إنشاء جميع التسميات
-    // ====================
-    function createAllLabels() {
-        // إزالة التسميات القديمة
-        document.querySelectorAll('.rect-label-group').forEach(el => el.remove());
-        
-        const rects = document.querySelectorAll('rect.image-mapper-shape');
-        activeState.labels = [];
-        
-        rects.forEach(rect => {
-            const href = rect.getAttribute('data-href') || '';
-            if (!href) return;
+        if (!isTouchDevice) {
+            function handleMouseOver() {
+                if (interactionEnabled) startHover.call(rect);
+            }
             
-            // استخراج اسم الملف
-            const filename = href.split('/').pop().replace('.pdf', '').replace(/\.[^/.]+$/, "");
-            if (!filename) return;
+            function handleMouseOut() {
+                if (interactionEnabled) stopHover.call(rect);
+            }
             
-            // إنشاء التسمية متعددة الأسطر
-            const labelGroup = createMultiLineLabel(rect, filename);
+            rect.addEventListener('mouseover', handleMouseOver);
+            rect.addEventListener('mouseout', handleMouseOut);
+        }
+
+        rect.addEventListener('click', handleLinkOpen);
+
+        rect.addEventListener('touchstart', function (event) {
+            if (!interactionEnabled) return;
+            activeState.touchStartTime = Date.now();
+            activeState.initialScrollLeft = scrollContainer.scrollLeft;
+            activeState.isScrolling = false;
+            startHover.call(this);
+        });
+
+        rect.addEventListener('touchend', function (event) {
+            if (!interactionEnabled) return;
+            const timeElapsed = Date.now() - activeState.touchStartTime;
             
-            // إضافة التسمية بعد المستطيل مباشرة
-            rect.parentNode.insertBefore(labelGroup, rect.nextSibling);
+            if (activeState.isScrolling === false && timeElapsed < TAP_THRESHOLD_MS) {
+                handleLinkOpen(event);
+            }
             
-            // حفظ المرجع
-            activeState.labels.push({
-                rect: rect,
-                label: labelGroup,
-                text: filename.toLowerCase()
-            });
-            
-            // إرفاق الأحداث
-            attachRectEvents(rect);
+            cleanupHover();
         });
     }
 
     // ====================
     // وظيفة البحث
     // ====================
-    function setupSearch() {
-        if (!searchInput) return;
+    const svgImages = Array.from(mainSvg.querySelectorAll('image'));
+    const rectShapes = Array.from(mainSvg.querySelectorAll('rect.image-mapper-shape'));
+    const rectLabels = Array.from(mainSvg.querySelectorAll('text.rect-label'));
+    const allRectsAndLabels = [...rectShapes, ...rectLabels];
 
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
+    function filterRects(query) {
+        const lowerQuery = query.toLowerCase();
+        
+        allRectsAndLabels.forEach(element => {
+            let match = false;
             
-            activeState.labels.forEach(item => {
-                const matches = searchTerm === '' || item.text.includes(searchTerm);
-                
-                // التحكم في ظهور المستطيل
-                if (item.rect) {
-                    item.rect.style.opacity = matches ? '1' : '0.2';
-                    item.rect.style.pointerEvents = matches ? 'auto' : 'none';
+            if (element.tagName === 'rect') {
+                const href = element.getAttribute('data-href') || '';
+                if (href.toLowerCase().includes(lowerQuery)) {
+                    match = true;
                 }
-                
-                // التحكم في ظهور التسمية
-                if (item.label) {
-                    item.label.style.opacity = matches ? '1' : '0.2';
-                    item.label.style.display = matches ? 'block' : 'none';
+            } else if (element.tagName === 'text') {
+                if (element.textContent.toLowerCase().includes(lowerQuery)) {
+                    match = true;
                 }
-            });
-        });
+            }
 
-        // زر Esc لمسح البحث
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                this.dispatchEvent(new Event('input'));
-                this.blur();
+            const rectShape = (element.tagName === 'rect') ? element : element.previousElementSibling;
+            
+            if (rectShape && rectShape.matches('rect.image-mapper-shape')) {
+                const correspondingLabel = rectShape.nextElementSibling;
+                
+                if (query.length > 0 && !match) {
+                    rectShape.style.opacity = '0.1';
+                    rectShape.style.pointerEvents = 'none';
+                    if (correspondingLabel) correspondingLabel.style.opacity = '0.1';
+                } else {
+                    rectShape.style.opacity = '1';
+                    rectShape.style.pointerEvents = 'auto';
+                    if (correspondingLabel) correspondingLabel.style.opacity = '1';
+                    
+                    if (query.length > 0 && match) {
+                        rectShape.style.filter = 'drop-shadow(0 0 8px #00FFFF) drop-shadow(0 0 14px #00FFFF)';
+                    } else {
+                        rectShape.style.filter = 'none';
+                    }
+                }
             }
         });
     }
 
-    // ====================
-    // إنهاء التحميل
-    // ====================
-    function finishLoading() {
-        if (loadingInterval) clearInterval(loadingInterval);
-        
-        // إخفاء شاشة التحميل بسلاسة
-        loadingOverlay.style.opacity = '0';
-        
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-            mainSvg.style.opacity = '1';
-            
-            // تحديث الأحجام
-            updateDynamicSizes();
-            
-            // إنشاء التسميات
-            createAllLabels();
-            
-            // إعداد البحث
-            setupSearch();
-        }, 300);
+    const debouncedFilter = debounce(filterRects, 150);
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            debouncedFilter(this.value);
+        });
     }
 
     // ====================
     // تحميل الصور
     // ====================
-    function loadImages() {
-        const svgImages = Array.from(mainSvg.querySelectorAll('image'));
-        let loaded = 0;
-        const totalImages = svgImages.length;
+    const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+    let loadedCount = 0;
+    const totalCount = urls.length;
 
-        if (totalImages === 0) {
-            console.warn('No images found in SVG');
-            finishLoading();
-            return;
-        }
-
-        function updateProgress() {
-            loaded++;
-            const percent = Math.round((loaded / totalImages) * 100);
-            loadingText.textContent = `Loading images... ${percent}%`;
-            
-            if (loaded === totalImages) {
-                finishLoading();
-            }
-        }
-
-        svgImages.forEach(img => {
-            const src = img.getAttribute('data-src') || 
-                        img.getAttribute('href') || 
-                        img.getAttribute('xlink:href');
-            
-            if (!src) {
-                console.warn('Image without source:', img);
-                updateProgress();
-                return;
-            }
-
-            const temp = new Image();
-            
-            temp.onload = () => {
-                // تحديث السمة href لتأمين العرض
-                if (img.hasAttribute('xlink:href')) {
-                    img.setAttribute('xlink:href', src);
-                } else {
-                    img.setAttribute('href', src);
-                }
-                updateProgress();
-            };
-            
-            temp.onerror = () => {
-                console.warn(`Failed to load image: ${src}`);
-                updateProgress();
-            };
-            
-            temp.src = src;
-        });
+    function updateLoader() {
+        const percent = Math.round((loadedCount / totalCount) * 100);
+        if (loadingText) loadingText.textContent = `Preparing the environment...`;
+        
+        if (percent >= 25) document.getElementById('bulb-1').classList.add('on');
+        if (percent >= 50) document.getElementById('bulb-2').classList.add('on');
+        if (percent >= 75) document.getElementById('bulb-3').classList.add('on');
+        if (percent === 100) document.getElementById('bulb-4').classList.add('on');
     }
+
+    function finishLoading() {
+        if (loadingOverlay) {
+            setTimeout(() => {
+                loadingOverlay.style.opacity = 0;
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    mainSvg.style.opacity = 1;
+                    setTimeout(() => {
+                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                        scrollContainer.scrollTo({
+                            left: scrollContainer.scrollWidth,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+                }, 300);
+            }, 0);
+        }
+    }
+
+    urls.forEach((url, index) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            updateLoader();
+            if (loadedCount === totalCount) {
+                finishLoading();
+                svgImages.forEach((svgImg, i) => {
+                    svgImg.setAttribute('href', urls[i]);
+                });
+            }
+        };
+        img.src = url;
+    });
+
+    // ====================
+    // تقسيم النص إلى أسطر متعددة
+    // ====================
+    function wrapTextInSvg(textElement, maxWidth, padding = 5) {
+        const text = textElement.textContent;
+        const words = text.split(/\s+/).filter(w => w.length > 0);
+        textElement.textContent = null;
+
+        let tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspan.setAttribute('x', textElement.getAttribute('x'));
+        tspan.setAttribute('dy', '0');
+        textElement.appendChild(tspan);
+
+        let currentLine = '';
+        const lineHeight = parseFloat(textElement.style.fontSize) * 1.2;
+        let lineNumber = 0;
+
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            const lineTest = currentLine + (currentLine.length ? ' ' : '') + word;
+            tspan.textContent = lineTest;
+            
+            if (tspan.getComputedTextLength() > maxWidth - (padding * 2) && currentLine.length > 0) {
+                tspan.textContent = currentLine;
+                lineNumber++;
+                tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan.setAttribute('x', textElement.getAttribute('x'));
+                tspan.setAttribute('dy', `${lineHeight}px`);
+                textElement.appendChild(tspan);
+                currentLine = word;
+                tspan.textContent = word;
+            } else {
+                currentLine = lineTest;
+            }
+        }
+    }
+
+    // ====================
+    // إنشاء تسميات للمستطيلات
+    // ====================
+    document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
+        const href = rect.getAttribute('data-href') || '';
+        const fileName = href.split('/').pop().split('#')[0] || '';
+        const baseName = fileName.split('.');
+        const textContent = baseName.slice(0, baseName.length - 1).join('.');
+        
+        const rectWidth = parseFloat(rect.getAttribute('width'));
+        const rectX = parseFloat(rect.getAttribute('x'));
+        const rectY = parseFloat(rect.getAttribute('y'));
+        
+        const minFont = 8;
+        const maxFont = 16;
+        const scaleFactor = 0.12;
+        let fontSize = rectWidth * scaleFactor;
+        fontSize = Math.max(minFont, Math.min(maxFont, fontSize));
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', rectX + rectWidth / 2);
+        
+        const padding = fontSize * 0.2; // حوالي 20% من حجم الخط كفراغ
+        const initialY = rectY + padding + fontSize * 0.8; // 0.8 لضبط baseline
+        text.setAttribute('y', initialY);
+        text.setAttribute('text-anchor', 'middle');
+        text.textContent = textContent;
+        text.style.fontSize = fontSize + 'px';
+        text.style.fill = 'white';
+        text.style.pointerEvents = 'none';
+        text.setAttribute('class', 'rect-label');
+        text.setAttribute('data-original-text', textContent);
+        
+        rect.parentNode.insertBefore(text, rect.nextSibling);
+        wrapTextInSvg(text, rectWidth);
+    });
+
+    // ====================
+    // إرفاق أحداث لجميع المستطيلات
+    // ====================
+    document.querySelectorAll('rect.image-mapper-shape').forEach((rect, i) => {
+        rect.setAttribute('data-processed', 'true');
+        attachHover(rect, i);
+    });
+
+    // ====================
+    // Mutation Observer للمستطيلات الجديدة
+    // ====================
+    const rootObserver = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) {
+                    if (node.matches('rect.image-mapper-shape') && !node.hasAttribute('data-processed')) {
+                        attachHover(node, Date.now());
+                        node.setAttribute('data-processed', 'true');
+                    }
+                    
+                    if (node.querySelector) {
+                        node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect => {
+                            attachHover(rect, Date.now());
+                            rect.setAttribute('data-processed', 'true');
+                        });
+                    }
+                }
+            });
+        });
+    });
+
+    rootObserver.observe(mainSvg, { childList: true, subtree: true });
 
     // ====================
     // تبديل التفاعل
     // ====================
-    if (jsToggle) {
-        jsToggle.addEventListener('change', function () {
-            interactionEnabled = this.checked;
-            
-            // تحديث نص التبديل
-            const toggleLabel = document.getElementById('toggle-label');
-            if (toggleLabel) {
-                toggleLabel.textContent = interactionEnabled ? 
-                    'Interaction Enabled' : 'Interaction Disabled';
-            }
-            
-            if (!interactionEnabled) {
-                cleanupHover();
-                
-                // تعطيل أحداث جميع المستطيلات
-                document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-                    rect.style.pointerEvents = 'none';
-                });
+    jsToggle.addEventListener('change', function () {
+        interactionEnabled = this.checked;
+        const label = document.getElementById('toggle-label');
+        
+        if (interactionEnabled) {
+            label.textContent = 'Interaction Enabled';
+        } else {
+            label.textContent = 'Interaction Disabled';
+            cleanupHover();
+        }
+    });
+
+    // ====================
+    // تحريك زر التبديل
+    // ====================
+    if (moveToggle && toggleContainer) {
+        moveToggle.addEventListener('click', function () {
+            if (toggleContainer.classList.contains('top')) {
+                toggleContainer.classList.remove('top');
+                toggleContainer.classList.add('bottom');
             } else {
-                // تمكين أحداث جميع المستطيلات
-                document.querySelectorAll('rect.image-mapper-shape').forEach(rect => {
-                    rect.style.pointerEvents = 'auto';
-                });
+                toggleContainer.classList.remove('bottom');
+                toggleContainer.classList.add('top');
             }
         });
     }
 
     // ====================
-    // بدء التحميل
-    // ====================
-    loadImages();
-
-    // ====================
     // تحسين الأداء عند تغيير الحجم
     // ====================
-    window.addEventListener('resize', debounce(() => {
-        updateDynamicSizes();
-        createAllLabels(); // إعادة إنشاء التسميات لتناسب الحجم الجديد
-    }, 250));
-
-    // ====================
-    // تهيئة أولية
-    // ====================
-    updateDynamicSizes();
+    window.addEventListener('resize', debounce(updateDynamicSizes, 250));
 };
 
 // ====================
 // دعم المتصفحات القديمة
 // ====================
 if (!Element.prototype.closest) {
-    Element.prototype.closest = function(s) {
+    Element.prototype.closest = function (s) {
         var el = this;
         if (!document.documentElement.contains(el)) return null;
         do {
@@ -651,31 +637,16 @@ if (!Element.prototype.closest) {
 }
 
 if (!Element.prototype.matches) {
-    Element.prototype.matches = 
-        Element.prototype.matchesSelector || 
+    Element.prototype.matches =
+        Element.prototype.matchesSelector ||
         Element.prototype.mozMatchesSelector ||
-        Element.prototype.msMatchesSelector || 
-        Element.prototype.oMatchesSelector || 
+        Element.prototype.msMatchesSelector ||
+        Element.prototype.oMatchesSelector ||
         Element.prototype.webkitMatchesSelector ||
-        function(s) {
+        function (s) {
             var matches = (this.document || this.ownerDocument).querySelectorAll(s),
                 i = matches.length;
-            while (--i >= 0 && matches.item(i) !== this) {}
+            while (--i >= 0 && matches.item(i) !== this) { }
             return i > -1;
         };
-}
-
-// ====================
-// دعم requestAnimationFrame
-// ====================
-if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = (function() {
-        return window.webkitRequestAnimationFrame ||
-               window.mozRequestAnimationFrame ||
-               window.oRequestAnimationFrame ||
-               window.msRequestAnimationFrame ||
-               function(callback) {
-                   window.setTimeout(callback, 1000 / 60);
-               };
-    })();
 }
