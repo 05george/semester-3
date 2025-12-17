@@ -1,6 +1,5 @@
 window.onload=function(){
-// تحديد عرض موحد لكل العناصر التي تحمل كلاس 'w'
-const defaultWidth = 115; // يمكنك تغيير الرقم حسب العرض المطلوب
+const defaultWidth = 115;
 document.querySelectorAll('rect.w').forEach(rect => {
     rect.setAttribute('width', defaultWidth);
 });
@@ -9,5 +8,4 @@ const mainSvg=document.getElementById('main-svg');const scrollContainer=document
 const padding = fontSize * 0.2; // حوالي 20% من حجم الخط كفراغ
 const initialY = rectY + padding + fontSize * 0.8; // 0.8 لضبط baseline
 text.setAttribute('y', initialY);
-// **************************************************
 text.setAttribute('text-anchor','middle');text.textContent=textContent;text.style.fontSize=fontSize+'px';text.style.fill='white';text.style.pointerEvents='none';text.setAttribute('class','rect-label');text.setAttribute('data-original-text',textContent);rect.parentNode.insertBefore(text,rect.nextSibling);wrapTextInSvg(text,rectWidth)});document.querySelectorAll('rect.image-mapper-shape').forEach((rect,i)=>{rect.setAttribute('data-processed','true');attachHover(rect,i)});const rootObserver=new MutationObserver(mutations=>{mutations.forEach(mutation=>{mutation.addedNodes.forEach(node=>{if(node.nodeType===1){if(node.matches('rect.image-mapper-shape')&&!node.hasAttribute('data-processed')){attachHover(node,Date.now());node.setAttribute('data-processed','true')}if(node.querySelector){node.querySelectorAll('rect.image-mapper-shape:not([data-processed])').forEach(rect=>{attachHover(rect,Date.now());rect.setAttribute('data-processed','true')})}}})})});rootObserver.observe(mainSvg,{childList:true,subtree:true});jsToggle.addEventListener('change',function(){interactionEnabled=this.checked;const label=document.getElementById('toggle-label');if(interactionEnabled){label.textContent='Interaction Enabled'}else{label.textContent='Interaction Disabled';cleanupHover()}});const moveToggle=document.getElementById('move-toggle');const toggleContainer=document.getElementById('js-toggle-container');moveToggle.addEventListener('click',function(){if(toggleContainer.classList.contains('top')){toggleContainer.classList.remove('top');toggleContainer.classList.add('bottom')}else{toggleContainer.classList.remove('bottom');toggleContainer.classList.add('top')}})}
