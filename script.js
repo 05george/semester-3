@@ -1,5 +1,4 @@
 window.onload = function() {
-    const criticalFiles = ['o.webp', '1.webp', '2.webp']; 
     const dimensions = { 'w': 115, 'hw': 57 };
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
@@ -26,18 +25,17 @@ window.onload = function() {
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
-        const firstImage = images[0];
-        const imageWidth = parseFloat(firstImage.getAttribute('width')) || 1024;
-        const imageHeight = parseFloat(firstImage.getAttribute('height')) || 2454;
-        const totalWidth = images.length * imageWidth;
-        mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imageHeight}`);
-        window.MAX_SCROLL_LEFT = totalWidth - window.innerWidth;
+        const firstImg = images[0];
+        const imgW = parseFloat(firstImg.getAttribute('width')) || 1024;
+        const imgH = parseFloat(firstImg.getAttribute('height')) || 2454;
+        const totalW = images.length * imgW;
+        mainSvg.setAttribute('viewBox', `0 0 ${totalW} ${imgH}`);
+        window.MAX_SCROLL_LEFT = totalW - window.innerWidth;
     }
     updateDynamicSizes();
 
-    const svgImages = Array.from(mainSvg.querySelectorAll('image'));
-    const urls = svgImages.map(img => img.getAttribute('data-src') || img.getAttribute('href'));
-    let loadedCount = 0;
+    const allImages = Array.from(mainSvg.querySelectorAll('image'));
+    const criticalImages = allImages.filter(img => !img.classList.contains('lazy-map'));
     let criticalLoaded = 0;
 
     function finishLoading() {
@@ -47,21 +45,32 @@ window.onload = function() {
                 loadingOverlay.style.display = 'none';
                 mainSvg.style.opacity = 1;
                 scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                loadLazyImages();
             }, 300);
         }
     }
 
-    urls.forEach((url) => {
-        if (!url) return;
-        const img = new Image();
-        const fileName = url.split('/').pop();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            if (criticalFiles.includes(fileName)) criticalLoaded++;
-            if (criticalLoaded >= criticalFiles.length || loadedCount === urls.length) finishLoading();
-        };
-        img.src = url;
-    });
+    function loadLazyImages() {
+        allImages.forEach(svgImg => {
+            const url = svgImg.getAttribute('data-src') || svgImg.getAttribute('href');
+            if (url) svgImg.setAttribute('href', url);
+        });
+    }
+
+    if (criticalImages.length === 0) {
+        finishLoading();
+    } else {
+        criticalImages.forEach(svgImg => {
+            const url = svgImg.getAttribute('data-src') || svgImg.getAttribute('href');
+            if (!url) { criticalLoaded++; return; }
+            const img = new Image();
+            img.onload = img.onerror = () => {
+                criticalLoaded++;
+                if (criticalLoaded >= criticalImages.length) finishLoading();
+            };
+            img.src = url;
+        });
+    }
 
     setTimeout(finishLoading, 6000);
 
@@ -87,7 +96,7 @@ window.onload = function() {
         activeState.rect = rect;
         const scale = 1.1;
         const x = parseFloat(rect.getAttribute('x')), y = parseFloat(rect.getAttribute('y'));
-        const width = parseFloat(rect.getAttribute('width')), height = parseFloat(rect.getAttribute('height'));
+        const w = parseFloat(rect.getAttribute('width')), h = parseFloat(rect.getAttribute('height'));
         
         let cx = 0, cy = 0, curr = rect;
         while(curr && curr.tagName !== 'svg') {
@@ -100,7 +109,7 @@ window.onload = function() {
         }
 
         const absX = x + cx, absY = y + cy;
-        rect.style.transformOrigin = `${x + width/2}px ${y + height/2}px`;
+        rect.style.transformOrigin = `${x + w/2}px ${y + h/2}px`;
         rect.style.transform = `scale(${scale})`;
         rect.style.strokeWidth = '4px';
 
@@ -119,7 +128,7 @@ window.onload = function() {
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
             const cr = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            cr.setAttribute('x', absX); cr.setAttribute('y', absY); cr.setAttribute('width', width); cr.setAttribute('height', height);
+            cr.setAttribute('x', absX); cr.setAttribute('y', absY); cr.setAttribute('width', w); cr.setAttribute('height', h);
             clipDefs.appendChild(clip).appendChild(cr);
 
             const zp = document.createElementNS('http://www.w3.org/2000/svg', 'image');
@@ -127,7 +136,7 @@ window.onload = function() {
             zp.setAttribute('clip-path', `url(#${clipId})`); zp.setAttribute('class', 'zoom-part');
             mainSvg.appendChild(zp);
             activeState.zoomPart = zp;
-            zp.style.transformOrigin = `${absX + width/2}px ${absY + height/2}px`;
+            zp.style.transformOrigin = `${absX + w/2}px ${absY + h/2}px`;
             zp.style.transform = `scale(${scale})`;
         }
 
@@ -144,15 +153,15 @@ window.onload = function() {
         const href = rect.getAttribute('data-href') || '';
         const fileName = href.split('/').pop().split('#')[0] || '';
         const textContent = fileName.split('.')[0] || '';
-        const rectWidth = parseFloat(rect.getAttribute('width')), rectX = parseFloat(rect.getAttribute('x')), rectY = parseFloat(rect.getAttribute('y'));
-        const fontSize = Math.max(8, Math.min(14, rectWidth * 0.12));
+        const rW = parseFloat(rect.getAttribute('width')), rX = parseFloat(rect.getAttribute('x')), rY = parseFloat(rect.getAttribute('y'));
+        const fSize = Math.max(8, Math.min(14, rW * 0.12));
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', rectX + rectWidth / 2);
-        text.setAttribute('y', rectY + fontSize * 1.5);
+        text.setAttribute('x', rX + rW / 2);
+        text.setAttribute('y', rY + fSize * 1.5);
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('class', 'rect-label');
-        text.style.fontSize = fontSize + 'px';
+        text.style.fontSize = fSize + 'px';
         text.style.fill = 'white';
         text.style.pointerEvents = 'none';
         text.textContent = textContent;
@@ -168,10 +177,15 @@ window.onload = function() {
             const q = this.value.toLowerCase();
             document.querySelectorAll('rect.m').forEach(r => {
                 const l = r.nextElementSibling;
-                const m = r.getAttribute('data-href')?.toLowerCase().includes(q) || l?.textContent.toLowerCase().includes(q);
-                r.style.opacity = (q === "" || m) ? "1" : "0.1";
-                if(l) l.style.opacity = (q === "" || m) ? "1" : "0.1";
+                const match = r.getAttribute('data-href')?.toLowerCase().includes(q) || l?.textContent.toLowerCase().includes(q);
+                r.style.opacity = (q === "" || match) ? "1" : "0.1";
+                if(l) l.style.opacity = (q === "" || match) ? "1" : "0.1";
             });
         });
     }
+
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if (!interactionEnabled) cleanupHover();
+    });
 };
