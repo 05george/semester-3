@@ -36,6 +36,7 @@ html, body {
 .a { stroke: purple; }
 .l { stroke: yellow; }
 .s { stroke: green; }
+/* إزالة الـ !important وجعلها قاعدة أولية فقط */
 .w { width: 114px; }
 
 .zoom-part { pointer-events: none; }
