@@ -12,10 +12,11 @@ window.onload = function() {
 
     const activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-        animationId: null, initialScrollLeft: 0, touchStartTime: 0
+        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- Utility ---
+    // --- Utility Functions ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -64,17 +65,25 @@ window.onload = function() {
         return null;
     }
 
-    // --- Hover ---
+    // --- Interaction Core ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
-        activeState.rect.style.filter = 'none';
-        activeState.rect.style.transform = 'scale(1)';
-        activeState.rect.style.strokeWidth = '2px';
+
+        if (activeState.rect) {
+            activeState.rect.style.filter = 'none';
+            activeState.rect.style.transform = 'scale(1)';
+            activeState.rect.style.strokeWidth = '2px';
+        }
+
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
-        Object.assign(activeState, {rect:null, zoomPart:null, zoomText:null, zoomBg:null, animationId:null});
+
+        Object.assign(activeState, {
+            rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+            animationId: null, clipPathId: null
+        });
     }
 
     function startHover() {
@@ -92,61 +101,27 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
+        rect.style.transformOrigin = `${centerX}px ${centerY}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
 
-        // --- جلب النص مباشرة من المستطيل ---
-        const fullTitle = rect.getAttribute('data-full-text') || rect.getAttribute('data-href') || '';
-
-        if(fullTitle) {
-            const zText = document.createElementNS('http://www.w3.org/2000/svg','text');
-            zText.textContent = fullTitle;
-            zText.setAttribute('x', centerX);
-            zText.setAttribute('y', absY - 10);
-            zText.setAttribute('text-anchor', 'middle');
-            zText.style.fill = 'white';
-            zText.style.fontWeight = 'bold';
-            zText.style.fontSize = '16px';
-            zText.style.pointerEvents = 'none';
-            mainSvg.appendChild(zText);
-            activeState.zoomText = zText;
-
-            const bbox = zText.getBBox();
-            const pad = 10;
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg','rect');
-            zBg.setAttribute('x', bbox.x - pad/2);
-            zBg.setAttribute('y', bbox.y - pad/2);
-            zBg.setAttribute('width', bbox.width + pad);
-            zBg.setAttribute('height', bbox.height + pad);
-            zBg.setAttribute('rx', 5);
-            zBg.style.fill = 'black';
-            zBg.style.stroke = 'white';
-            zBg.style.strokeWidth = '1.5px';
-            zBg.style.pointerEvents = 'none';
-            mainSvg.insertBefore(zBg, zText);
-            activeState.zoomBg = zBg;
-        }
-
-        // --- عرض صورة الزوم ---
         const imgData = getGroupImage(rect);
         if (imgData) {
             const clipId = `clip-${Date.now()}`;
-            const clip = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+            activeState.clipPathId = clipId;
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
             cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
-            clip.appendChild(cRect);
-            clipDefs.appendChild(clip);
+            clipDefs.appendChild(clip).appendChild(cRect);
 
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg','image');
+            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
             zPart.setAttribute('href', imgData.src);
             zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
             zPart.setAttribute('clip-path', `url(#${clipId})`);
             const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(([\d.-]+),([\d.-]+)\)/);
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0);
-            zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
             zPart.style.pointerEvents = 'none';
             zPart.style.transformOrigin = `${centerX}px ${centerY}px`;
             zPart.style.transform = `scale(1.1)`;
@@ -154,7 +129,55 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // --- Glow effect ---
+        // Text and Background
+        const parentGroup = rect.parentNode;
+        const bText = parentGroup.querySelector('.rect-label');
+        const bBg = parentGroup.querySelector('.label-bg');
+
+        activeState.baseText = bText;
+        activeState.baseBg = bBg;
+
+        if (bBg) bBg.style.opacity = '1';
+        if (bText) bText.style.opacity = '1';
+
+        if (bText) {
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
+            zText.textContent = fullTitle;
+            const baseFs = parseFloat(bText.style.fontSize) || 10;
+            zText.style.fontSize = (baseFs * 2) + 'px';
+            zText.style.fill = 'white';
+            zText.style.fontWeight = 'bold';
+            zText.setAttribute('x', centerX);
+            zText.setAttribute('text-anchor', 'middle');
+            zText.style.dominantBaseline = 'central';
+            zText.style.pointerEvents = 'none';
+
+            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            mainSvg.appendChild(zBg);
+            mainSvg.appendChild(zText);
+
+            const bbox = zText.getBBox();
+            const pad = 20;
+            const bgW = bbox.width + pad;
+            const bgH = bbox.height + pad;
+
+            zBg.setAttribute('x', centerX - bgW / 2);
+            zBg.setAttribute('y', absY - bgH - 15);
+            zBg.setAttribute('width', bgW);
+            zBg.setAttribute('height', bgH);
+            zBg.setAttribute('rx', '8');
+            zBg.style.fill = 'black';
+            zBg.style.stroke = 'white';
+            zBg.style.strokeWidth = '1.5px';
+            zBg.style.pointerEvents = 'none';
+
+            zText.setAttribute('y', parseFloat(zBg.getAttribute('y')) + (bgH / 2));
+
+            activeState.zoomText = zText;
+            activeState.zoomBg = zBg;
+        }
+
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
@@ -165,81 +188,159 @@ window.onload = function() {
         }, 100);
     }
 
+    function wrapText(el, maxW) {
+        const txt = el.getAttribute('data-original-text');
+        if(!txt) return;
+        const words = txt.split(/\s+/);
+        el.textContent = '';
+        let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        ts.setAttribute('x', el.getAttribute('x'));
+        ts.setAttribute('dy', '0');
+        el.appendChild(ts);
+        let line = '';
+        const lh = parseFloat(el.style.fontSize) * 1.1;
+        words.forEach(word => {
+            let test = line + (line ? ' ' : '') + word;
+            ts.textContent = test;
+            if (ts.getComputedTextLength() > maxW - 5 && line) {
+                ts.textContent = line;
+                ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                ts.setAttribute('x', el.getAttribute('x'));
+                ts.setAttribute('dy', lh + 'px');
+                ts.textContent = word;
+                el.appendChild(ts);
+                line = word;
+            } else { line = test; }
+        });
+    }
+
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
+
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
+
         const href = r.getAttribute('data-href') || '';
-        r.addEventListener('click', () => { if(href && href!=='#') window.open(href,'_blank'); });
-        if(!isTouchDevice) {
+        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+
+        const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
+        const x = parseFloat(r.getAttribute('x'));
+        const y = parseFloat(r.getAttribute('y'));
+
+        if (name && name.trim() !== '') {
+            const fs = Math.max(8, Math.min(12, w * 0.11));
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', x + w / 2);
+            txt.setAttribute('y', y + 2);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('class', 'rect-label');
+            txt.setAttribute('data-original-text', name);
+            txt.style.fontSize = fs + 'px';
+            txt.style.fill = 'white';
+            txt.style.pointerEvents = 'none';
+            txt.style.dominantBaseline = 'hanging';
+
+            r.parentNode.appendChild(txt);
+            wrapText(txt, w);
+
+            const bbox = txt.getBBox();
+            const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', w);
+            bg.setAttribute('height', bbox.height + 8);
+            bg.setAttribute('class', 'label-bg');
+            bg.style.fill = 'black'; 
+            bg.style.pointerEvents = 'none';
+
+            r.parentNode.insertBefore(bg, txt);
+        }
+
+        if (!isTouchDevice) {
             r.addEventListener('mouseover', startHover);
             r.addEventListener('mouseout', cleanupHover);
         }
-        r.addEventListener('touchstart', function() {
+
+        r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
+
+        r.addEventListener('touchstart', function(e) {
             if(!interactionEnabled) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
-        r.addEventListener('touchend', function() {
-            if(!interactionEnabled) return;
+
+        r.addEventListener('touchend', function(e) {
+            if (!interactionEnabled) return;
             const moved = Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) > 10;
-            if(!moved && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if(href && href!=='#') window.open(href,'_blank');
+            if (!moved && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
+                if (href && href !== '#') window.open(href, '_blank');
             }
             cleanupHover();
         });
-        r.setAttribute('data-processed','true');
+
+        r.setAttribute('data-processed', 'true');
     }
 
     function scan() {
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(processRect);
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
     }
     scan();
 
-    // --- البحث ---
-    searchInput.addEventListener('input', debounce(function(e){
+    // --- Search Logic (case-insensitive) ---
+    searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m, rect.image-mapper-shape').forEach(rect=>{
-            const href = (rect.getAttribute('data-href')||'').toLowerCase();
-            const isMatch = href.includes(query);
-            const label = rect.nextElementSibling;
-            if(query.length>0){
-                if(isMatch){ rect.style.display=''; rect.style.opacity='1'; rect.style.pointerEvents='auto'; if(label) label.style.display=''; }
-                else{ rect.style.display='none'; rect.style.opacity='0'; rect.style.pointerEvents='none'; if(label) label.style.display='none'; }
-            } else { rect.style.display=''; rect.style.opacity='1'; rect.style.pointerEvents='auto'; if(label) label.style.display=''; }
-        });
-    },150));
+        const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
 
-    // --- Loading ---
+        allRects.forEach(rect => {
+            const parent = rect.parentNode;
+            const label = parent.querySelector('.rect-label');
+            const bg = parent.querySelector('.label-bg');
+
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const isMatch = href.includes(query);
+
+            if (query.length > 0 && !isMatch) {
+                rect.style.display = 'none';
+                if (label) label.style.display = 'none';
+                if (bg) bg.style.display = 'none';
+            } else {
+                rect.style.display = '';
+                if (label) label.style.display = '';
+                if (bg) bg.style.display = '';
+            }
+        });
+    }, 150));
+
+    // --- Loading Logic ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
-    urls.forEach(u=>{
+    urls.forEach(u => {
         const img = new Image();
-        img.onload = img.onerror = ()=>{
+        img.onload = img.onerror = () => {
             loadedCount++;
-            const p = (loadedCount/urls.length)*100;
-            if(p>=25) document.getElementById('bulb-1')?.classList.add('on');
-            if(p>=50) document.getElementById('bulb-2')?.classList.add('on');
-            if(p>=75) document.getElementById('bulb-3')?.classList.add('on');
-            if(p===100){
-                document.getElementById('bulb-4')?.classList.add('on');
-                setTimeout(()=>{
-                    if(loadingOverlay) loadingOverlay.style.opacity=0;
-                    setTimeout(()=>{ if(loadingOverlay) loadingOverlay.style.display='none'; mainSvg.style.opacity=1; scrollContainer.scrollLeft=scrollContainer.scrollWidth; },300);
-                },500);
-                mainSvg.querySelectorAll('image').forEach((si,idx)=>si.setAttribute('href',urls[idx]));
+            if(loadedCount === urls.length) {
+                if(loadingOverlay) loadingOverlay.style.opacity = 0;
+                setTimeout(() => { 
+                    if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                    mainSvg.style.opacity = 1;
+                }, 300);
+                mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
             }
         };
-        img.src=u;
+        img.src = u;
     });
 
-    new MutationObserver(scan).observe(mainSvg,{childList:true,subtree:true});
+    new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
 
-    jsToggle.addEventListener('change', function(){ interactionEnabled=this.checked; if(!interactionEnabled) cleanupHover(); });
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if(!interactionEnabled) cleanupHover();
+    });
 
-    document.getElementById('move-toggle')?.addEventListener('click', ()=>{
+    document.getElementById('move-toggle')?.addEventListener('click', () => {
         const container = document.getElementById('js-toggle-container');
-        container.classList.toggle('top'); container.classList.toggle('bottom');
+        container.classList.toggle('top');
+        container.classList.toggle('bottom');
     });
 };
