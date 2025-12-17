@@ -6,12 +6,12 @@ window.onload = function () {
     };
 
     Object.keys(dimensions).forEach(className => {
-        document.querySelectorAll(`rect.${className}}).forEach(rect => {
+        document.querySelectorAll(`rect.${className}`).forEach(rect => {
             rect.setAttribute('width', dimensions[className]);
         });
     });
 
-    // 2. تعريف المتغيرات الأساسية
+    // 2. تعريف المتغيرات الأساسية (بقية الكود كما هو)
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
