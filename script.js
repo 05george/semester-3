@@ -71,7 +71,7 @@ window.onload = function() {
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
-        
+
         activeState.rect.style.filter = 'none';
         activeState.rect.style.transform = 'scale(1)';
         activeState.rect.style.strokeWidth = '2px';
@@ -79,7 +79,7 @@ window.onload = function() {
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
-        
+
         if (activeState.baseText) activeState.baseText.style.opacity = '1';
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
 
@@ -92,7 +92,7 @@ window.onload = function() {
         });
     }
 
-        function startHover() {
+    function startHover() {
         if (!interactionEnabled) return;
         const rect = this;
         if (activeState.rect === rect) return;
@@ -107,7 +107,6 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
-        // تأثير التكبير للمستطيل الأصلي
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
@@ -136,29 +135,20 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // --- الطريقة المدمجة لتحديد النص من المستطيل ---
-        let bText = null;
-        let bBg = null;
-
-        // البحث عن النص والخلفية داخل نفس المجموعة (g)
         const parentGroup = rect.parentNode;
-        bText = parentGroup.querySelector('.rect-label');
-        bBg = parentGroup.querySelector('.label-bg');
+        let bText = parentGroup.querySelector('.rect-label');
+        let bBg = parentGroup.querySelector('.label-bg');
 
-        if (bText && bBg) {
-            // إخفاء النص الأصلي الصغير
+        if (bText) {
             bText.style.opacity = '0';
-            bBg.style.opacity = '0';
+            if(bBg) bBg.style.opacity = '0';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
-            // إنشاء النص المكبر (Zoom Text)
             const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            // نأخذ الاسم من data-full-text أو من النص الأصلي
             const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
             zText.textContent = fullTitle;
-            
-            // تصميم النص المكبر
+
             const baseFs = parseFloat(bText.style.fontSize) || 10;
             zText.style.fontSize = (baseFs * 2) + 'px';
             zText.style.fill = 'white';
@@ -168,7 +158,6 @@ window.onload = function() {
             zText.style.dominantBaseline = 'central';
             zText.style.pointerEvents = 'none';
 
-            // إنشاء خلفية النص المكبر
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             mainSvg.appendChild(zBg);
             mainSvg.appendChild(zText);
@@ -179,22 +168,21 @@ window.onload = function() {
             const bgH = bbox.height + pad;
 
             zBg.setAttribute('x', centerX - bgW / 2);
-            zBg.setAttribute('y', absY - bgH - 15); // يظهر فوق المستطيل بمسافة 15px
+            zBg.setAttribute('y', absY - bgH - 15);
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
-            zBg.setAttribute('rx', '8'); // حواف دائرية ناعمة
+            zBg.setAttribute('rx', '8');
             zBg.style.fill = 'rgba(0, 0, 0, 0.85)';
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
 
             zText.setAttribute('y', parseFloat(zBg.getAttribute('y')) + (bgH / 2));
-            
+
             activeState.zoomText = zText;
             activeState.zoomBg = zBg;
         }
 
-        // تأثير الإضاءة المتغيرة (Rainbow Glow)
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
@@ -235,13 +223,13 @@ window.onload = function() {
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
-        
+
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
         const href = r.getAttribute('data-href') || '';
         const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
-        
+
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x'));
         const y = parseFloat(r.getAttribute('y'));
@@ -279,7 +267,7 @@ window.onload = function() {
             r.addEventListener('mouseover', startHover);
             r.addEventListener('mouseout', cleanupHover);
         }
-        
+
         r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
 
         r.addEventListener('touchstart', function(e) {
@@ -306,8 +294,46 @@ window.onload = function() {
     }
     scan();
 
-    // --- Loading & Search ---
+    // --- البحث المطور (الأدق) ---
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase();
+        const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
+        
+        allRects.forEach(rect => {
+            const parent = rect.parentNode;
+            const label = parent.querySelector('.rect-label');
+            const bg = parent.querySelector('.label-bg');
+            
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const text = (label ? label.getAttribute('data-original-text') : '').toLowerCase();
+            
+            const isMatch = href.includes(query) || text.includes(query);
 
+            if (query.length > 0) {
+                if (isMatch) {
+                    rect.style.opacity = '1';
+                    rect.style.pointerEvents = 'auto';
+                    rect.style.filter = 'drop-shadow(0 0 8px #00FFFF)';
+                    if (label) label.style.opacity = '1';
+                    if (bg) bg.style.opacity = '1';
+                } else {
+                    rect.style.opacity = '0.1';
+                    rect.style.pointerEvents = 'none';
+                    rect.style.filter = 'none';
+                    if (label) label.style.opacity = '0.1';
+                    if (bg) bg.style.opacity = '0.1';
+                }
+            } else {
+                rect.style.opacity = '1';
+                rect.style.pointerEvents = 'auto';
+                rect.style.filter = 'none';
+                if (label) label.style.opacity = '1';
+                if (bg) bg.style.opacity = '1';
+            }
+        });
+    }, 150));
+
+    // --- الباقي من الكود (تحميل وصيانة) ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
@@ -315,15 +341,15 @@ window.onload = function() {
         img.onload = img.onerror = () => {
             loadedCount++;
             const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-1').classList.add('on');
-            if(p >= 50) document.getElementById('bulb-2').classList.add('on');
-            if(p >= 75) document.getElementById('bulb-3').classList.add('on');
+            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
             if(p === 100) {
-                document.getElementById('bulb-4').classList.add('on');
+                document.getElementById('bulb-4')?.classList.add('on');
                 setTimeout(() => {
-                    loadingOverlay.style.opacity = 0;
+                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
-                        loadingOverlay.style.display = 'none'; 
+                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
                         mainSvg.style.opacity = 1;
                         scrollContainer.scrollLeft = scrollContainer.scrollWidth;
                     }, 300);
@@ -334,30 +360,14 @@ window.onload = function() {
         img.src = u;
     });
 
-    searchInput.addEventListener('input', debounce((e) => {
-        const q = e.target.value.toLowerCase();
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => {
-            // استخدام البحث بالطريقة الصح المعتمدة على الترتيب
-            let label = r.nextElementSibling;
-            if (label && label.classList.contains('label-bg')) label = label.nextElementSibling;
-            
-            const match = (r.getAttribute('data-href')||'').toLowerCase().includes(q) || (label?.getAttribute('data-original-text')||'').toLowerCase().includes(q);
-            
-            r.style.opacity = (q && !match) ? '0.1' : '1';
-            const bg = label ? label.previousElementSibling : null;
-            if(bg) bg.style.opacity = (q && !match) ? '0.1' : '1';
-            if(label) label.style.opacity = (q && !match) ? '0.1' : '1';
-        });
-    }, 150));
-
     new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
-    
+
     jsToggle.addEventListener('change', function() {
         interactionEnabled = this.checked;
         if(!interactionEnabled) cleanupHover();
     });
 
-    document.getElementById('move-toggle').addEventListener('click', () => {
+    document.getElementById('move-toggle')?.addEventListener('click', () => {
         const container = document.getElementById('js-toggle-container');
         container.classList.toggle('top');
         container.classList.toggle('bottom');
