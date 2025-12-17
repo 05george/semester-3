@@ -11,14 +11,25 @@ window.onload = function() {
     const TAP_THRESHOLD_MS = 300;
 
     const activeState = {
-        rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null,
-        animationId: null, clipPathId: null, initialScrollLeft: 0, touchStartTime: 0
+        rect: null,
+        zoomPart: null,
+        zoomText: null,
+        zoomBg: null,
+        baseText: null,
+        baseBg: null,
+        animationId: null,
+        clipPathId: null,
+        initialScrollLeft: 0,
+        touchStartTime: 0
     };
+
+    // --- Utility Functions ---
 
     function debounce(func, delay) {
         let timeoutId;
         return function() {
-            const context = this; const args = arguments;
+            const context = this;
+            const args = arguments;
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(context, args), delay);
         }
@@ -39,7 +50,10 @@ window.onload = function() {
             const trans = current.getAttribute('transform');
             if (trans) {
                 const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
+                if (m) {
+                    x += parseFloat(m[1]);
+                    y += parseFloat(m[2]);
+                }
             }
             current = current.parentNode;
         }
@@ -63,20 +77,36 @@ window.onload = function() {
         return null;
     }
 
+    // --- Interaction Core ---
+
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
+        
         activeState.rect.style.filter = 'none';
         activeState.rect.style.transform = 'scale(1)';
         activeState.rect.style.strokeWidth = '2px';
+
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
+        
         if (activeState.baseText) activeState.baseText.style.opacity = '1';
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
+
         const clip = document.getElementById(activeState.clipPathId);
         if (clip) clip.remove();
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null, clipPathId: null });
+
+        Object.assign(activeState, {
+            rect: null,
+            zoomPart: null,
+            zoomText: null,
+            zoomBg: null,
+            baseText: null,
+            baseBg: null,
+            animationId: null,
+            clipPathId: null
+        });
     }
 
     function startHover() {
@@ -94,10 +124,12 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
+        // Scale Original Rect
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
 
+        // Zoom Image Logic
         const imgData = getGroupImage(rect);
         if (imgData) {
             const clipId = `clip-${Date.now()}`;
@@ -105,15 +137,22 @@ window.onload = function() {
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
             const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
+            cRect.setAttribute('x', absX);
+            cRect.setAttribute('y', absY);
+            cRect.setAttribute('width', rW);
+            cRect.setAttribute('height', rH);
             clipDefs.appendChild(clip).appendChild(cRect);
+
             const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
             zPart.setAttribute('href', imgData.src);
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
+            zPart.setAttribute('width', imgData.width);
+            zPart.setAttribute('height', imgData.height);
             zPart.setAttribute('clip-path', `url(#${clipId})`);
+            
             const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(([\d.-]+),([\d.-]+)\)/);
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0);
+            zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
+            
             zPart.style.pointerEvents = 'none';
             zPart.style.transformOrigin = `${centerX}px ${centerY}px`;
             zPart.style.transform = `scale(1.1)`;
@@ -121,126 +160,214 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        let bText = rect.nextElementSibling;
-        while(bText && !bText.classList.contains('rect-label')) bText = bText.nextElementSibling;
-        let bBg = bText ? bText.previousElementSibling : null;
+        // --- التعديل الجوهري: البحث عن النص في نفس المجموعة ---
+        const parentGroup = rect.parentNode;
+        const bText = parentGroup.querySelector('.rect-label');
+        const bBg = parentGroup.querySelector('.label-bg');
 
-        if (bText && bBg && bBg.classList.contains('label-bg')) {
-            bText.style.opacity = '0'; bBg.style.opacity = '0';
-            activeState.baseText = bText; activeState.baseBg = bBg;
+        if (bText && bBg) {
+            bText.style.opacity = '0';
+            bBg.style.opacity = '0';
+            activeState.baseText = bText;
+            activeState.baseBg = bBg;
+
             const zText = bText.cloneNode(true);
-            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
-            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
-            zText.style.opacity = '1'; zText.setAttribute('x', centerX);
-            zText.style.alignmentBaseline = 'central'; zText.style.dominantBaseline = 'central';
+            const fullTxt = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
+            zText.textContent = fullTxt;
+            
+            const baseFontSize = parseFloat(bText.style.fontSize);
+            zText.style.fontSize = (baseFontSize * 2) + 'px';
+            zText.style.opacity = '1';
+            zText.setAttribute('x', centerX);
+            zText.style.alignmentBaseline = 'central';
+            zText.style.dominantBaseline = 'central';
+
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            mainSvg.appendChild(zBg); mainSvg.appendChild(zText);
+            mainSvg.appendChild(zBg);
+            mainSvg.appendChild(zText);
+
             const bbox = zText.getBBox();
-            const bgW = bbox.width + 24; const bgH = bbox.height + 24;
-            zBg.setAttribute('x', centerX - bgW / 2); zBg.setAttribute('y', absY);
-            zBg.setAttribute('width', bgW); zBg.setAttribute('height', bgH);
-            zBg.style.fill = 'black'; zBg.style.stroke = 'white'; zBg.style.strokeWidth = '1.5px'; zBg.style.pointerEvents = 'none';
+            const padding = 24;
+            const bgW = bbox.width + padding;
+            const bgH = bbox.height + padding;
+
+            zBg.setAttribute('x', centerX - bgW / 2);
+            zBg.setAttribute('y', absY);
+            zBg.setAttribute('width', bgW);
+            zBg.setAttribute('height', bgH);
+            zBg.style.fill = 'black';
+            zBg.style.stroke = 'white';
+            zBg.style.strokeWidth = '1.5px';
+            zBg.style.pointerEvents = 'none';
+
             zText.setAttribute('y', absY + (bgH / 2));
-            activeState.zoomText = zText; activeState.zoomBg = zBg;
+            activeState.zoomText = zText;
+            activeState.zoomBg = zBg;
         }
 
-        let hue = 0;
+        // Glow Animation (On Rect & Zoom Part Only)
+        let hueAnim = 0;
         activeState.animationId = setInterval(() => {
-            hue = (hue + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 15px hsl(${(hue+60)%360},100%,60%))`;
-            rect.style.filter = glow;
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
+            hueAnim = (hueAnim + 10) % 360;
+            const glowFilter = `drop-shadow(0 0 8px hsl(${hueAnim},100%,55%)) drop-shadow(0 0 15px hsl(${(hueAnim+60)%360},100%,60%))`;
+            rect.style.filter = glowFilter;
+            if (activeState.zoomPart) {
+                activeState.zoomPart.style.filter = glowFilter;
+            }
         }, 100);
     }
+
+    // --- Processing ---
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
-        const words = txt.split(/\s+/); el.textContent = '';
+        const words = txt.split(/\s+/);
+        el.textContent = '';
+        
         let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
+        ts.setAttribute('x', el.getAttribute('x'));
+        ts.setAttribute('dy', '0');
         el.appendChild(ts);
-        let line = ''; const fs = parseFloat(el.style.fontSize); const lh = fs * 1.1;
+        
+        let line = '';
+        const fs = parseFloat(el.style.fontSize);
+        const lh = fs * 1.1;
+
         words.forEach(word => {
-            let test = line + (line ? ' ' : '') + word; ts.textContent = test;
+            let test = line + (line ? ' ' : '') + word;
+            ts.textContent = test;
             if (ts.getComputedTextLength() > maxW - 5 && line) {
                 ts.textContent = line;
                 ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
-                ts.textContent = word; el.appendChild(ts); line = word;
-            } else { line = test; }
+                ts.setAttribute('x', el.getAttribute('x'));
+                ts.setAttribute('dy', lh + 'px');
+                ts.textContent = word;
+                el.appendChild(ts);
+                line = word;
+            } else {
+                line = test;
+            }
         });
     }
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
+        
+        // Handle Shortcuts
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
+
         const href = r.getAttribute('data-href') || '';
         const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+        
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
-        const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
+        const x = parseFloat(r.getAttribute('x'));
+        const y = parseFloat(r.getAttribute('y'));
 
+        // المستطيل الأسود يظهر فقط لو فيه نص
         if (name && name.trim() !== '') {
             const fs = Math.max(8, Math.min(12, w * 0.11));
+
             const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            txt.setAttribute('x', x + w / 2); txt.setAttribute('y', y + 2);
-            txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
-            txt.setAttribute('data-original-text', name); txt.style.fontSize = fs + 'px';
-            txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
-            r.parentNode.appendChild(txt); wrapText(txt, w);
+            txt.setAttribute('x', x + w / 2);
+            txt.setAttribute('y', y + 2);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('class', 'rect-label');
+            txt.setAttribute('data-original-text', name);
+            txt.style.fontSize = fs + 'px';
+            txt.style.fill = 'white';
+            txt.style.pointerEvents = 'none';
+            txt.style.dominantBaseline = 'hanging';
+
+            r.parentNode.appendChild(txt);
+            wrapText(txt, w);
+
             const bbox = txt.getBBox();
             const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w);
-            bg.setAttribute('height', bbox.height + 8); bg.setAttribute('class', 'label-bg');
-            bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', w);
+            bg.setAttribute('height', bbox.height + 8);
+            bg.setAttribute('class', 'label-bg');
+            bg.style.fill = 'black';
+            bg.style.pointerEvents = 'none';
+
             r.parentNode.insertBefore(bg, txt);
         }
-        if (!isTouchDevice) { r.addEventListener('mouseover', startHover); r.addEventListener('mouseout', cleanupHover); }
-        r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
+
+        // Glow works on ALL rects always
+        r.style.cursor = 'pointer';
+
+        if (!isTouchDevice) {
+            r.addEventListener('mouseover', startHover);
+            r.addEventListener('mouseout', cleanupHover);
+        }
+        
+        r.addEventListener('click', (e) => {
+            if (href && href !== '#') window.open(href, '_blank');
+        });
+
         r.addEventListener('touchstart', function(e) {
             if(!interactionEnabled) return;
-            activeState.touchStartTime = Date.now(); activeState.initialScrollLeft = scrollContainer.scrollLeft;
+            activeState.touchStartTime = Date.now();
+            activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
+
         r.addEventListener('touchend', function(e) {
             if (!interactionEnabled) return;
             const moved = Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) > 10;
-            if (!moved && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) { if (href && href !== '#') window.open(href, '_blank'); }
+            if (!moved && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
+                if (href && href !== '#') window.open(href, '_blank');
+            }
             cleanupHover();
         });
+
         r.setAttribute('data-processed', 'true');
     }
 
-    function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
+    function scan() {
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
+    }
     scan();
 
+    // --- Loading & Search & Observers ---
+
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
-    let loaded = 0;
+    let loadedCount = 0;
     urls.forEach(u => {
         const img = new Image();
         img.onload = img.onerror = () => {
-            loaded++; const p = (loaded / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-1').classList.add('on');
-            if(p >= 50) document.getElementById('bulb-2').classList.add('on');
-            if(p >= 75) document.getElementById('bulb-3').classList.add('on');
-            if(p === 100) {
+            loadedCount++;
+            const progress = (loadedCount / urls.length) * 100;
+            if(progress >= 25) document.getElementById('bulb-1').classList.add('on');
+            if(progress >= 50) document.getElementById('bulb-2').classList.add('on');
+            if(progress >= 75) document.getElementById('bulb-3').classList.add('on');
+            if(progress === 100) {
                 document.getElementById('bulb-4').classList.add('on');
                 setTimeout(() => {
                     loadingOverlay.style.opacity = 0;
-                    setTimeout(() => { loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; scrollContainer.scrollLeft = scrollContainer.scrollWidth; }, 300);
+                    setTimeout(() => { 
+                        loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = 1;
+                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                    }, 300);
                 }, 500);
                 mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
             }
-        }; img.src = u;
+        };
+        img.src = u;
     });
 
     searchInput.addEventListener('input', debounce((e) => {
         const q = e.target.value.toLowerCase();
         mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => {
-            const bg = r.nextElementSibling;
-            const label = bg?.classList.contains('label-bg') ? bg.nextElementSibling : null;
+            const parent = r.parentNode;
+            const bg = parent.querySelector('.label-bg');
+            const label = parent.querySelector('.rect-label');
             const match = (r.getAttribute('data-href')||'').toLowerCase().includes(q) || (label?.getAttribute('data-original-text')||'').toLowerCase().includes(q);
+            
             r.style.opacity = (q && !match) ? '0.1' : '1';
             if(bg) bg.style.opacity = (q && !match) ? '0.1' : '1';
             if(label) label.style.opacity = (q && !match) ? '0.1' : '1';
@@ -248,6 +375,15 @@ window.onload = function() {
     }, 150));
 
     new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
-    jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
-    document.getElementById('move-toggle').addEventListener('click', () => { const c = document.getElementById('js-toggle-container'); c.classList.toggle('top'); c.classList.toggle('bottom'); });
+    
+    jsToggle.addEventListener('change', function() {
+        interactionEnabled = this.checked;
+        if(!interactionEnabled) cleanupHover();
+    });
+
+    document.getElementById('move-toggle').addEventListener('click', () => {
+        const container = document.getElementById('js-toggle-container');
+        container.classList.toggle('top');
+        container.classList.toggle('bottom');
+    });
 };
