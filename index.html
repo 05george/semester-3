@@ -1,105 +1,91 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Interactive College Map</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-    <div id="js-toggle-container" class="top">
-        <div id="search-container">
-            <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
-            <span id="search-icon">🔍</span>
-        </div>
-        <span id="move-toggle" title="تحريك القائمة">↕️</span>
-        <label class="switch">
-            <input type="checkbox" id="js-toggle" checked>
-            <span class="slider round"></span>
-        </label>
-        <span id="toggle-label">Interaction Enabled</span>
-    </div>
-
-    <div id="loading-overlay">
-        <div id="loading-content">
-            <img id="splash-image" src="image/o.webp" alt="Logo" />
-            <h1>Interactive College Map</h1>
-            <div id="loader-lights">
-                <div class="light-bulb" id="bulb-1"></div>
-                <div class="light-bulb" id="bulb-2"></div>
-                <div class="light-bulb" id="bulb-3"></div>
-                <div class="light-bulb" id="bulb-4"></div>
-            </div>
-            <p id="loading-text">Preparing the environment...</p>
-        </div>
-    </div>
-<div id="scroll-container">
-    <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 13312 2454" preserveAspectRatio="xMinYMin meet">
-        <defs></defs>
-
+<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Interactive Map</title><link rel="stylesheet" href="style.css"><style>#main-svg{opacity:0;}.rect-label{opacity:1;transition:opacity .2s ease;}</style></head><body><div id="js-toggle-container" class="top"><div id="search-container"><input type="text" id="search-input" placeholder="ابحث باسم الملف (e.g., micro)"><span id="search-icon">🔍</span></div><span id="move-toggle" title="Move Toggle Position">↕️</span><label class="switch"><input type="checkbox" id="js-toggle" checked><span class="slider round"></span></label><span id="toggle-label">Interaction Enabled</span></div><div id="loading-overlay"><div id="loading-content"><img id="splash-image" src="image/o.webp" alt="Merit University Level 2 Group B Section 15" /><h1 style="color: #ffcc00; margin-bottom: 5px; margin-top: 15px;">Interactive College Map</h1><div id="loader-lights"><div class="light-bulb" id="bulb-1"></div><div class="light-bulb" id="bulb-2"></div><div class="light-bulb" id="bulb-3"></div><div class="light-bulb" id="bulb-4"></div></div><div id="legend" style="display:flex;justify-content:center;gap:15px;margin-top:20px;font-family:Arial,sans-serif;color:white;">
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:red;border:1px solid #fff;"></div>
+    <span>أسئلة</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:blue;border:1px solid #fff;"></div>
+    <span>فيديو شرح</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:white;border:1px solid #fff;"></div>
+    <span>مواد أخرى</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:purple;border:1px solid #fff;"></div>
+    <span>إجابات</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:green;border:1px solid #fff;"></div>
+    <span>سكاشن العملي</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;">
+    <div style="width:20px;height:20px;background:yellow;border:1px solid #fff;"></div>
+    <span>محاضرات</span>
+  </div>
+</div><p id="loading-text">Preparing the environment...</p></div></div><div id="scroll-container"><svg id="main-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet"><defs></defs>
 <!-- الاسبوع الأول -->
 <g transform="translate(0,0)">
-<image data-src="image/1.webp" x="0" y="0" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/1.webp" x="0" y="0" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثاني -->
 <g transform="translate(1024,0)">
-<image data-src="image/2.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/2.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثالث -->
 <g transform="translate(2048,0)">
-<image data-src="image/3.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/3.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الرابع -->
 <g transform="translate(3072,0)">
-<image data-src="image/4.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/4.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الخامس -->
 <g transform="translate(4096,0)">
-<image data-src="image/5.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/5.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع السادس -->
 <g transform="translate(5120,0)">
-<image data-src="image/6.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/6.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع السابع -->
 <g transform="translate(6144,0)">
-<image data-src="image/7.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/7.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثامن -->
 <g transform="translate(7168,0)">
-<image data-src="image/8.webp" width="1024" height="2454" class="lazy-map" />
+<image data-src="image/8.webp" width="1024" height="2454" />
 
 <!-- Monday 8 -->
 <g transform="translate(368,0)">
 
-<rect x="0" y="703" height="380" class="m l w" data-href="rrs-micro-1.pdf"/>
+<rect x="0" y="703" width="113.5" height="380" class="image-mapper-shape l" data-href="rrs-micro-1.pdf"/>
 
-<rect x="0" y="1083" height="253.5" class="m l w" data-href="rrs-patho-1.pdf"/>
+<rect x="0" y="1083" width="113.5" height="253.5" class="image-mapper-shape l" data-href="rrs-patho-1.pdf"/>
 
-<rect x="0" y="1339" height="125" class="m q w" data-href="rrs-patho-q-1.pdf"/>
+<rect x="0" y="1339" width="113.5" height="125" class="image-mapper-shape q" data-href="rrs-patho-q-1.pdf"/>
 
-<rect x="0" y="1465" height="378.5" class="m l w" data-href="rrs-physio-2.pdf"/>
+<rect x="0" y="1465" width="113.5" height="378.5" class="image-mapper-shape l" data-href="rrs-physio-2.pdf"/>
 
-<rect x="0" y="1845" height="380" class="m s w" data-href="rrs-anatomy-s-1.pdf"/>
+<rect x="0" y="1845" width="113.5" height="380" class="image-mapper-shape s" data-href="rrs-anatomy-s-1.pdf"/>
 
 </g>
 <!-- Wednesday 8 -->
 <g transform="translate(598,0)">
 
-<rect x="0" y="366" height="315" class="m l w" data-href="rrs-physio-1.pdf"/>
+<rect x="0" y="366" width="113.5" height="315" class="image-mapper-shape l" data-href="rrs-physio-1.pdf"/>
 
-<rect x="0" y="1846" height="253.4" class="m l w" data-href="rrs-physio-2.pdf"/>
+<rect x="0" y="1846" width="113.5" height="253.4" class="image-mapper-shape l" data-href="rrs-physio-2.pdf"/>
 
-<rect x="0" y="2100" height="127" class="m q w" data-href="rrs-physio-q-1.pdf"/>
+<rect x="0" y="2100" width="113.5" height="127" class="image-mapper-shape q" data-href="rrs-physio-q-1.pdf"/>
 
 </g>
 <!-- Thursday 8 -->
 <g transform="translate(712.35,0)">
 
-<rect x="0" y="702" height="380" class="m l w" data-href="rrs-histo-1.pdf"/>
+<rect x="0" y="702" width="113.5" height="380" class="image-mapper-shape l" data-href="rrs-histo-1.pdf"/>
 
-<rect x="0" y="1465" height="380" class="m l w" data-href="rrs-anatomy-2.pdf"/>
+<rect x="0" y="1465" width="113.5" height="380" class="image-mapper-shape l" data-href="rrs-anatomy-2.pdf"/>
 
 </g>
 </g>
@@ -110,63 +96,63 @@
 <!-- Saturday 9 -->
 <g transform="translate(140,0)">
 
-<rect x="0" y="308.91" height="340.63" class="m l w" data-href="rrs-pharma-1.pdf"/>
+<rect x="0" y="308.91" width="113.5" height="340.63" class="image-mapper-shape l" data-href="rrs-pharma-1.pdf"/>
 
-<rect x="0" y="876" height="349" class="m i w" data-href="ipc/book.pdf"/>
+<rect x="0" y="876" width="113.5" height="349" class="image-mapper-shape i" data-href="ipc/book.pdf"/>
 
-<rect x="0" y="1225" height="121" class="m hw q" data-href="ipc/q/9.pdf"/>
+<rect x="0" y="1225" width="56.75" height="121" class="image-mapper-shape q" data-href="ipc/q/9.pdf"/>
 
-<rect x="57.5" y="1225" height="121" class="m hw a" data-href="ipc/a/9.pdf"/>
+<rect x="57.5" y="1225" width="56.75" height="121" class="image-mapper-shape a" data-href="ipc/a/9.pdf"/>
 
-<rect x="0" y="1810.38" height="470.24" class="m w" data-href="#"/>
+<rect x="0" y="1810.38" width="113.5" height="470.24" class="image-mapper-shape" data-href="#"/>
 
 </g>
 <!-- Monday 9 -->
 <g transform="translate(370,0)">
 
-<rect x="0" y="422.29" height="456.42" class="m l w" data-href="rrs-physio-3.pdf"/>
+<rect x="0" y="422.29" width="113.5" height="456.42" class="image-mapper-shape l" data-href="rrs-physio-3.pdf"/>
 
-<rect x="0" y="1369" height="450" class="m w" data-href="rrs-histo-2.pdf"/>
+<rect x="0" y="1369" width="113.5" height="450" class="image-mapper-shape" data-href="rrs-histo-2.pdf"/>
 
-<rect x="0" y="1812.08" height="471.44" class="m w" data-href="#"/>
+<rect x="0" y="1812.08" width="113.5" height="471.44" class="image-mapper-shape" data-href="#"/>
 
 </g>
 <!-- Tuesday 9 -->
 <g transform="translate(485,0)">
 
-<rect x="0" y="1121.29" height="347.86" class="m w" data-href="#"/>
+<rect x="0" y="1121.29" width="113.5" height="347.86" class="image-mapper-shape" data-href="#"/>
 
-<rect x="0" y="1470.58" height="340.47" class="m w" data-href="#"/>
+<rect x="0" y="1470.58" width="113.5" height="340.47" class="image-mapper-shape" data-href="#"/>
 
-<rect x="0" y="1813.77" height="361.36" class="m w" data-href="#"/>
+<rect x="0" y="1813.77" width="113.5" height="361.36" class="image-mapper-shape" data-href="#"/>
 
 </g>
 <!-- Wednesday 9 -->
 <g transform="translate(600,0)">
 
-<rect x="0" y="421.64" height="457.44" class="m w" data-href="#"/>
+<rect x="0" y="421.64" width="113.5" height="457.44" class="image-mapper-shape" data-href="#"/>
 
-<rect x="0" y="1469.19" height="343.19" class="m l w" data-href="rrs-physio-4.pdf"/>
+<rect x="0" y="1469.19" width="113.5" height="343.19" class="image-mapper-shape l" data-href="rrs-physio-4.pdf"/>
 
 </g>
 <!-- Thursday 9 -->
 <g transform="translate(715,0)">
 
-<rect x="0" y="422.25" height="340.47" class="m w" data-href="#"/>
+<rect x="0" y="422.25" width="113.5" height="340.47" class="image-mapper-shape" data-href="#"/>
 
-<rect x="0" y="877.49" height="485.43" class="m w" data-href="#"/>
+<rect x="0" y="877.49" width="113.5" height="485.43" class="image-mapper-shape" data-href="#"/>
 
-<rect x="0" y="1364.73" height="447.54" class="m w" data-href="#"/>
+<rect x="0" y="1364.73" width="113.5" height="447.54" class="image-mapper-shape" data-href="#"/>
 
 </g>
 </g>
 <!-- الاسبوع العاشر -->
 <g transform="translate(9216,0)">
-    <image data-src="image/10.webp" width="1024" height="2454" class="lazy-map" />
+    <image data-src="image/10.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الحادي عشر-->
 <g transform="translate(10240,0)">
-    <image data-src="image/11.webp" width="1024" height="2454" class="lazy-map" />
+    <image data-src="image/11.webp" width="1024" height="2454" />
 </g>
 <!-- الاسبوع الثاني عشر -->
 <g transform="translate(11264,0)">
@@ -175,7 +161,7 @@
 <!-- Saturday 12 -->
 <g transform="translate(138.41,0)">
 
-<rect x="0" y="557.66" height="628.7" class="m l w"data-href="uri-pharma-1.pdf"/>
+<rect x="0" y="557.66" width="113.5" height="628.7" class="image-mapper-shape l"data-href="uri-pharma-1.pdf"/>
 
 </g>
 </g>
@@ -186,56 +172,53 @@
 <!-- Saturday 13 -->
 <g transform="translate(139,0)">
 
-<rect x="0" y="937.7" height="468.3" class="m w"data-href="#"/>
+<rect x="0" y="937.6961380088744" width="113.5" height="468.3" class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="1409" height="472.3" class="m l w"data-href="uri-pharma-2.pdf"/>
+<rect x="0" y="1409.1914803179411" width="113.5" height="472.3" class="image-mapper-shape l"data-href="uri-pharma-2.pdf"/>
 
-<rect x="0" y="1883.5" height="395.5" class="m s w"data-href="uri-micro-s-1.pdf"/>
+<rect x="0" y="1883.5068868358521" width="113.5" height="395.5" class="image-mapper-shape s"data-href="uri-micro-s-1.pdf"/>
 
 </g>
 <!-- Monday 13 -->
 <g transform="translate(368,0)">
 
-<rect x="0" y="415.1" height="424.1" class="m w"data-href="#"/>
+<rect x="0" y="415.09478720775013" width="113.5" height="424.1" class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="839" height="445" class="m w"data-href="#"/>
+<rect x="0" y="839.1484547149481" width="113.5" height="445" class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="1287.75" height="484.32" class="m i w"data-href="ipc/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
+<rect x="0" y="1287.7479086024769" width="113.5" height="484.32" class="image-mapper-shape i"data-href="ipc/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
 
-<rect x="0" y="1773.4" height="505.15" class="m l w"data-href="uri-physio-1.pdf"/>
+<rect x="0" y="1773.3920554795154" width="113.5" height="505.15" class="image-mapper-shape l"data-href="uri-physio-1.pdf"/>
 
 </g>
 <!-- Tuesday 13 -->
 <g transform="translate(485,0)">
 
-<rect x="0" y="311.4" height="426.454" class="m w"data-href="#"/>
+<rect x="0" y="311.37650014724824" width="113.5" height="426.454" class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="1285.3" height="486" class="m w"data-href="#"/>
+<rect x="0" y="1285.2646772955172" width="113.5" height="486" class="image-mapper-shape"data-href="#"/>
 
 </g>
 <!-- Wednesday 13 -->
 <g transform="translate(598,0)">
 
-<rect x="0" y="415.1" height="323.85" class="m l w"data-href="uri-micro-1.pdf"/>
+<rect x="0" y="415.09478720775013" width="113.5" height="323.85" class="image-mapper-shape l"data-href="uri-micro-1.pdf"/>
 
-<rect x="0" y="841.4" height="444" class="m l w"data-href="uri-histo-1.pdf"/>
+<rect x="0" y="841.3972882341253" width="113.5" height="444" class="image-mapper-shape l"data-href="uri-histo-1.pdf"/>
 
-<rect x="0" y="1286.2" height="486.5" class="m w"data-href="#"/>
+<rect x="0" y="1286.171282735977" width="113.5" height="486.5" class="image-mapper-shape"data-href="#"/>
 
 </g>
 <!-- Thursday 13 -->
 <g transform="translate(714,0)">
 
-<rect x="0" y="418.7" height="420" 
-class="m w"data-href="#"/>
+<rect x="0" y="418.6636120015161" width="113.5" height="420" 
+class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="1286.5" height="485" class="m w"data-href="#"/>
+<rect x="0" y="1286.4906178247757" width="113.5" height="485" class="image-mapper-shape"data-href="#"/>
 
-<rect x="0" y="1772.3" height="508.2" class="m w"data-href="#"/>
+<rect x="0" y="1772.2991712372573" width="113.5" height="508.2" class="image-mapper-shape "data-href="#"/>
 </g>
 </g>
 
-</svg>
-    <script src="script.js"></script>
-</body>
-</html>
+</svg></div><script src="script.js"></script></body></html>
