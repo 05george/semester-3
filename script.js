@@ -2,11 +2,10 @@ window.onload = function () {
     // 1. تحديد العرض للكلاسات المختلفة أولاً
     const dimensions = {
         'w': 115,
-        'hw': 57 // استبدلنا 0.5w بـ half-w لتجنب مشاكل التسمية الرقمية
+        'hw': 57
     };
 
     Object.keys(dimensions).forEach(className => {
-        // تم تصحيح القوس المتعرج هنا `${className}`
         document.querySelectorAll(`rect.${className}`).forEach(rect => {
             rect.setAttribute('width', dimensions[className]);
         });
