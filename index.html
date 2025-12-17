@@ -1,29 +1,55 @@
-<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Interactive Map</title><link rel="stylesheet" href="style.css"><style>#main-svg{opacity:0;}.rect-label{opacity:1;transition:opacity .2s ease;}</style></head><body><div id="js-toggle-container" class="top"><div id="search-container"><input type="text" id="search-input" placeholder="ابحث باسم الملف (e.g., micro)"><span id="search-icon">🔍</span></div><span id="move-toggle" title="Move Toggle Position">↕️</span><label class="switch"><input type="checkbox" id="js-toggle" checked><span class="slider round"></span></label><span id="toggle-label">Interaction Enabled</span></div><div id="loading-overlay"><div id="loading-content"><img id="splash-image" src="image/o.webp" alt="Merit University Level 2 Group B Section 15" /><h1 style="color: #ffcc00; margin-bottom: 5px; margin-top: 15px;">Interactive College Map</h1><div id="loader-lights"><div class="light-bulb" id="bulb-1"></div><div class="light-bulb" id="bulb-2"></div><div class="light-bulb" id="bulb-3"></div><div class="light-bulb" id="bulb-4"></div></div>
-<div id="legend" style="display:flex;justify-content:center;gap:15px;margin-top:20px;font-family:Arial,sans-serif;color:white;">
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:red;border:1px solid #fff;"></div>
-    <span>أسئلة</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:blue;border:1px solid #fff;"></div>
-    <span>فيديو شرح</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:white;border:1px solid #fff;"></div>
-    <span>مواد أخرى</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:purple;border:1px solid #fff;"></div>
-    <span>إجابات</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:green;border:1px solid #fff;"></div>
-    <span>سكاشن العملي</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:5px;">
-    <div style="width:20px;height:20px;background:yellow;border:1px solid #fff;"></div>
-    <span>محاضرات</span>
-  </div></div><p id="loading-text">Preparing the environment...</p></div></div><div id="scroll-container">
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Interactive College Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="js-toggle-container" class="top">
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
+            <span id="search-icon">🔍</span>
+        </div>
+        <span id="move-toggle" title="تحريك القائمة">↕️</span>
+        <label class="switch">
+            <input type="checkbox" id="js-toggle" checked>
+            <span class="slider round"></span>
+        </label>
+        <span id="toggle-label">Interaction Enabled</span>
+    </div>
+
+    <div id="loading-overlay">
+        <div id="loading-content">
+            <img id="splash-image" src="image/o.webp" alt="Logo" />
+            <h1>Interactive College Map</h1>
+            <div id="loader-lights">
+                <div class="light-bulb" id="bulb-1"></div>
+                <div class="light-bulb" id="bulb-2"></div>
+                <div class="light-bulb" id="bulb-3"></div>
+                <div class="light-bulb" id="bulb-4"></div>
+            </div>
+            <p id="loading-text">Preparing the environment...</p>
+        </div>
+    </div>
+
+    <div id="scroll-container">
+        <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 13312 2454" preserveAspectRatio="xMinYMin meet">
+            <defs></defs>
+            
+            <g transform="translate(0,0)">
+                <image data-src="image/1.webp" width="1024" height="2454" class="lazy-map" />
+            </g>
+
+            <g transform="translate(12288,0)">
+                <image data-src="image/13.webp" width="1024" height="2454" />
+                <rect x="139" y="1409" height="472" class="m l w" data-href="uri-pharma-2.pdf"/>
+                <rect x="139" y="1883" height="395" class="m s w" data-href="uri-micro-s-1.pdf"/>
+            </g>
+        </svg>
+    </div>
 <svg id="main-svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet"><defs></defs>
 <!-- الاسبوع الأول -->
 <g transform="translate(0,0)">
@@ -223,4 +249,6 @@ class="m w"data-href="#"/>
 </g>
 
 </svg>
-</div><script src="script.js"></script></body></html>
+    <script src="script.js"></script>
+</body>
+</html>
