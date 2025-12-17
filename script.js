@@ -92,21 +92,22 @@ window.onload = function() {
         });
     }
 
-    function startHover() {
+        function startHover() {
         if (!interactionEnabled) return;
         const rect = this;
         if (activeState.rect === rect) return;
         cleanupHover();
         activeState.rect = rect;
 
-        const rW = parseFloat(rect.getAttribute('width'));
-        const rH = parseFloat(rect.getAttribute('height'));
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
         const cum = getCumulativeTranslate(rect);
         const absX = parseFloat(rect.getAttribute('x')) + cum.x;
         const absY = parseFloat(rect.getAttribute('y')) + cum.y;
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
+        // تأثير التكبير للمستطيل الأصلي
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
@@ -135,56 +136,72 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // --- الطريقة الصح اللي إنت طلبتها لتحديد النص ---
-        let bText = rect.nextElementSibling;
-        // لو اللي بعده مستطيل أسود، يبقى النص هو اللي بعده
-        if (bText && bText.classList.contains('label-bg')) bText = bText.nextElementSibling;
-        
-        let bBg = bText ? bText.previousElementSibling : null;
+        // --- الطريقة المدمجة لتحديد النص من المستطيل ---
+        let bText = null;
+        let bBg = null;
 
-        if (bText && bText.classList.contains('rect-label') && bBg && bBg.classList.contains('label-bg')) {
+        // البحث عن النص والخلفية داخل نفس المجموعة (g)
+        const parentGroup = rect.parentNode;
+        bText = parentGroup.querySelector('.rect-label');
+        bBg = parentGroup.querySelector('.label-bg');
+
+        if (bText && bBg) {
+            // إخفاء النص الأصلي الصغير
             bText.style.opacity = '0';
             bBg.style.opacity = '0';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
-            const zText = bText.cloneNode(true);
-            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
-            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
-            zText.style.opacity = '1';
+            // إنشاء النص المكبر (Zoom Text)
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            // نأخذ الاسم من data-full-text أو من النص الأصلي
+            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
+            zText.textContent = fullTitle;
+            
+            // تصميم النص المكبر
+            const baseFs = parseFloat(bText.style.fontSize) || 10;
+            zText.style.fontSize = (baseFs * 2) + 'px';
+            zText.style.fill = 'white';
+            zText.style.fontWeight = 'bold';
             zText.setAttribute('x', centerX);
-            zText.style.alignmentBaseline = 'central';
+            zText.setAttribute('text-anchor', 'middle');
             zText.style.dominantBaseline = 'central';
+            zText.style.pointerEvents = 'none';
 
+            // إنشاء خلفية النص المكبر
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             mainSvg.appendChild(zBg);
             mainSvg.appendChild(zText);
 
             const bbox = zText.getBBox();
-            const pad = 24;
+            const pad = 20;
             const bgW = bbox.width + pad;
             const bgH = bbox.height + pad;
 
             zBg.setAttribute('x', centerX - bgW / 2);
-            zBg.setAttribute('y', absY);
+            zBg.setAttribute('y', absY - bgH - 15); // يظهر فوق المستطيل بمسافة 15px
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
-            zBg.style.fill = 'black';
+            zBg.setAttribute('rx', '8'); // حواف دائرية ناعمة
+            zBg.style.fill = 'rgba(0, 0, 0, 0.85)';
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
 
-            zText.setAttribute('y', absY + (bgH / 2));
+            zText.setAttribute('y', parseFloat(zBg.getAttribute('y')) + (bgH / 2));
+            
             activeState.zoomText = zText;
             activeState.zoomBg = zBg;
         }
 
+        // تأثير الإضاءة المتغيرة (Rainbow Glow)
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%)) drop-shadow(0 0 15px hsl(${(h+60)%360},100%,60%))`;
+            const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%))`;
             rect.style.filter = glow;
             if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
+            if (activeState.zoomBg) activeState.zoomBg.style.stroke = `hsl(${h},100%,60%)`;
         }, 100);
     }
 
