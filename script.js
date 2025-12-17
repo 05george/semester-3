@@ -98,14 +98,8 @@ window.onload = function() {
         if (clip) clip.remove();
 
         Object.assign(activeState, {
-            rect: null,
-            zoomPart: null,
-            zoomText: null,
-            zoomBg: null,
-            baseText: null,
-            baseBg: null,
-            animationId: null,
-            clipPathId: null
+            rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null,
+            animationId: null, clipPathId: null
         });
     }
 
@@ -124,12 +118,10 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
-        // Scale Original Rect
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
 
-        // Zoom Image Logic
         const imgData = getGroupImage(rect);
         if (imgData) {
             const clipId = `clip-${Date.now()}`;
@@ -137,22 +129,16 @@ window.onload = function() {
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
             const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            cRect.setAttribute('x', absX);
-            cRect.setAttribute('y', absY);
-            cRect.setAttribute('width', rW);
-            cRect.setAttribute('height', rH);
+            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
+            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
             clipDefs.appendChild(clip).appendChild(cRect);
 
             const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
             zPart.setAttribute('href', imgData.src);
-            zPart.setAttribute('width', imgData.width);
-            zPart.setAttribute('height', imgData.height);
+            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
             zPart.setAttribute('clip-path', `url(#${clipId})`);
-            
             const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(([\d.-]+),([\d.-]+)\)/);
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0);
-            zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
-            
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
             zPart.style.pointerEvents = 'none';
             zPart.style.transformOrigin = `${centerX}px ${centerY}px`;
             zPart.style.transform = `scale(1.1)`;
@@ -160,23 +146,22 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // --- التعديل الجوهري: البحث عن النص في نفس المجموعة ---
-        const parentGroup = rect.parentNode;
-        const bText = parentGroup.querySelector('.rect-label');
-        const bBg = parentGroup.querySelector('.label-bg');
+        // --- التعديل الجوهري: ربط النص والمستطيل الأسود يدوياً ---
+        // بنجيب المعرف (ID) اللي إحنا ربطنا بيه النص بالمستطيل وقت الإنشاء
+        const linkedTextId = rect.getAttribute('data-label-id');
+        const bText = document.getElementById(linkedTextId);
+        const bBg = bText ? bText.previousElementSibling : null;
 
-        if (bText && bBg) {
+        if (bText && bBg && bBg.classList.contains('label-bg')) {
             bText.style.opacity = '0';
             bBg.style.opacity = '0';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
             const zText = bText.cloneNode(true);
-            const fullTxt = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
-            zText.textContent = fullTxt;
-            
-            const baseFontSize = parseFloat(bText.style.fontSize);
-            zText.style.fontSize = (baseFontSize * 2) + 'px';
+            zText.removeAttribute('id'); // عشان ميبقاش فيه اتنين بنفس الـ ID
+            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
+            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
             zText.style.opacity = '1';
             zText.setAttribute('x', centerX);
             zText.style.alignmentBaseline = 'central';
@@ -187,9 +172,9 @@ window.onload = function() {
             mainSvg.appendChild(zText);
 
             const bbox = zText.getBBox();
-            const padding = 24;
-            const bgW = bbox.width + padding;
-            const bgH = bbox.height + padding;
+            const pad = 24;
+            const bgW = bbox.width + pad;
+            const bgH = bbox.height + pad;
 
             zBg.setAttribute('x', centerX - bgW / 2);
             zBg.setAttribute('y', absY);
@@ -205,15 +190,12 @@ window.onload = function() {
             activeState.zoomBg = zBg;
         }
 
-        // Glow Animation (On Rect & Zoom Part Only)
-        let hueAnim = 0;
+        let hue = 0;
         activeState.animationId = setInterval(() => {
-            hueAnim = (hueAnim + 10) % 360;
-            const glowFilter = `drop-shadow(0 0 8px hsl(${hueAnim},100%,55%)) drop-shadow(0 0 15px hsl(${(hueAnim+60)%360},100%,60%))`;
-            rect.style.filter = glowFilter;
-            if (activeState.zoomPart) {
-                activeState.zoomPart.style.filter = glowFilter;
-            }
+            hue = (hue + 10) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 15px hsl(${(hue+60)%360},100%,60%))`;
+            rect.style.filter = glow;
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
         }, 100);
     }
 
@@ -224,16 +206,12 @@ window.onload = function() {
         if(!txt) return;
         const words = txt.split(/\s+/);
         el.textContent = '';
-        
         let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         ts.setAttribute('x', el.getAttribute('x'));
         ts.setAttribute('dy', '0');
         el.appendChild(ts);
-        
         let line = '';
-        const fs = parseFloat(el.style.fontSize);
-        const lh = fs * 1.1;
-
+        const lh = parseFloat(el.style.fontSize) * 1.1;
         words.forEach(word => {
             let test = line + (line ? ' ' : '') + word;
             ts.textContent = test;
@@ -245,16 +223,13 @@ window.onload = function() {
                 ts.textContent = word;
                 el.appendChild(ts);
                 line = word;
-            } else {
-                line = test;
-            }
+            } else { line = test; }
         });
     }
 
-    function processRect(r) {
+    function processRect(r, index) {
         if (r.hasAttribute('data-processed')) return;
         
-        // Handle Shortcuts
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
@@ -265,11 +240,15 @@ window.onload = function() {
         const x = parseFloat(r.getAttribute('x'));
         const y = parseFloat(r.getAttribute('y'));
 
-        // المستطيل الأسود يظهر فقط لو فيه نص
         if (name && name.trim() !== '') {
             const fs = Math.max(8, Math.min(12, w * 0.11));
+            const uniqueId = `label-${Date.now()}-${index}`;
+            
+            // ربط المستطيل بالنص عن طريق ID فريد
+            r.setAttribute('data-label-id', uniqueId);
 
             const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('id', uniqueId);
             txt.setAttribute('x', x + w / 2);
             txt.setAttribute('y', y + 2);
             txt.setAttribute('text-anchor', 'middle');
@@ -296,25 +275,19 @@ window.onload = function() {
             r.parentNode.insertBefore(bg, txt);
         }
 
-        // Glow works on ALL rects always
-        r.style.cursor = 'pointer';
-
         if (!isTouchDevice) {
             r.addEventListener('mouseover', startHover);
             r.addEventListener('mouseout', cleanupHover);
         }
+        r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
         
-        r.addEventListener('click', (e) => {
-            if (href && href !== '#') window.open(href, '_blank');
-        });
-
         r.addEventListener('touchstart', function(e) {
             if(!interactionEnabled) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
-
+        
         r.addEventListener('touchend', function(e) {
             if (!interactionEnabled) return;
             const moved = Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) > 10;
@@ -328,11 +301,11 @@ window.onload = function() {
     }
 
     function scan() {
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach((r, i) => processRect(r, i));
     }
     scan();
 
-    // --- Loading & Search & Observers ---
+    // --- Loading, Search & UI ---
 
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
@@ -363,9 +336,9 @@ window.onload = function() {
     searchInput.addEventListener('input', debounce((e) => {
         const q = e.target.value.toLowerCase();
         mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => {
-            const parent = r.parentNode;
-            const bg = parent.querySelector('.label-bg');
-            const label = parent.querySelector('.rect-label');
+            const labelId = r.getAttribute('data-label-id');
+            const label = document.getElementById(labelId);
+            const bg = label ? label.previousElementSibling : null;
             const match = (r.getAttribute('data-href')||'').toLowerCase().includes(q) || (label?.getAttribute('data-original-text')||'').toLowerCase().includes(q);
             
             r.style.opacity = (q && !match) ? '0.1' : '1';
