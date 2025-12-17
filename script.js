@@ -11,16 +11,9 @@ window.onload = function() {
     const TAP_THRESHOLD_MS = 300;
 
     const activeState = {
-        rect: null,
-        zoomPart: null,
-        zoomText: null,
-        zoomBg: null,
-        baseText: null,
-        baseBg: null,
-        animationId: null,
-        clipPathId: null,
-        initialScrollLeft: 0,
-        touchStartTime: 0
+        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        initialScrollLeft: 0, touchStartTime: 0
     };
 
     // --- Utility Functions ---
@@ -28,8 +21,7 @@ window.onload = function() {
     function debounce(func, delay) {
         let timeoutId;
         return function() {
-            const context = this;
-            const args = arguments;
+            const context = this; const args = arguments;
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(context, args), delay);
         }
@@ -50,10 +42,7 @@ window.onload = function() {
             const trans = current.getAttribute('transform');
             if (trans) {
                 const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (m) {
-                    x += parseFloat(m[1]);
-                    y += parseFloat(m[2]);
-                }
+                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
             }
             current = current.parentNode;
         }
@@ -98,8 +87,8 @@ window.onload = function() {
         if (clip) clip.remove();
 
         Object.assign(activeState, {
-            rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null,
-            animationId: null, clipPathId: null
+            rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+            baseText: null, baseBg: null, animationId: null, clipPathId: null
         });
     }
 
@@ -146,20 +135,20 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // --- التعديل الجوهري: ربط النص والمستطيل الأسود يدوياً ---
-        // بنجيب المعرف (ID) اللي إحنا ربطنا بيه النص بالمستطيل وقت الإنشاء
-        const linkedTextId = rect.getAttribute('data-label-id');
-        const bText = document.getElementById(linkedTextId);
-        const bBg = bText ? bText.previousElementSibling : null;
+        // --- الطريقة الصح اللي إنت طلبتها لتحديد النص ---
+        let bText = rect.nextElementSibling;
+        // لو اللي بعده مستطيل أسود، يبقى النص هو اللي بعده
+        if (bText && bText.classList.contains('label-bg')) bText = bText.nextElementSibling;
+        
+        let bBg = bText ? bText.previousElementSibling : null;
 
-        if (bText && bBg && bBg.classList.contains('label-bg')) {
+        if (bText && bText.classList.contains('rect-label') && bBg && bBg.classList.contains('label-bg')) {
             bText.style.opacity = '0';
             bBg.style.opacity = '0';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
             const zText = bText.cloneNode(true);
-            zText.removeAttribute('id'); // عشان ميبقاش فيه اتنين بنفس الـ ID
             zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text');
             zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
             zText.style.opacity = '1';
@@ -190,10 +179,10 @@ window.onload = function() {
             activeState.zoomBg = zBg;
         }
 
-        let hue = 0;
+        let h = 0;
         activeState.animationId = setInterval(() => {
-            hue = (hue + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${hue},100%,55%)) drop-shadow(0 0 15px hsl(${(hue+60)%360},100%,60%))`;
+            h = (h + 10) % 360;
+            const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%)) drop-shadow(0 0 15px hsl(${(h+60)%360},100%,60%))`;
             rect.style.filter = glow;
             if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
         }, 100);
@@ -227,7 +216,7 @@ window.onload = function() {
         });
     }
 
-    function processRect(r, index) {
+    function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
         
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
@@ -242,13 +231,7 @@ window.onload = function() {
 
         if (name && name.trim() !== '') {
             const fs = Math.max(8, Math.min(12, w * 0.11));
-            const uniqueId = `label-${Date.now()}-${index}`;
-            
-            // ربط المستطيل بالنص عن طريق ID فريد
-            r.setAttribute('data-label-id', uniqueId);
-
             const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            txt.setAttribute('id', uniqueId);
             txt.setAttribute('x', x + w / 2);
             txt.setAttribute('y', y + 2);
             txt.setAttribute('text-anchor', 'middle');
@@ -279,15 +262,16 @@ window.onload = function() {
             r.addEventListener('mouseover', startHover);
             r.addEventListener('mouseout', cleanupHover);
         }
-        r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
         
+        r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
+
         r.addEventListener('touchstart', function(e) {
             if(!interactionEnabled) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
-        
+
         r.addEventListener('touchend', function(e) {
             if (!interactionEnabled) return;
             const moved = Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) > 10;
@@ -301,11 +285,11 @@ window.onload = function() {
     }
 
     function scan() {
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach((r, i) => processRect(r, i));
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
     }
     scan();
 
-    // --- Loading, Search & UI ---
+    // --- Loading & Search ---
 
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
@@ -313,11 +297,11 @@ window.onload = function() {
         const img = new Image();
         img.onload = img.onerror = () => {
             loadedCount++;
-            const progress = (loadedCount / urls.length) * 100;
-            if(progress >= 25) document.getElementById('bulb-1').classList.add('on');
-            if(progress >= 50) document.getElementById('bulb-2').classList.add('on');
-            if(progress >= 75) document.getElementById('bulb-3').classList.add('on');
-            if(progress === 100) {
+            const p = (loadedCount / urls.length) * 100;
+            if(p >= 25) document.getElementById('bulb-1').classList.add('on');
+            if(p >= 50) document.getElementById('bulb-2').classList.add('on');
+            if(p >= 75) document.getElementById('bulb-3').classList.add('on');
+            if(p === 100) {
                 document.getElementById('bulb-4').classList.add('on');
                 setTimeout(() => {
                     loadingOverlay.style.opacity = 0;
@@ -336,12 +320,14 @@ window.onload = function() {
     searchInput.addEventListener('input', debounce((e) => {
         const q = e.target.value.toLowerCase();
         mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => {
-            const labelId = r.getAttribute('data-label-id');
-            const label = document.getElementById(labelId);
-            const bg = label ? label.previousElementSibling : null;
+            // استخدام البحث بالطريقة الصح المعتمدة على الترتيب
+            let label = r.nextElementSibling;
+            if (label && label.classList.contains('label-bg')) label = label.nextElementSibling;
+            
             const match = (r.getAttribute('data-href')||'').toLowerCase().includes(q) || (label?.getAttribute('data-original-text')||'').toLowerCase().includes(q);
             
             r.style.opacity = (q && !match) ? '0.1' : '1';
+            const bg = label ? label.previousElementSibling : null;
             if(bg) bg.style.opacity = (q && !match) ? '0.1' : '1';
             if(label) label.style.opacity = (q && !match) ? '0.1' : '1';
         });
