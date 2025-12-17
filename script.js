@@ -2,7 +2,6 @@ window.onload = function() {
     // 1. إعداد القياسات التلقائية للكلاسات
     const dimensions = { 'w': 115, 'hw': 57 };
     Object.keys(dimensions).forEach(className => {
-        // تم تصحيح علامات التنصيص هنا
         document.querySelectorAll(`rect.${className}`).forEach(rect => {
             rect.setAttribute('width', dimensions[className]);
         });
