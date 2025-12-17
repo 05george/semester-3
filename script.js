@@ -1,4 +1,4 @@
-window.onload = function() {
+Window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -170,7 +170,7 @@ window.onload = function() {
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
             zBg.setAttribute('rx', '8');
-            zBg.style.fill = 'black'; // معتم تماماً 100%
+            zBg.style.fill = 'black'; 
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
@@ -254,7 +254,7 @@ window.onload = function() {
             bg.setAttribute('width', w);
             bg.setAttribute('height', bbox.height + 8);
             bg.setAttribute('class', 'label-bg');
-            bg.style.fill = 'black'; // معتم تماماً 100%
+            bg.style.fill = 'black'; 
             bg.style.pointerEvents = 'none';
 
             r.parentNode.insertBefore(bg, txt);
@@ -291,9 +291,9 @@ window.onload = function() {
     }
     scan();
 
-    // --- نظام البحث الصارم (معتم 100% أو شفاف 100%) ---
+    // --- المجلد المحدث: نظام البحث الصارم (data-href فقط + إخفاء تام) ---
     searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase();
+        const query = e.target.value.toLowerCase().trim();
         const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
         
         allRects.forEach(rect => {
@@ -302,30 +302,33 @@ window.onload = function() {
             const bg = parent.querySelector('.label-bg');
             
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
-            const text = (label ? label.getAttribute('data-original-text') : '').toLowerCase();
-            const isMatch = href.includes(query) || text.includes(query);
+            const isMatch = href.includes(query);
 
             if (query.length > 0) {
                 if (isMatch) {
+                    // إظهار والمحافظة على التنسيق
+                    rect.style.display = ''; 
                     rect.style.opacity = '1';
                     rect.style.pointerEvents = 'auto';
                     rect.style.filter = 'drop-shadow(0 0 10px #00FFFF)';
-                    if (label) { label.style.opacity = '1'; label.style.fill = 'white'; }
-                    if (bg) { bg.style.opacity = '1'; bg.style.fill = 'black'; }
+                    if (label) { label.style.display = ''; label.style.opacity = '1'; }
+                    if (bg) { bg.style.display = ''; bg.style.opacity = '1'; }
                 } else {
-                    // إخفاء تام (شفافية 100%)
+                    // إخفاء مطلق لعدم المطابقة
+                    rect.style.display = 'none';
                     rect.style.opacity = '0';
                     rect.style.pointerEvents = 'none';
-                    if (label) label.style.opacity = '0';
-                    if (bg) bg.style.opacity = '0';
+                    if (label) { label.style.display = 'none'; label.style.opacity = '0'; }
+                    if (bg) { bg.style.display = 'none'; bg.style.opacity = '0'; }
                 }
             } else {
-                // العودة للحالة الطبيعية المعتمة
+                // الحالة الافتراضية عند فراغ البحث
+                rect.style.display = '';
                 rect.style.opacity = '1';
                 rect.style.pointerEvents = 'auto';
                 rect.style.filter = 'none';
-                if (label) label.style.opacity = '1';
-                if (bg) { bg.style.opacity = '1'; bg.style.fill = 'black'; }
+                if (label) { label.style.display = ''; label.style.opacity = '1'; }
+                if (bg) { bg.style.display = ''; bg.style.opacity = '1'; }
             }
         });
     }, 150));
