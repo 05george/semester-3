@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-<meta name="darkreader-lock">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="darkreader-lock">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Interactive Map</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -11,7 +11,7 @@
 <div id="js-toggle-container" class="top">
   <div id="search-container">
     <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
-    <span id="search-icon" style="cursor:pointer;">🔍</span>
+    <span id="search-icon">🔍</span>
   </div>
 
   <div class="controls-row">
@@ -22,44 +22,45 @@
         <input type="checkbox" id="js-toggle" checked>
         <span class="slider round"></span>
       </label>
-    </div></div></div>
-  <div id="loading-overlay">
+    </div>
+  </div>
+</div>
+
+<div id="loading-overlay">
   <div id="loading-content">
     <img id="splash-image" src="image/o.webp" />
     <h1>Interactive College Map</h1>
-
     <div id="loader-lights">
       <div class="light-bulb" id="bulb-1"></div>
       <div class="light-bulb" id="bulb-2"></div>
       <div class="light-bulb" id="bulb-3"></div>
       <div class="light-bulb" id="bulb-4"></div>
     </div>
-
     <div id="legend">
-<div class="legend-item red">أسئلة</div>
-<div class="legend-item yellow">محاضرات</div>
-<div class="legend-item white">مواد أخرى</div>
-<div class="legend-item purple">إجابات</div>
-<div class="legend-item green">سكاشن العملي</div>
-<div class="legend-item blue">فيديو شرح</div>
+      <div class="legend-item red">أسئلة</div>
+      <div class="legend-item yellow">محاضرات</div>
+      <div class="legend-item white">مواد أخرى</div>
+      <div class="legend-item purple">إجابات</div>
+      <div class="legend-item green">سكاشن العملي</div>
+      <div class="legend-item blue">فيديو شرح</div>
     </div>
   </div>
 </div>
 
 <div id="scroll-container">
-  <svg
-    id="main-svg"
-    xmlns="http://www.w3.org/2000/svg"
-    xmlns:xlink="http://www.w3.org/1999/xlink"
-    preserveAspectRatio="xMinYMin meet">
-
+  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
     <defs></defs>
-<!-- قائمه الملفات -->
-<g id="back-button-group" style="cursor: pointer;">
-    <rect id="back-btn" x="130" y="50" width="350" height="70" rx="15" fill="#5d4037" stroke="#fff" stroke-width="3" />
     
-    <text x="305" y="92" text-anchor="middle" fill="white" font-size="24" font-weight="bold" style="pointer-events: none;">رجوع ←</text>
-</g>
+    <g transform="translate(0,0)" id="files-list-container">
+      <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />
+      
+      <g id="back-button-group" style="cursor: pointer;">
+        <rect id="back-btn" x="120" y="150" width="350" height="60" rx="15" fill="#5d4037" stroke="#fff" stroke-width="2" />
+        <text x="295" y="188" id="back-btn-text" text-anchor="middle" fill="white" font-size="20" font-weight="bold" font-family="Arial">إلى الخريطة ←</text>
+      </g>
+
+      <g id="dynamic-links-group"></g>
+    </g>
 <!-- الاسبوع الأول -->
 <g transform="translate(1024,0)">
 <image data-src="image/1.webp" width="1024" height="2454" />
