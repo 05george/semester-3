@@ -70,19 +70,23 @@ window.onload = function() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
 
-        if (activeState.rect) {
-            activeState.rect.style.filter = 'none';
-            activeState.rect.style.transform = 'scale(1)';
-            activeState.rect.style.strokeWidth = '2px';
-        }
+        activeState.rect.style.filter = 'none';
+        activeState.rect.style.transform = 'scale(1)';
+        activeState.rect.style.strokeWidth = '2px';
 
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
 
+        if (activeState.baseText) activeState.baseText.style.opacity = '1';
+        if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
+
+        const clip = document.getElementById(activeState.clipPathId);
+        if (clip) clip.remove();
+
         Object.assign(activeState, {
             rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-            animationId: null, clipPathId: null
+            baseText: null, baseBg: null, animationId: null, clipPathId: null
         });
     }
 
@@ -101,7 +105,7 @@ window.onload = function() {
         const centerX = absX + rW / 2;
         const centerY = absY + rH / 2;
 
-        rect.style.transformOrigin = `${centerX}px ${centerY}px`;
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
         rect.style.strokeWidth = '4px';
 
@@ -129,21 +133,20 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        // Text and Background
         const parentGroup = rect.parentNode;
-        const bText = parentGroup.querySelector('.rect-label');
-        const bBg = parentGroup.querySelector('.label-bg');
-
-        activeState.baseText = bText;
-        activeState.baseBg = bBg;
-
-        if (bBg) bBg.style.opacity = '1';
-        if (bText) bText.style.opacity = '1';
+        let bText = parentGroup.querySelector('.rect-label');
+        let bBg = parentGroup.querySelector('.label-bg');
 
         if (bText) {
+            bText.style.opacity = '0';
+            if(bBg) bBg.style.opacity = '0';
+            activeState.baseText = bText;
+            activeState.baseBg = bBg;
+
             const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
             zText.textContent = fullTitle;
+
             const baseFs = parseFloat(bText.style.fontSize) || 10;
             zText.style.fontSize = (baseFs * 2) + 'px';
             zText.style.fill = 'white';
@@ -167,7 +170,7 @@ window.onload = function() {
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
             zBg.setAttribute('rx', '8');
-            zBg.style.fill = 'black';
+            zBg.style.fill = 'black'; 
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
@@ -178,6 +181,7 @@ window.onload = function() {
             activeState.zoomBg = zBg;
         }
 
+        // Glow animation
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
@@ -188,6 +192,7 @@ window.onload = function() {
         }, 100);
     }
 
+    // --- Text Wrapping ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
@@ -214,6 +219,7 @@ window.onload = function() {
         });
     }
 
+    // --- Process Each Rect ---
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
 
@@ -239,7 +245,6 @@ window.onload = function() {
             txt.style.fill = 'white';
             txt.style.pointerEvents = 'none';
             txt.style.dominantBaseline = 'hanging';
-
             r.parentNode.appendChild(txt);
             wrapText(txt, w);
 
@@ -252,7 +257,6 @@ window.onload = function() {
             bg.setAttribute('class', 'label-bg');
             bg.style.fill = 'black'; 
             bg.style.pointerEvents = 'none';
-
             r.parentNode.insertBefore(bg, txt);
         }
 
@@ -287,44 +291,57 @@ window.onload = function() {
     }
     scan();
 
-    // --- Search Logic (case-insensitive) ---
+    // --- Search Logic ---
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
 
         allRects.forEach(rect => {
             const parent = rect.parentNode;
-            const label = parent.querySelector('.rect-label');
-            const bg = parent.querySelector('.label-bg');
-
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
             const isMatch = href.includes(query);
 
-            if (query.length > 0 && !isMatch) {
-                rect.style.display = 'none';
-                if (label) label.style.display = 'none';
-                if (bg) bg.style.display = 'none';
-            } else {
-                rect.style.display = '';
-                if (label) label.style.display = '';
-                if (bg) bg.style.display = '';
+            // إخفاء أو إظهار المستطيل الأساسي
+            rect.style.display = isMatch ? '' : 'none';
+            rect.style.opacity = isMatch ? '1' : '0';
+            rect.style.pointerEvents = isMatch ? 'auto' : 'none';
+
+            // النصوص والخلفيات الأساسية
+            const labels = Array.from(parent.querySelectorAll('.rect-label'));
+            const bgs = Array.from(parent.querySelectorAll('.label-bg'));
+
+            // إذا هذا العنصر زوم حاليًا، أضف zoomText/zoomBg
+            if(activeState.rect === rect) {
+                if(activeState.zoomText) labels.push(activeState.zoomText);
+                if(activeState.zoomBg) bgs.push(activeState.zoomBg);
             }
+
+            labels.forEach(l => { l.style.display = isMatch ? '' : 'none'; });
+            bgs.forEach(b => { b.style.display = isMatch ? '' : 'none'; });
         });
     }, 150));
 
-    // --- Loading Logic ---
+    // --- Loading ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
         const img = new Image();
         img.onload = img.onerror = () => {
             loadedCount++;
-            if(loadedCount === urls.length) {
-                if(loadingOverlay) loadingOverlay.style.opacity = 0;
-                setTimeout(() => { 
-                    if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                    mainSvg.style.opacity = 1;
-                }, 300);
+            const p = (loadedCount / urls.length) * 100;
+            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
+            if(p === 100) {
+                document.getElementById('bulb-4')?.classList.add('on');
+                setTimeout(() => {
+                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
+                    setTimeout(() => { 
+                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = 1;
+                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                    }, 300);
+                }, 500);
                 mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
             }
         };
