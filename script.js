@@ -1,4 +1,46 @@
-window.onload = function() {
+window.onload = 
+function generateFilesList() {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    const allRects = mainSvg.querySelectorAll('rect.m[data-href$=".pdf"]');
+    const uniqueHrefs = new Set();
+    const files = [];
+
+    allRects.forEach(r => {
+        const href = r.getAttribute('data-href');
+        if (!uniqueHrefs.has(href)) {
+            uniqueHrefs.add(href);
+            files.push({
+                href: href,
+                className: r.getAttribute('class'),
+                fullText: r.getAttribute('data-full-text')
+            });
+        }
+    });
+
+    let currentY = 100; // نقطة البداية من الأعلى
+    const itemHeight = 45; // ارتفاع كل عنصر في القائمة
+    const columnWidth = 250; // عرض المستطيل في القائمة
+
+    files.forEach(file => {
+        const newRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        newRect.setAttribute('x', "150"); // إزاحة عن الحافة اليسرى
+        newRect.setAttribute('y', currentY);
+        newRect.setAttribute('width', columnWidth);
+        newRect.setAttribute('height', itemHeight);
+        newRect.setAttribute('class', file.className + " list-item");
+        newRect.setAttribute('data-href', file.href);
+        if(file.fullText) newRect.setAttribute('data-full-text', file.fullText);
+        
+        dynamicGroup.appendChild(newRect);
+        processRect(newRect); // تشغيل منطق النصوص والتفاعل عليه
+        currentY += itemHeight + 10; // ترك مسافة بين العناصر
+    });
+}
+
+// استدعاء الوظيفة بعد السحب الأولي
+generateFilesList();
+
+function() {
     const mainSvg = document.getElementById('main-svg');
     mainSvg.style.colorScheme = 'only light'; 
     const scrollContainer = document.getElementById('scroll-container');
