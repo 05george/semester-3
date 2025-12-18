@@ -88,108 +88,107 @@ window.onload = function() {
         });
     }
 
-function startHover() {  
-    if (!interactionEnabled) return;  
-    const rect = this;  
-    if (activeState.rect === rect) return;  
-    cleanupHover();  
-    activeState.rect = rect;  
+    function startHover() {  
+        if (!interactionEnabled) return;  
+        const rect = this;  
+        if (activeState.rect === rect) return;  
+        cleanupHover();  
+        activeState.rect = rect;  
 
-    const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
-    const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
-    const cum = getCumulativeTranslate(rect);  
-    const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
-    const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
-    const centerX = absX + rW / 2;  
-    const centerY = absY + rH / 2;  
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
+        const cum = getCumulativeTranslate(rect);  
+        const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
+        const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
+        const centerX = absX + rW / 2;  
 
-    rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
-    rect.style.transform = `scale(1.1)`;  
-    rect.style.strokeWidth = '4px';  
+        // حساب Y الجديدة بعد التكبير بنسبة 1.1 لضمان المحاذاة
+        const scaleFactor = 1.1;
+        const yOffset = (rH * (scaleFactor - 1)) / 2;
+        const hoveredY = absY - yOffset;
 
-    const imgData = getGroupImage(rect);  
-    if (imgData) {  
-        const clipId = `clip-${Date.now()}`;  
-        activeState.clipPathId = clipId;  
-        const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
-        clip.setAttribute('id', clipId);  
-        const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-        cRect.setAttribute('x', absX);  
-        cRect.setAttribute('y', absY);  
-        cRect.setAttribute('width', rW);  
-        cRect.setAttribute('height', rH);  
-        clipDefs.appendChild(clip).appendChild(cRect);  
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
+        rect.style.transform = `scale(${scaleFactor})`;  
+        rect.style.strokeWidth = '4px';  
 
-        const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
-        zPart.setAttribute('href', imgData.src);  
-        zPart.setAttribute('width', imgData.width);  
-        zPart.setAttribute('height', imgData.height);  
-        zPart.setAttribute('clip-path', `url(#${clipId})`);  
-        const mTrans = imgData.group.getAttribute('transform')?.match(/translate([\d.-]+),([\d.-]+)/);  
-        zPart.setAttribute('x', mTrans ? mTrans[1] : 0);  
-        zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
-        zPart.style.pointerEvents = 'none';  
-        zPart.style.transformOrigin = `${centerX}px ${centerY}px`;  
-        zPart.style.transform = `scale(1.1)`;  
-        mainSvg.appendChild(zPart);  
-        activeState.zoomPart = zPart;  
-    }  
+        // 1. الجزء الخاص بتكبير صورة الخلفية
+        const imgData = getGroupImage(rect);  
+        if (imgData) {  
+            const clipId = `clip-${Date.now()}`;  
+            activeState.clipPathId = clipId;  
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
+            clip.setAttribute('id', clipId);  
+            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);  
+            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);  
+            clipDefs.appendChild(clip).appendChild(cRect);  
 
-    // النص والمستطيل الأسود
-    let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-    if (bText) {  
-        bText.style.opacity = '0';  
-        let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-        if(bBg) bBg.style.opacity = '0';  
-        activeState.baseText = bText;  
-        activeState.baseBg = bBg;  
+            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
+            zPart.setAttribute('href', imgData.src);  
+            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);  
+            zPart.setAttribute('clip-path', `url(#${clipId})`);  
+            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);  
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
+            zPart.style.pointerEvents = 'none';  
+            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;  
+            zPart.style.transform = `scale(${scaleFactor})`;  
+            mainSvg.appendChild(zPart);  
+            activeState.zoomPart = zPart;  
+        }  
 
-        const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-        const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
-        zText.textContent = fullTitle;  
-        zText.setAttribute('x', absX + rW/2);  
-        zText.setAttribute('y', absY + rH/2);  
-        zText.setAttribute('text-anchor', 'middle');  
-        zText.style.dominantBaseline = 'middle';  
-        zText.style.fill = 'white';  
-        zText.style.fontWeight = 'bold';  
-        zText.style.pointerEvents = 'none';  
-        const baseFs = parseFloat(bText.style.fontSize) || 10;  
-        zText.style.fontSize = (baseFs * 2) + 'px';  
+        // 2. الجزء الخاص بالنص والمستطيل الأسود المكبر
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+        if (bText) {  
+            bText.style.opacity = '0';  
+            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+            if(bBg) bBg.style.opacity = '0';  
+            activeState.baseText = bText;  
+            activeState.baseBg = bBg;  
 
-        mainSvg.appendChild(zText);  
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
+            zText.textContent = fullTitle;  
+            zText.setAttribute('x', centerX);  
+            zText.setAttribute('text-anchor', 'middle');  
+            zText.style.dominantBaseline = 'central';  
+            zText.style.fill = 'white';  
+            zText.style.fontWeight = 'bold';  
+            zText.style.pointerEvents = 'none';  
+            const baseFs = parseFloat(bText.style.fontSize) || 10;  
+            zText.style.fontSize = (baseFs * 2) + 'px';  
 
-        const bbox = zText.getBBox();  
-        const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-        zBg.setAttribute('x', absX);  
-        zBg.setAttribute('y', absY);  
-        zBg.setAttribute('width', rW);  
-        zBg.setAttribute('height', Math.max(rH, bbox.height));  
-        zBg.style.fill = 'black';  
-        zBg.style.stroke = 'none';  
-        zBg.style.pointerEvents = 'none';  
+            mainSvg.appendChild(zText);  
 
-        mainSvg.insertBefore(zBg, zText);  
+            const bbox = zText.getBBox();  
+            const padW = 20, padH = 10;
+            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+            
+            // التمركز حسب طلبك: y تطابق y المكبرة، و x في المنتصف
+            zBg.setAttribute('x', centerX - (bbox.width + padW) / 2);  
+            zBg.setAttribute('y', hoveredY);  
+            zBg.setAttribute('width', bbox.width + padW);  
+            zBg.setAttribute('height', bbox.height + padH);  
+            zBg.setAttribute('rx', '5');  
+            zBg.style.fill = 'black';  
+            zBg.style.strokeWidth = '2px';  
+            zBg.style.pointerEvents = 'none';  
 
-        // الزوم ×2
-        zBg.style.transformOrigin = `${absX + rW/2}px ${absY}px`;  
-        zBg.style.transform = `scale(2)`;  
-        zText.style.transformOrigin = `${absX + rW/2}px ${absY + Math.max(rH, bbox.height)/2}px`;  
-        zText.style.transform = `scale(2)`;  
+            mainSvg.insertBefore(zBg, zText);  
+            zText.setAttribute('y', hoveredY + (bbox.height + padH) / 2);
 
-        activeState.zoomText = zText;  
-        activeState.zoomBg = zBg;  
-    }  
+            activeState.zoomText = zText;  
+            activeState.zoomBg = zBg;  
+        }  
 
-    let h = 0;  
-    activeState.animationId = setInterval(() => {  
-        h = (h + 10) % 360;  
-        const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%))`;  
-        rect.style.filter = glow;  
-        if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;  
-        if (activeState.zoomBg) activeState.zoomBg.style.filter = glow;  
-    }, 100);  
-}
+        let h = 0;  
+        activeState.animationId = setInterval(() => {  
+            h = (h + 10) % 360;  
+            const color = `hsl(${h},100%,60%)`;
+            rect.style.filter = `drop-shadow(0 0 8px ${color})`;  
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;  
+            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
+        }, 100);  
+    }
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
@@ -238,7 +237,7 @@ function startHover() {
             txt.setAttribute('text-anchor', 'middle');
             txt.setAttribute('class', 'rect-label');
             txt.setAttribute('data-original-text', name);
-            txt.setAttribute('data-original-for', href); // ربط النص بالrect
+            txt.setAttribute('data-original-for', href);
             txt.style.fontSize = fs + 'px';
             txt.style.fill = 'white';
             txt.style.pointerEvents = 'none';
@@ -252,9 +251,9 @@ function startHover() {
             bg.setAttribute('x', x);
             bg.setAttribute('y', y);
             bg.setAttribute('width', w);
-            bg.setAttribute('height', bbox.height + 8);
+            bg.setAttribute('height', bbox.height + 8); // طول ديناميكي حسب النص
             bg.setAttribute('class', 'label-bg');
-            bg.setAttribute('data-original-for', href); // ربط الخلفية بالrect
+            bg.setAttribute('data-original-for', href);
             bg.style.fill = 'black';
             bg.style.pointerEvents = 'none';
 
@@ -305,17 +304,13 @@ function startHover() {
             const isMatch = href.includes(query);
 
             if(query.length > 0 && !isMatch) {
-                rect.style.display = 'none';
-                rect.style.opacity = '0';
-                rect.style.pointerEvents = 'none';
-                if(label) { label.style.display = 'none'; label.style.opacity = '0'; }
-                if(bg) { bg.style.display = 'none'; bg.style.opacity = '0'; }
+                rect.style.display = 'none'; rect.style.opacity = '0';
+                if(label) { label.style.display = 'none'; }
+                if(bg) { bg.style.display = 'none'; }
             } else {
-                rect.style.display = '';
-                rect.style.opacity = '1';
-                rect.style.pointerEvents = 'auto';
-                if(label) { label.style.display = ''; label.style.opacity = '1'; }
-                if(bg) { bg.style.display = ''; bg.style.opacity = '1'; }
+                rect.style.display = ''; rect.style.opacity = '1';
+                if(label) { label.style.display = ''; }
+                if(bg) { bg.style.display = ''; }
             }
         });
     }, 150));
