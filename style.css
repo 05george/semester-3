@@ -1,3 +1,10 @@
+html, body {
+  /* منع المتصفحات من تكبير الخط تلقائياً */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 /* 1. إعدادات منع الوضع الداكن (في البداية دائماً) */
 :root {
   color-scheme: only light !important;
@@ -175,7 +182,6 @@ html, body {
 .legend-item.yellow { --item-color: var(--color-l); }
 
 /* ===== Toggle & Search UI ===== */
-/* ===== Toggle & Search UI (تم التعديل ليكون مرناً) ===== */
 #js-toggle-container {
   position: fixed;
   right: 20px;
