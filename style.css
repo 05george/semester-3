@@ -108,8 +108,8 @@ html, body {
 }
 
 .light-bulb {
-  width: 15px;
-  height: 15px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background-color: #222;
   border: 1px solid #444;
