@@ -8,7 +8,7 @@ html, body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* الألوان المركزية - عدل هنا لتتغير في كل الموقع */
+/* الألوان المركزية - التغيير هنا يغير الموقع بالكامل */
 :root {
   --color-q: #ff4d4d;    /* أسئلة - أحمر */
   --color-v: #4da6ff;    /* فيديو - أزرق */
@@ -33,7 +33,7 @@ html, body {
   width: auto;
   display: block;
   transition: opacity .3s ease-out;
-  opacity: 0; /* يبدأ مخفياً حتى ينتهي التحميل */
+  opacity: 0; 
 }
 
 /* ===== Rectangles & Interactions ===== */
@@ -54,10 +54,6 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
-.zoom-part {
-  pointer-events: none;
-}
-
 /* ===== Loading Overlay ===== */
 #loading-overlay {
   position: fixed;
@@ -76,13 +72,15 @@ html, body {
   max-width: 600px;
 }
 
+/* شعار شاشة البدء مع تأثير النبض */
 #splash-image {
   max-width: 250px;
   height: auto;
   display: block;
   margin: 0 auto 20px auto;
   border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+  animation: logo-glow 2s infinite ease-in-out;
 }
 
 #loading-content h1 {
@@ -122,15 +120,16 @@ html, body {
   border-color: #fff;
 }
 
-/* ===== Legend (The Fixed Part) ===== */
+/* ===== Legend (شاشة البدء) ===== */
 #legend {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 أعمدة */
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   margin-top: 30px;
   padding: 15px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .legend-item {
@@ -141,18 +140,17 @@ html, body {
   font-size: 13px;
 }
 
-/* إنشاء المربع الملون آلياً لكل عنصر */
 .legend-item::before {
   content: "";
   width: 12px;
   height: 12px;
   border-radius: 3px;
   background-color: var(--item-color);
-  box-shadow: 0 0 10px var(--item-color); /* توهج اللون */
+  box-shadow: 0 0 10px var(--item-color);
   flex-shrink: 0;
 }
 
-/* ربط كلاسات الـ HTML بالمتغيرات */
+/* ربط الكلاسات بالمتغيرات */
 .legend-item.red    { --item-color: var(--color-q); }
 .legend-item.blue   { --item-color: var(--color-v); }
 .legend-item.white  { --item-color: var(--color-i); }
@@ -160,7 +158,7 @@ html, body {
 .legend-item.green  { --item-color: var(--color-s); }
 .legend-item.yellow { --item-color: var(--color-l); }
 
-/* ===== Toggle & Search (Fixed UI) ===== */
+/* ===== Toggle & Search UI ===== */
 #js-toggle-container {
   position: fixed;
   right: 20px;
@@ -205,12 +203,6 @@ html, body {
   opacity: 0.6;
 }
 
-#move-toggle {
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.7;
-}
-
 /* ===== Switch Toggle ===== */
 .switch {
   position: relative;
@@ -241,7 +233,23 @@ html, body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* ===== Rect Labels ===== */
+/* ===== Animations (Keyframes) ===== */
+@keyframes logo-glow {
+  0% {
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 204, 0, 0.6);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+    transform: scale(1);
+  }
+}
+
+/* ===== Labels & Extras ===== */
 .label-bg {
   rx: 3;
   ry: 3;
@@ -250,12 +258,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 .rect-label {
   font-weight: bold;
   pointer-events: none;
-  user-select: none;
 }
 
 /* تحسين العرض على الموبايل */
 @media (max-width: 600px) {
   #legend { grid-template-columns: repeat(2, 1fr); }
   #search-container { width: 150px; }
-  #loading-content h1 { font-size: 1.4rem; }
+  #loading-content h1 { font-size: 1.3rem; }
+  #splash-image { max-width: 180px; }
 }
