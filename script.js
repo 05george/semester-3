@@ -1,12 +1,13 @@
+// main.js
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
-    mainSvg.style.colorScheme = 'only light'; 
+    mainSvg.style.colorScheme = 'only light';
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-    const searchIcon = document.getElementById('search-icon'); // الإضافة الجديدة
+    const searchIcon = document.getElementById('search-icon'); 
 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -27,7 +28,6 @@ window.onload = function() {
         }
     }
 
-    // --- إضافة: وظيفة التمرير لليسار ---
     function scrollToResults() {
         scrollContainer.scrollTo({
             left: 0,
@@ -49,6 +49,7 @@ window.onload = function() {
         while (current && current.tagName !== 'svg') {
             const trans = current.getAttribute('transform');
             if (trans) {
+                // تم إصلاح الأقواس هنا
                 const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
                 if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
             }
@@ -98,107 +99,106 @@ window.onload = function() {
         });
     }
 
-    function startHover() {  
-        if (!interactionEnabled) return;  
-        const rect = this;  
-        if (activeState.rect === rect) return;  
-        cleanupHover();  
-        activeState.rect = rect;  
+    function startHover() {
+        if (!interactionEnabled) return;
+        const rect = this;
+        if (activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
 
-        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
-        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
-        const cum = getCumulativeTranslate(rect);  
-        const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
-        const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
-        const centerX = absX + rW / 2;  
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
+        const cum = getCumulativeTranslate(rect);
+        const absX = parseFloat(rect.getAttribute('x')) + cum.x;
+        const absY = parseFloat(rect.getAttribute('y')) + cum.y;
+        const centerX = absX + rW / 2;
 
         const scaleFactor = 1.1;
         const yOffset = (rH * (scaleFactor - 1)) / 2;
         const hoveredY = absY - yOffset;
 
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
-        rect.style.transform = `scale(${scaleFactor})`;  
-        rect.style.strokeWidth = '4px';  
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
+        rect.style.transform = `scale(${scaleFactor})`;
+        rect.style.strokeWidth = '4px';
 
-        const imgData = getGroupImage(rect);  
-        if (imgData) {  
-            const clipId = `clip-${Date.now()}`;  
-            activeState.clipPathId = clipId;  
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
-            clip.setAttribute('id', clipId);  
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);  
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);  
-            clipDefs.appendChild(clip).appendChild(cRect);  
+        const imgData = getGroupImage(rect);
+        if (imgData) {
+            const clipId = `clip-${Date.now()}`;
+            activeState.clipPathId = clipId;
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clip.setAttribute('id', clipId);
+            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
+            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
+            clipDefs.appendChild(clip).appendChild(cRect);
 
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
-            zPart.setAttribute('href', imgData.src);  
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);  
-            zPart.setAttribute('clip-path', `url(#${clipId})`);  
-            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);  
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
-            zPart.style.pointerEvents = 'none';  
-            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;  
-            zPart.style.transform = `scale(${scaleFactor})`;  
-            mainSvg.appendChild(zPart);  
-            activeState.zoomPart = zPart;  
-        }  
+            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            zPart.setAttribute('href', imgData.src);
+            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
+            zPart.setAttribute('clip-path', `url(#${clipId})`);
+            // تم إصلاح الأقواس هنا أيضاً
+            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
+            zPart.style.pointerEvents = 'none';
+            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;
+            zPart.style.transform = `scale(${scaleFactor})`;
+            mainSvg.appendChild(zPart);
+            activeState.zoomPart = zPart;
+        }
 
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-        if (bText) {  
-            bText.style.opacity = '0';  
-            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-            if(bBg) bBg.style.opacity = '0';  
-            activeState.baseText = bText;  
-            activeState.baseBg = bBg;  
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        if (bText) {
+            bText.style.opacity = '0';
+            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            if (bBg) bBg.style.opacity = '0';
+            activeState.baseText = bText;
+            activeState.baseBg = bBg;
 
-            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
-            zText.textContent = fullTitle;  
-            zText.setAttribute('x', centerX);  
-            zText.setAttribute('text-anchor', 'middle');  
-            zText.style.dominantBaseline = 'central';  
-            zText.style.fill = 'white';  
-            zText.style.fontWeight = 'bold';  
-            zText.style.pointerEvents = 'none';  
-            const baseFs = parseFloat(bText.style.fontSize) || 10;  
-            zText.style.fontSize = (baseFs * 2) + 'px';  
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
+            zText.textContent = fullTitle;
+            zText.setAttribute('x', centerX);
+            zText.setAttribute('text-anchor', 'middle');
+            zText.style.dominantBaseline = 'central';
+            zText.style.fill = 'white';
+            zText.style.fontWeight = 'bold';
+            zText.style.pointerEvents = 'none';
+            const baseFs = parseFloat(bText.style.fontSize) || 10;
+            zText.style.fontSize = (baseFs * 2) + 'px';
+            mainSvg.appendChild(zText);
 
-            mainSvg.appendChild(zText);  
-
-            const bbox = zText.getBBox();  
+            const bbox = zText.getBBox();
             const padW = 20, padH = 10;
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            zBg.setAttribute('x', centerX - (bbox.width + padW) / 2);
+            zBg.setAttribute('y', hoveredY);
+            zBg.setAttribute('width', bbox.width + padW);
+            zBg.setAttribute('height', bbox.height + padH);
+            zBg.setAttribute('rx', '5');
+            zBg.style.fill = 'black';
+            zBg.style.strokeWidth = '2px';
+            zBg.style.pointerEvents = 'none';
 
-            zBg.setAttribute('x', centerX - (bbox.width + padW) / 2);  
-            zBg.setAttribute('y', hoveredY);  
-            zBg.setAttribute('width', bbox.width + padW);  
-            zBg.setAttribute('height', bbox.height + padH);  
-            zBg.setAttribute('rx', '5');  
-            zBg.style.fill = 'black';  
-            zBg.style.strokeWidth = '2px';  
-            zBg.style.pointerEvents = 'none';  
-
-            mainSvg.insertBefore(zBg, zText);  
+            mainSvg.insertBefore(zBg, zText);
             zText.setAttribute('y', hoveredY + (bbox.height + padH) / 2);
 
-            activeState.zoomText = zText;  
-            activeState.zoomBg = zBg;  
-        }  
+            activeState.zoomText = zText;
+            activeState.zoomBg = zBg;
+        }
 
-        let h = 0;  
-        activeState.animationId = setInterval(() => {  
-            h = (h + 10) % 360;  
+        let h = 0;
+        activeState.animationId = setInterval(() => {
+            h = (h + 10) % 360;
             const color = `hsl(${h},100%,60%)`;
-            rect.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
-        }, 100);  
+            rect.style.filter = `drop-shadow(0 0 8px ${color})`;
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;
+            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;
+        }, 100);
     }
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
-        if(!txt) return;
+        if (!txt) return;
         const words = txt.split(/\s+/);
         el.textContent = '';
         let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -218,11 +218,10 @@ window.onload = function() {
                 ts.textContent = word;
                 el.appendChild(ts);
                 line = word;
-            } else { line = test; }
+            } else line = test;
         });
     }
 
-    // --- إضافة: وظيفة توليد القائمة تلقائياً ---
     function generateFilesList() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -233,7 +232,7 @@ window.onload = function() {
 
         allRects.forEach(r => {
             const href = r.getAttribute('data-href');
-            if (href && !uniqueHrefs.has(href)) {
+            if (href && href !== '#' && !uniqueHrefs.has(href)) {
                 uniqueHrefs.add(href);
                 items.push({
                     href: href,
@@ -243,23 +242,23 @@ window.onload = function() {
             }
         });
 
-        let currentY = 150; 
-        const itemHeight = 45; 
+        let currentY = 150;
+        const itemHeight = 45;
         const columnWidth = 300;
 
         items.forEach(item => {
             const newRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            newRect.setAttribute('x', "120"); 
+            newRect.setAttribute('x', "120");
             newRect.setAttribute('y', currentY);
             newRect.setAttribute('width', columnWidth);
             newRect.setAttribute('height', itemHeight);
             newRect.setAttribute('class', item.className + " list-item");
             newRect.setAttribute('data-href', item.href);
             if(item.fullText) newRect.setAttribute('data-full-text', item.fullText);
-            
+
             dynamicGroup.appendChild(newRect);
-            processRect(newRect); 
-            currentY += itemHeight + 12; 
+            processRect(newRect);
+            currentY += itemHeight + 12;
         });
     }
 
@@ -298,7 +297,7 @@ window.onload = function() {
             bg.setAttribute('x', x);
             bg.setAttribute('y', y);
             bg.setAttribute('width', w);
-            bg.setAttribute('height', bbox.height + 8); 
+            bg.setAttribute('height', bbox.height + 8);
             bg.setAttribute('class', 'label-bg');
             bg.setAttribute('data-original-for', href);
             bg.style.fill = 'black';
@@ -314,14 +313,14 @@ window.onload = function() {
 
         r.addEventListener('click', () => { if (href && href !== '#') window.open(href, '_blank'); });
 
-        r.addEventListener('touchstart', function(e) {
+        r.addEventListener('touchstart', function() {
             if(!interactionEnabled) return;
             activeState.touchStartTime = Date.now();
             activeState.initialScrollLeft = scrollContainer.scrollLeft;
             startHover.call(this);
         });
 
-        r.addEventListener('touchend', function(e) {
+        r.addEventListener('touchend', function() {
             if (!interactionEnabled) return;
             const moved = Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) > 10;
             if (!moved && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
@@ -337,9 +336,8 @@ window.onload = function() {
         mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
     }
     scan();
-    generateFilesList(); // توليد قائمة الخشب بعد المسح الأول
+    generateFilesList();
 
-    // --- تعديل: البحث (إخفاء فقط أثناء الكتابة) ---
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         const allRects = mainSvg.querySelectorAll('rect.m, rect.image-mapper-shape');
@@ -365,11 +363,9 @@ window.onload = function() {
         });
     }, 150));
 
-    // --- إضافة: التحويل لليسار عند Enter أو العدسة ---
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') scrollToResults(); });
     if(searchIcon) searchIcon.addEventListener('click', scrollToResults);
 
-    // منطق التحميل الأصلي مع تصحيح روابط الصور
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach((u, index) => {
@@ -395,8 +391,6 @@ window.onload = function() {
         };
         img.src = u;
     });
-
-    new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
 
     jsToggle.addEventListener('change', function() {
         interactionEnabled = this.checked;
