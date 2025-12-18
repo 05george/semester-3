@@ -74,17 +74,17 @@ html, body {
 
 /* شعار شاشة البدء مع تأثير النبض */
 #splash-image {
-  height: auto;
-  transform: translateY(-15%);
-  margin-bottom: 20px;
   width: 400px;
+  max-width: 80vw;
   height: auto;
   display: block;
-  margin: 0 auto 20px auto;
+  transform: translateY(-20%); 
+  margin: -30px auto 10px auto;
   border-radius: 15px;
   box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
   animation: logo-glow 2s infinite ease-in-out;
 }
+
 
 #loading-content h1 {
   color: #ffcc00;
