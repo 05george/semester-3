@@ -20,20 +20,21 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- 1. وظائف المساعدة والتحجيم ---
+    // --- 1. وظائف المساعدة والتحجيم (من الكود القياسي) ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
+            const context = this; const args = arguments;
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, arguments), delay);
+            timeoutId = setTimeout(() => func.apply(context, args), delay);
         }
     }
 
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
-        const imgW = 1024;
-        const imgH = 2454;
+        const imgW = parseFloat(images[0].getAttribute('width')) || 1024;
+        const imgH = parseFloat(images[0].getAttribute('height')) || 2454;
         mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
     }
     updateDynamicSizes();
@@ -57,7 +58,7 @@ window.onload = function() {
             if (current.tagName === 'g') {
                 const imgs = [...current.children].filter(c => c.tagName === 'image');
                 if (imgs.length) return {
-                    src: imgs[0].getAttribute('href') || imgs[0].getAttribute('data-src'),
+                    src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
                     width: parseFloat(imgs[0].getAttribute('width')),
                     height: parseFloat(imgs[0].getAttribute('height')),
                     group: current
@@ -68,7 +69,7 @@ window.onload = function() {
         return null;
     }
 
-    // --- 2. نظام المجلدات (الخشب) - عمودين ---
+    // --- 2. نظام المجلدات (الخشب) المطور - عمودين ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -98,16 +99,12 @@ window.onload = function() {
             ...files.map(f => ({ label: f.text, path: f.href, isFolder: false, sourceRect: f.originalRect }))
         ];
 
-        // إعدادات العمودين
-        const startY = 250, itemHeight = 50, gapY = 15;
-        const colWidth = 380, startX = 130; 
+        const startY = 250, itemHeight = 50, gapY = 15, colWidth = 380, startX = 130; 
 
         items.forEach((item, index) => {
             const col = index % 2;
             const row = Math.floor(index / 2);
-            const x = startX + (col * colWidth);
-            const y = startY + (row * (itemHeight + gapY));
-            createWoodItem(item.label, item.path, item.isFolder, x, y, item.sourceRect);
+            createWoodItem(item.label, item.path, item.isFolder, startX + (col * colWidth), startY + (row * (itemHeight + gapY)), item.sourceRect);
         });
     }
 
@@ -119,7 +116,7 @@ window.onload = function() {
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         r.setAttribute("x", x); r.setAttribute("y", y);
         r.setAttribute("width", "350"); r.setAttribute("height", "50"); r.setAttribute("rx", "10");
-        r.setAttribute("class", sourceRect ? sourceRect.getAttribute('class') + " list-item" : "m list-item");
+        r.setAttribute("class", (sourceRect ? sourceRect.getAttribute('class') : "m") + " list-item");
         r.setAttribute("data-href", path);
         r.style.fill = isFolder ? "#5d4037" : "rgba(0,0,0,0.6)";
         r.style.stroke = "#fff";
@@ -134,14 +131,13 @@ window.onload = function() {
         g.onclick = (e) => {
             e.stopPropagation();
             if (isFolder) {
-                currentFolder = currentFolder === "" ? path : currentFolder + "/" + path;
+                currentFolder = (currentFolder === "") ? path : currentFolder + "/" + path;
                 updateWoodInterface();
             } else { window.open(path, '_blank'); }
         };
         dynamicGroup.appendChild(g);
     }
 
-    // زر الرجوع الذكي
     backButtonGroup.onclick = function() {
         if (currentFolder !== "") {
             let parts = currentFolder.split('/');
@@ -149,30 +145,50 @@ window.onload = function() {
             currentFolder = parts.join('/');
             updateWoodInterface();
         } else {
+            // العودة لأقصى اليمين (الجداول)
             scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
         }
     };
 
-    // --- 3. البحث (دعم العدسة و Enter) ---
+    // --- 3. البحث المطور (العدسة + Enter + Go + تمرير يسار) ---
     function performSearch() {
-        const q = searchInput.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const h = (rect.getAttribute('data-href') || '').toLowerCase();
+        const query = searchInput.value.toLowerCase().trim();
+        const allRects = mainSvg.querySelectorAll('rect.m');
+
+        allRects.forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
             const parent = rect.parentNode;
             const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
             const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            const match = h.includes(q);
-            rect.style.display = (q && !match) ? 'none' : '';
-            if(label) label.style.display = (q && !match) ? 'none' : '';
-            if(bg) bg.style.display = (q && !match) ? 'none' : '';
+            const isMatch = href.includes(query);
+
+            if(query.length > 0 && !isMatch) {
+                rect.style.display = 'none';
+                if(label) label.style.display = 'none';
+                if(bg) bg.style.display = 'none';
+            } else {
+                rect.style.display = '';
+                if(label) label.style.display = '';
+                if(bg) bg.style.display = '';
+            }
         });
+
+        // ميزة إضافية: عند البحث، التمرير لأقصى اليسار لرؤية النتائج في قائمة الخشب
+        if(query.length > 0) {
+            scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+        }
     }
 
     searchInput.addEventListener('input', debounce(performSearch, 150));
-    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { performSearch(); searchInput.blur(); } });
+    searchInput.addEventListener('keypress', (e) => { 
+        if (e.key === 'Enter') { 
+            performSearch(); 
+            searchInput.blur(); 
+        } 
+    });
     searchIcon.onclick = performSearch;
 
-    // --- 4. تأثيرات الـ Zoom والـ Hover ---
+    // --- 4. تأثيرات الـ Zoom والـ Hover (من الكود القياسي) ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -266,7 +282,7 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- 5. معالجة المستطيلات وتوليد النصوص ---
+    // --- 5. معالجة المستطيلات وتوليد النصوص (من الكود القياسي) ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -325,35 +341,36 @@ window.onload = function() {
     function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }
     scan();
 
-    // --- 6. نظام التحميل واللمبات ---
-    const allImages = mainSvg.querySelectorAll('image');
+    // --- 6. نظام التحميل واللمبات والمراقب (من الكود القياسي) ---
+    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
-    allImages.forEach(img => {
-        const src = img.getAttribute('data-src') || img.getAttribute('href');
-        const tempImg = new Image();
-        tempImg.onload = () => { img.setAttribute('href', src); loadedCount++; updateProgress(); };
-        tempImg.onerror = () => { loadedCount++; updateProgress(); };
-        tempImg.src = src;
+    urls.forEach(u => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            const p = (loadedCount / urls.length) * 100;
+            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
+            if(loadedCount >= urls.length) {
+                document.getElementById('bulb-4')?.classList.add('on');
+                setTimeout(() => {
+                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
+                    setTimeout(() => { 
+                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = 1;
+                        updateWoodInterface();
+                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                    }, 300);
+                }, 500);
+                mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
+            }
+        };
+        img.src = u;
     });
 
-    function updateProgress() {
-        const p = (loadedCount / allImages.length) * 100;
-        if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
-        if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
-        if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
-        if(loadedCount >= allImages.length) {
-            document.getElementById('bulb-4')?.classList.add('on');
-            setTimeout(() => {
-                if(loadingOverlay) loadingOverlay.style.opacity = 0;
-                setTimeout(() => { 
-                    if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                    mainSvg.style.opacity = 1;
-                    updateWoodInterface();
-                    scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-                }, 300);
-            }, 500);
-        }
-    }
+    // مراقب التغييرات لإعادة المسح (MutationObserver)
+    new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
 
     jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
     document.getElementById('move-toggle')?.addEventListener('click', () => { document.getElementById('js-toggle-container').classList.toggle('top'); document.getElementById('js-toggle-container').classList.toggle('bottom'); });
