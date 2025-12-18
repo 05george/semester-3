@@ -1,28 +1,8 @@
-/* هذا الجزء يوضع في بداية الملف تماماً */
+/* 1. إعدادات منع الوضع الداكن (في البداية دائماً) */
 :root {
   color-scheme: only light !important;
-}
-
-html, body {
-  background-color: black !important; /* لضمان بقاء الخلفية سوداء كما صممتها */
-  filter: none !important;            /* منع المتصفح من عكس الألوان */
-}
-
-/* لضمان عدم تأثر الـ SVG وألوان النصوص بداخله */
-#main-svg, .rect-label, .label-bg {
-  color-scheme: light !important;
-/* ===== Reset & Base ===== */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100svh;
-  overflow: hidden;
-  background: black;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* الألوان المركزية - التغيير هنا يغير الموقع بالكامل */
-:root {
+  
+  /* الألوان المركزية الخاصة بك */
   --color-q: #ff4d4d;    /* أسئلة - أحمر */
   --color-v: #4da6ff;    /* فيديو - أزرق */
   --color-i: #ffffff;    /* مواد أخرى - أبيض */
@@ -31,7 +11,22 @@ html, body {
   --color-l: #ffff4d;    /* محاضرات - أصفر */
 }
 
-/* ===== Scroll Container & SVG ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100svh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: black !important; /* إجبار الخلفية على اللون الأسود */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  filter: none !important;            /* منع عكس الألوان القسري */
+}
+
+/* ضمان عدم تأثر الـ SVG وإضافات التكبير */
+#main-svg, .rect-label, .label-bg {
+  color-scheme: light !important;
+}
+
 #scroll-container {
   width: 100vw;
   height: 100svh;
@@ -49,7 +44,6 @@ html, body {
   opacity: 0; 
 }
 
-/* ===== Rectangles & Interactions ===== */
 .m {
   fill: transparent;
   stroke: transparent;
@@ -59,7 +53,7 @@ html, body {
   cursor: pointer;
 }
 
-/* ربط ألوان الخريطة بالمتغيرات */
+/* ربط ألوان الخريطة */
 .q { stroke: var(--color-q); }
 .v { stroke: var(--color-v); }
 .i { stroke: var(--color-i); }
