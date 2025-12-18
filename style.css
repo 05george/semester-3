@@ -75,14 +75,20 @@ html, body {
 /* شعار شاشة البدء مع تأثير النبض */
 #splash-image {
   width: 400px;
-  max-width: 80vw;
+  max-width: 85vw;
   height: auto;
   display: block;
-  transform: translateY(-20%); 
-  margin: -30px auto 10px auto;
+  margin: -60px auto 10px auto;
+  transform: translateY(-10%);
   border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+  box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
   animation: logo-glow 2s infinite ease-in-out;
+}
+@media (max-width: 480px) {
+  #splash-image {
+    margin-top: -40px;
+    max-width: 75vw;
+  }
 }
 
 
