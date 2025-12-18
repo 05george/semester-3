@@ -1,4 +1,36 @@
-<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Interactive Map</title><link rel="stylesheet" href="style.css"><style>#main-svg{opacity:0;}.rect-label{opacity:1;transition:opacity .2s ease;}</style></head><body><div id="js-toggle-container" class="top"><div id="search-container"><input type="text" id="search-input" placeholder="ابحث باسم الملف (e.g., micro)"><span id="search-icon">🔍</span></div><span id="move-toggle" title="Move Toggle Position">↕️</span><label class="switch"><input type="checkbox" id="js-toggle" checked><span class="slider round"></span></label><span id="toggle-label">Interaction Enabled</span></div><div id="loading-overlay"><div id="loading-content"><img id="splash-image" src="image/o.webp" alt="Merit University Level 2 Group B Section 15" /><h1 style="color: #ffcc00; margin-bottom: 5px; margin-top: 15px;">Interactive College Map</h1><div id="loader-lights"><div class="light-bulb" id="bulb-1"></div><div class="light-bulb" id="bulb-2"></div><div class="light-bulb" id="bulb-3"></div><div class="light-bulb" id="bulb-4"></div></div><div id="legend" style="display:flex;justify-content:center;gap:15px;margin-top:20px;font-family:Arial,sans-serif;color:white;">
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Map</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="js-toggle-container" class="top">
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="ابحث باسم الملف (e.g., micro)">
+      <span id="search-icon">🔍</span>
+    </div>
+    <span id="move-toggle" title="Move Toggle Position">↕️</span>
+    <label class="switch">
+      <input type="checkbox" id="js-toggle" checked>
+      <span class="slider round"></span>
+    </label>
+    <span id="toggle-label">Interaction Enabled</span>
+  </div>
+
+  <div id="loading-overlay">
+    <div id="loading-content">
+      <img id="splash-image" src="image/o.webp" alt="Merit University Level 2 Group B Section 15" />
+      <h1>Interactive College Map</h1>
+      <div id="loader-lights">
+        <div class="light-bulb" id="bulb-1"></div>
+        <div class="light-bulb" id="bulb-2"></div>
+        <div class="light-bulb" id="bulb-3"></div>
+        <div class="light-bulb" id="bulb-4"></div>
+      </div>
+      <div id="legend">
   <div style="display:flex;align-items:center;gap:5px;">
     <div style="width:20px;height:20px;background:red;border:1px solid #fff;"></div>
     <span>أسئلة</span>
