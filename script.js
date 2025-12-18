@@ -16,7 +16,6 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- Utility Functions ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -65,7 +64,6 @@ window.onload = function() {
         return null;
     }
 
-    // --- Interaction Core ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -138,8 +136,8 @@ window.onload = function() {
         let bBg = parentGroup.querySelector('.label-bg');
 
         if (bText) {
-            bText.style.opacity = '0';
-            if(bBg) bBg.style.opacity = '0';
+            bText.style.opacity = '1';
+            if(bBg) bBg.style.opacity = '1';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
@@ -181,7 +179,6 @@ window.onload = function() {
             activeState.zoomBg = zBg;
         }
 
-        // Glow animation
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
@@ -192,7 +189,6 @@ window.onload = function() {
         }, 100);
     }
 
-    // --- Text Wrapping ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
@@ -219,7 +215,6 @@ window.onload = function() {
         });
     }
 
-    // --- Process Each Rect ---
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
 
@@ -245,6 +240,7 @@ window.onload = function() {
             txt.style.fill = 'white';
             txt.style.pointerEvents = 'none';
             txt.style.dominantBaseline = 'hanging';
+
             r.parentNode.appendChild(txt);
             wrapText(txt, w);
 
@@ -257,6 +253,7 @@ window.onload = function() {
             bg.setAttribute('class', 'label-bg');
             bg.style.fill = 'black'; 
             bg.style.pointerEvents = 'none';
+
             r.parentNode.insertBefore(bg, txt);
         }
 
@@ -291,37 +288,35 @@ window.onload = function() {
     }
     scan();
 
-    // --- Search Logic ---
+    // --- البحث ---
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
 
         allRects.forEach(rect => {
             const parent = rect.parentNode;
+            const label = parent.querySelector('.rect-label');
+            const bg = parent.querySelector('.label-bg');
+
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
             const isMatch = href.includes(query);
 
-            // إخفاء أو إظهار المستطيل الأساسي
-            rect.style.display = isMatch ? '' : 'none';
-            rect.style.opacity = isMatch ? '1' : '0';
-            rect.style.pointerEvents = isMatch ? 'auto' : 'none';
-
-            // النصوص والخلفيات الأساسية
-            const labels = Array.from(parent.querySelectorAll('.rect-label'));
-            const bgs = Array.from(parent.querySelectorAll('.label-bg'));
-
-            // إذا هذا العنصر زوم حاليًا، أضف zoomText/zoomBg
-            if(activeState.rect === rect) {
-                if(activeState.zoomText) labels.push(activeState.zoomText);
-                if(activeState.zoomBg) bgs.push(activeState.zoomBg);
+            if (!isMatch && query.length > 0) {
+                rect.style.display = 'none';
+                if (label) label.style.display = 'none';
+                if (bg) bg.style.display = 'none';
+            } else {
+                rect.style.display = '';
+                rect.style.opacity = '1';
+                rect.style.pointerEvents = 'auto';
+                rect.style.filter = ''; 
+                if (label) label.style.display = '';
+                if (bg) bg.style.display = '';
             }
-
-            labels.forEach(l => { l.style.display = isMatch ? '' : 'none'; });
-            bgs.forEach(b => { b.style.display = isMatch ? '' : 'none'; });
         });
     }, 150));
 
-    // --- Loading ---
+    // --- Loading Logic ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
