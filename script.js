@@ -67,96 +67,67 @@ window.onload = function() {
         return null;
     }
 
-// --- 2. نظام المجلدات (الخشب) وزر الرجوع المعدل لعمودين ---
-function updateWoodInterface() {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-    dynamicGroup.innerHTML = ''; 
+    // --- 2. نظام المجلدات (الخشب) وزر الرجوع ---
+    function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
 
-    const allRects = Array.from(mainSvg.querySelectorAll('rect.m:not(.list-item)'));
-    const folders = new Set();
-    const files = [];
+        const allRects = Array.from(mainSvg.querySelectorAll('rect.m:not(.list-item)'));
+        const folders = new Set();
+        const files = [];
 
-    allRects.forEach(r => {
-        const href = r.getAttribute('data-href') || "";
-        const fullText = r.getAttribute('data-full-text') || "";
-        if (!href || href === "#") return;
+        allRects.forEach(r => {
+            const href = r.getAttribute('data-href') || "";
+            const fullText = r.getAttribute('data-full-text') || "";
+            if (!href || href === "#") return;
 
-        if (currentFolder === "") {
-            if (href.includes('/')) folders.add(href.split('/')[0]);
-            else files.push({ href, text: fullText || href, originalRect: r });
-        } else {
-            if (href.startsWith(currentFolder + '/')) {
-                const relativePath = href.replace(currentFolder + '/', '');
-                if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
-                else files.push({ href, text: fullText || relativePath, originalRect: r });
+            if (currentFolder === "") {
+                if (href.includes('/')) folders.add(href.split('/')[0]);
+                else files.push({ href, text: fullText || href, originalRect: r });
+            } else {
+                if (href.startsWith(currentFolder + '/')) {
+                    const relativePath = href.replace(currentFolder + '/', '');
+                    if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
+                    else files.push({ href, text: fullText || relativePath, originalRect: r });
+                }
             }
-        }
-    });
+        });
 
-    const items = [
-        ...Array.from(folders).map(f => ({ label: f, path: f, isFolder: true })),
-        ...files.map(f => ({ label: f.text, path: f.href, isFolder: false, sourceRect: f.originalRect }))
-    ];
+        let currentY = 250; 
+        folders.forEach(f => { createWoodItem(f, f, true, currentY); currentY += 65; });
+        files.forEach(f => { createWoodItem(f.text, f.href, false, currentY, f.originalRect); currentY += 65; });
+    }
 
-    // إعدادات التوزيع على عمودين
-    const startY = 250;
-    const itemHeight = 50;
-    const gapY = 15; // المسافة الرأسية بين العناصر
-    const colWidth = 400; // عرض العمود (بما في ذلك المسافات)
-    const startX = 100; // نقطة البداية للعمود الأول
+    function createWoodItem(label, path, isFolder, y, sourceRect = null) {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.style.cursor = "pointer";
 
-    items.forEach((item, index) => {
-        const col = index % 2; // 0 للعمود الأول، 1 للعمود الثاني
-        const row = Math.floor(index / 2);
-        
-        const x = startX + (col * colWidth);
-        const y = startY + (row * (itemHeight + gapY));
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", "120"); r.setAttribute("y", y);
+        r.setAttribute("width", "350"); r.setAttribute("height", "50"); r.setAttribute("rx", "10");
+        r.setAttribute("class", sourceRect ? sourceRect.getAttribute('class') + " list-item" : "m list-item");
+        r.setAttribute("data-href", path);
+        r.style.fill = isFolder ? "#5d4037" : "rgba(0,0,0,0.6)";
+        r.style.stroke = "#fff";
 
-        createWoodItem(item.label, item.path, item.isFolder, x, y, item.sourceRect);
-    });
-}
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", "295"); t.setAttribute("y", y + 32);
+        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+        t.style.fontWeight = "bold"; t.style.fontSize = "16px";
+        t.textContent = (isFolder ? "📁 " : "📄 ") + label;
 
-function createWoodItem(label, path, isFolder, x, y, sourceRect = null) {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.style.cursor = "pointer";
-
-    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    r.setAttribute("x", x); 
-    r.setAttribute("y", y);
-    r.setAttribute("width", "350"); // نفس العرض الأصلي
-    r.setAttribute("height", "50"); // نفس الارتفاع الأصلي
-    r.setAttribute("rx", "10");
-    r.setAttribute("class", sourceRect ? sourceRect.getAttribute('class') + " list-item" : "m list-item");
-    r.setAttribute("data-href", path);
-    r.style.fill = isFolder ? "#5d4037" : "rgba(0,0,0,0.6)";
-    r.style.stroke = "#fff";
-
-    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    t.setAttribute("x", x + 175); // توسيط النص بالنسبة لعرض المستطيل (350/2)
-    t.setAttribute("y", y + 32);
-    t.setAttribute("text-anchor", "middle"); 
-    t.setAttribute("fill", "white");
-    t.style.fontWeight = "bold"; 
-    t.style.fontSize = "16px";
-    t.style.pointerEvents = "none";
-    t.textContent = (isFolder ? "📁 " : "📄 ") + label;
-
-    g.appendChild(r); 
-    g.appendChild(t);
-    
-    g.onclick = (e) => {
-        e.stopPropagation();
-        if (isFolder) {
-            currentFolder = currentFolder === "" ? path : currentFolder + "/" + path;
-            updateWoodInterface();
-        } else { 
-            window.open(path, '_blank'); 
-        }
-    };
-    dynamicGroup.appendChild(g);
-}
+        g.appendChild(r); g.appendChild(t);
+        g.onclick = (e) => {
+            e.stopPropagation();
+            if (isFolder) {
+                currentFolder = currentFolder === "" ? path : currentFolder + "/" + path;
+                updateWoodInterface();
+            } else { window.open(path, '_blank'); }
+        };
+        dynamicGroup.appendChild(g);
+    }
 
     backButtonGroup.onclick = function() {
         if (currentFolder !== "") {
