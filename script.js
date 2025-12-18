@@ -1,4 +1,48 @@
 window.onload = 
+// وظيفة التمرير لأقصى اليسار
+function scrollToResults() {
+    scrollContainer.scrollTo({
+        left: 0,
+        behavior: 'smooth'
+    });
+}
+
+// 1. البحث أثناء الكتابة (بدون تحريك الشاشة)
+searchInput.addEventListener('input', debounce(function(e) {
+    const query = e.target.value.toLowerCase().trim();
+    const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
+
+    allRects.forEach(rect => {
+        const href = (rect.getAttribute('data-href') || '').toLowerCase();
+        const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+        const isMatch = href.includes(query) || fullText.includes(query);
+
+        const parent = rect.parentNode;
+        const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
+        if(query.length > 0 && !isMatch) {
+            rect.style.display = 'none';
+            if(label) label.style.display = 'none';
+            if(bg) bg.style.display = 'none';
+        } else {
+            rect.style.display = '';
+            if(label) label.style.display = '';
+            if(bg) bg.style.display = '';
+        }
+    });
+}, 150));
+
+// 2. التحريك لليسار عند الضغط على Enter
+searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        scrollToResults();
+    }
+});
+
+// 3. التحريك لليسار عند الضغط على أيقونة البحث (العدسة)
+document.getElementById('search-icon').addEventListener('click', scrollToResults);
+
 function generateFilesList() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const allRects = mainSvg.querySelectorAll('rect.m[data-href$=".pdf"]');
