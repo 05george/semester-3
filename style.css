@@ -84,7 +84,7 @@ html, body {
 }
 
 #splash-image {
-    width: 80%;
+    width: 80vw;
     height: auto;
     border-radius: 20px;
     margin-bottom: 20px;
