@@ -259,11 +259,3 @@ input:checked + .slider:before { transform: translateX(20px); }
   font-weight: bold;
   pointer-events: none;
 }
-
-/* تحسين العرض على الموبايل */
-@media (max-width: 600px) {
-  #legend { grid-template-columns: repeat(2, 1fr); }
-  #search-container { width: 150px; }
-  #loading-content h1 { font-size: 1.3rem; }
-  #splash-image { max-width: 180px; }
-}
