@@ -1,55 +1,55 @@
-/* ===== 1. منع تلاعب المتصفح بالألوان (Dark Mode Protection) ===== */
+/* ===== 1. الإعدادات العامة ومنع تلاعب المتصفح ===== */
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* منع الوميض الأزرق في الموبايل */
 }
 
 :root {
-  color-scheme: only light;
-  --color-q: #ff4d4d !important;
-  --color-v: #4da6ff !important;
-  --color-i: #ffffff !important;
-  --color-a: #b366ff !important;
-  --color-s: #4dff88 !important;
-  --color-l: #ffff4d !important;
+    color-scheme: only light; /* منع الـ Dark Mode الإجباري في بعض المتصفحات */
+    --color-q: #ff4d4d; /* أحمر - أسئلة */
+    --color-v: #4da6ff; /* أزرق - فيديو */
+    --color-i: #ffffff; /* أبيض - مواد أخرى */
+    --color-a: #b366ff; /* بنفسجي - إجابات */
+    --color-s: #4dff88; /* أخضر - عملي */
+    --color-l: #ffff4d; /* أصفر - محاضرات */
 }
 
-/* ===== 2. الإعدادات الأساسية للهيكل ===== */
 html, body {
-  margin: 0;
-  padding: 0;
-  height: 100svh;
-  overflow: hidden;
-  background: black;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100svh;
+    overflow: hidden;
+    background: black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ===== 2. حاوية الخريطة (SVG Container) ===== */
 #scroll-container {
-  width: 100vw;
-  height: 100svh;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #444 black;
+    width: 100vw;
+    height: 100svh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #444 black;
 }
 
 #main-svg {
-  height: 100%;
-  width: auto;
-  display: block;
-  transition: opacity .3s ease-out;
-  opacity: 0; 
-  filter: none !important;
-  forced-color-adjust: none;
+    height: 100%;
+    width: auto;
+    display: block;
+    transition: opacity .3s ease-out;
+    opacity: 0; 
+    filter: none !important;
 }
 
-/* ===== 3. المستطيلات والتفاعلات ===== */
+/* ===== 3. الأشكال التفاعلية (Rectangles) ===== */
 .m {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 2px;
-  transform-origin: center center;
-  transition: filter .3s ease, stroke-width .3s ease, transform .3s ease;
-  cursor: pointer;
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 2px;
+    transform-origin: center center;
+    transition: filter .3s ease, stroke-width .3s ease, transform .3s ease;
+    cursor: pointer;
 }
 
 .q { stroke: var(--color-q); }
@@ -59,170 +59,169 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
-/* ===== 4. شاشة التحميل (Loading & Bulbs) ===== */
+/* ===== 4. شاشة التحميل والدليل (Loading & Legend) ===== */
 #loading-overlay {
-  overflow: hidden;
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity .5s ease-out;
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity .5s ease-out;
+    color: white;
+}
+
+#loading-content {
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
 }
 
 #splash-image {
-  width: 80svw;
-  max-width: 80%;
-  height: auto;
-  display: block;
-  margin: 0 auto 20px auto;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
-  animation: logo-glow 2s infinite ease-in-out;
+    width: 150px;
+    height: auto;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    animation: logo-glow 2s infinite ease-in-out;
 }
 
+#loading-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+/* اللمبات */
 #loader-lights {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
 .light-bulb {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: #222;
-  border: 1px solid #444;
-  transition: all .4s ease;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #222;
+    border: 1px solid #444;
+    transition: all .4s ease;
 }
 
 .light-bulb.on {
-  background-color: #ffcc00;
-  box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff9900;
-  border-color: #fff;
+    background-color: #ffcc00;
+    box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff9900;
 }
 
-/* ===== 5. صندوق التحكم (UI Container) - التعديل الجوهري هنا ===== */
+/* تنسيق دليل الألوان الجديد */
+#legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #ddd;
+}
+
+.legend-item::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* ربط ألوان الدليل بالمتغيرات */
+.legend-item.red::before    { background: var(--color-q); box-shadow: 0 0 5px var(--color-q); }
+.legend-item.yellow::before { background: var(--color-l); box-shadow: 0 0 5px var(--color-l); }
+.legend-item.white::before  { background: var(--color-i); box-shadow: 0 0 5px var(--color-i); }
+.legend-item.purple::before { background: var(--color-a); box-shadow: 0 0 5px var(--color-a); }
+.legend-item.green::before  { background: var(--color-s); box-shadow: 0 0 5px var(--color-s); }
+.legend-item.blue::before   { background: var(--color-v); box-shadow: 0 0 5px var(--color-v); }
+
+/* ===== 5. صندوق التحكم (UI Container) ===== */
 #js-toggle-container {
-  position: fixed;
-  right: 20px;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all .3s ease;
-  
-  /* منع التمدد العشوائي في متصفح سامسونج */
-  width: 250px; 
-  max-width: 85vw;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  flex-shrink: 0;
+    position: fixed;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: white;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 250px;
+    max-width: 85vw;
 }
 
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
 
-/* تنسيق الصف السفلي (السويتش والزر) */
 .controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 10px;
-  margin-top: 5px;
-}
-
-#search-container {
-  position: relative;
-  width: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 #search-input {
-  padding: 8px 10px 8px 35px;
-  border: 1px solid #444;
-  border-radius: 8px;
-  width: 100%;
-  background: #1a1a1a;
-  color: white;
-  font-size: 14px;
-  outline: none;
-  /* منع المتصفح من تغيير الستايل */
-  appearance: none;
-  -webkit-appearance: none;
+    width: 100%;
+    padding: 8px 10px 8px 35px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #111;
+    color: white;
+    outline: none;
 }
 
-#search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  opacity: 0.6;
-}
-
-/* ===== 6. أزرار التبديل (Switch) ===== */
+/* ===== 6. السويتش (Toggle Switch) ===== */
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-  flex-shrink: 0;
+    position: relative;
+    width: 40px;
+    height: 20px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #444;
-  transition: .4s;
-  border-radius: 20px;
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #444;
+    transition: .4s;
+    border-radius: 20px;
 }
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
+    position: absolute;
+    content: "";
+    height: 14px; width: 14px;
+    left: 3px; bottom: 3px;
+    background: white;
+    transition: .4s;
+    border-radius: 50%;
 }
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* ===== 7. تسميات الـ SVG (Labels & BG) ===== */
-.label-bg {
-  rx: 3;
-  ry: 3;
-  opacity: 0.9;
-  forced-color-adjust: none;
-}
-.rect-label {
-  font-weight: bold;
-  pointer-events: none;
-}
-
-/* ===== 8. الأنيميشن وتحسينات الموبايل ===== */
+/* ===== 7. الأنيميشن والتحسينات ===== */
 @keyframes logo-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
-  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
 }
 
 @media (max-width: 600px) {
-  #js-toggle-container { 
-    right: 10px; 
-    width: 220px;
-    padding: 10px;
-  }
+    #js-toggle-container { right: 10px; width: 220px; }
+    #legend { grid-template-columns: 1fr; gap: 8px; }
 }
