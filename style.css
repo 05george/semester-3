@@ -1,3 +1,16 @@
+/* هذا الجزء يوضع في بداية الملف تماماً */
+:root {
+  color-scheme: only light !important;
+}
+
+html, body {
+  background-color: black !important; /* لضمان بقاء الخلفية سوداء كما صممتها */
+  filter: none !important;            /* منع المتصفح من عكس الألوان */
+}
+
+/* لضمان عدم تأثر الـ SVG وألوان النصوص بداخله */
+#main-svg, .rect-label, .label-bg {
+  color-scheme: light !important;
 /* ===== Reset & Base ===== */
 html, body {
   margin: 0;
