@@ -1,3 +1,9 @@
+/* تنسيق العناصر في قائمة الخشب */
+.list-item {
+    stroke-width: 1px !important;
+    rx: 5;
+    ry: 5;
+}
 /* 1. إعدادات توحيد الرؤية ومنع المتصفحات من الاجتهاد في تكبير الخطوط */
 *, *::before, *::after {
   box-sizing: border-box !important;
