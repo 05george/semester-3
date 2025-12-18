@@ -1,3 +1,4 @@
+Script.js
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
     mainSvg.style.colorScheme = 'only light'; 
@@ -6,12 +7,10 @@ window.onload = function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-    // إضافة العناصر الجديدة (تأكد من وجود هذه الـ IDs في الـ HTML الخاص بك)
-    const searchIcon = document.getElementById('search-icon');
     const backButtonGroup = document.getElementById('back-button-group');
 
     let interactionEnabled = jsToggle.checked;
-    let currentFolder = ""; 
+    let currentFolder = ""; // لتتبع المسار الحالي للمجلدات
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
@@ -21,21 +20,20 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- 1. وظائف المساعدة (نفس الكود القديم بالضبط) ---
+    // --- 1. وظائف المساعدة والتحجيم ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
-            const context = this; const args = arguments;
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(context, args), delay);
+            timeoutId = setTimeout(() => func.apply(this, arguments), delay);
         }
     }
 
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
-        const imgW = parseFloat(images[0].getAttribute('width')) || 1024;
-        const imgH = parseFloat(images[0].getAttribute('height')) || 2454;
+        const imgW = 1024;
+        const imgH = 2454;
         mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
     }
     updateDynamicSizes();
@@ -59,7 +57,7 @@ window.onload = function() {
             if (current.tagName === 'g') {
                 const imgs = [...current.children].filter(c => c.tagName === 'image');
                 if (imgs.length) return {
-                    src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
+                    src: imgs[0].getAttribute('href') || imgs[0].getAttribute('data-src'),
                     width: parseFloat(imgs[0].getAttribute('width')),
                     height: parseFloat(imgs[0].getAttribute('height')),
                     group: current
@@ -70,7 +68,7 @@ window.onload = function() {
         return null;
     }
 
-    // --- 2. نظام المجلدات (الخشب) - عمودين مع التمرير ---
+    // --- 2. نظام المجلدات (الخشب) وزر الرجوع ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -88,105 +86,62 @@ window.onload = function() {
             if (currentFolder === "") {
                 if (href.includes('/')) folders.add(href.split('/')[0]);
                 else files.push({ href, text: fullText || href, originalRect: r });
-            } else if (href.startsWith(currentFolder + '/')) {
-                const relativePath = href.replace(currentFolder + '/', '');
-                if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
-                else files.push({ href, text: fullText || relativePath, originalRect: r });
+            } else {
+                if (href.startsWith(currentFolder + '/')) {
+                    const relativePath = href.replace(currentFolder + '/', '');
+                    if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
+                    else files.push({ href, text: fullText || relativePath, originalRect: r });
+                }
             }
         });
 
-        const items = [
-            ...Array.from(folders).map(f => ({ label: f, path: f, isFolder: true })),
-            ...files.map(f => ({ label: f.text, path: f.href, isFolder: false, sourceRect: f.originalRect }))
-        ];
-
-        const startY = 250, itemHeight = 50, gapY = 15, colWidth = 380, startX = 130; 
-
-        items.forEach((item, index) => {
-            const col = index % 2;
-            const row = Math.floor(index / 2);
-            createWoodItem(item.label, item.path, item.isFolder, startX + (col * colWidth), startY + (row * (itemHeight + gapY)), item.sourceRect);
-        });
+        let currentY = 250; 
+        folders.forEach(f => { createWoodItem(f, f, true, currentY); currentY += 65; });
+        files.forEach(f => { createWoodItem(f.text, f.href, false, currentY, f.originalRect); currentY += 65; });
     }
 
-    function createWoodItem(label, path, isFolder, x, y, sourceRect = null) {
+    function createWoodItem(label, path, isFolder, y, sourceRect = null) {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.style.cursor = "pointer";
 
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", x); r.setAttribute("y", y);
+        r.setAttribute("x", "120"); r.setAttribute("y", y);
         r.setAttribute("width", "350"); r.setAttribute("height", "50"); r.setAttribute("rx", "10");
-        r.setAttribute("class", (sourceRect ? sourceRect.getAttribute('class') : "m") + " list-item");
+        r.setAttribute("class", sourceRect ? sourceRect.getAttribute('class') + " list-item" : "m list-item");
         r.setAttribute("data-href", path);
         r.style.fill = isFolder ? "#5d4037" : "rgba(0,0,0,0.6)";
         r.style.stroke = "#fff";
 
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); t.setAttribute("y", y + 32);
+        t.setAttribute("x", "295"); t.setAttribute("y", y + 32);
         t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; t.style.fontSize = "14px"; t.style.pointerEvents = "none";
+        t.style.fontWeight = "bold"; t.style.fontSize = "16px";
         t.textContent = (isFolder ? "📁 " : "📄 ") + label;
 
         g.appendChild(r); g.appendChild(t);
         g.onclick = (e) => {
             e.stopPropagation();
             if (isFolder) {
-                currentFolder = (currentFolder === "") ? path : currentFolder + "/" + path;
+                currentFolder = currentFolder === "" ? path : currentFolder + "/" + path;
                 updateWoodInterface();
             } else { window.open(path, '_blank'); }
         };
         dynamicGroup.appendChild(g);
     }
 
-    if (backButtonGroup) {
-        backButtonGroup.onclick = function() {
-            if (currentFolder !== "") {
-                let parts = currentFolder.split('/');
-                parts.pop();
-                currentFolder = parts.join('/');
-                updateWoodInterface();
-            } else {
-                scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
-            }
-        };
-    }
-
-    // --- 3. البحث المطور (العدسة + Enter + Go + تمرير يسار) ---
-    function performSearch() {
-        const query = searchInput.value.toLowerCase().trim();
-        const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-
-        allRects.forEach(rect => {
-            const href = (rect.getAttribute('data-href') || '').toLowerCase();
-            const parent = rect.parentNode;
-            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            const isMatch = href.includes(query);
-
-            if(query.length > 0 && !isMatch) {
-                rect.style.display = 'none'; rect.style.opacity = '0';
-                if(label) label.style.display = 'none';
-                if(bg) bg.style.display = 'none';
-            } else {
-                rect.style.display = ''; rect.style.opacity = '1';
-                if(label) label.style.display = '';
-                if(bg) bg.style.display = '';
-            }
-        });
-
-        if(query.length > 0) {
-            scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    backButtonGroup.onclick = function() {
+        if (currentFolder !== "") {
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            updateWoodInterface();
+        } else {
+            scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
         }
-    }
+    };
 
-    searchInput.addEventListener('input', debounce(performSearch, 150));
-    searchInput.addEventListener('keypress', (e) => { 
-        if (e.key === 'Enter') { performSearch(); searchInput.blur(); } 
-    });
-    if (searchIcon) searchIcon.onclick = performSearch;
-
-    // --- 4. تأثيرات الـ Zoom والـ Hover (الكود القديم بالكامل) ---
+    // --- 3. تأثيرات الـ Zoom والـ Hover (الكود القياسي) ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -204,7 +159,7 @@ window.onload = function() {
     }
 
     function startHover() {  
-        if (!interactionEnabled || this.classList.contains('list-item')) return;  
+        if (!interactionEnabled) return;  
         const rect = this;  
         if (activeState.rect === rect) return;  
         cleanupHover();  
@@ -280,7 +235,7 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- 5. معالجة المستطيلات (wrapText و processRect) ---
+    // --- 4. معالجة المستطيلات وتوليد النصوص ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -302,7 +257,7 @@ window.onload = function() {
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
         const href = r.getAttribute('data-href') || '';
-        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('.')[0] : '');
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
 
@@ -336,42 +291,57 @@ window.onload = function() {
         r.setAttribute('data-processed', 'true');
     }
 
-    function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
+    function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }
     scan();
 
-    // --- 6. نظام التحميل واللمبات والمراقب ---
-    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+    // --- 5. نظام التحميل واللمبات المطور ---
+    const allImages = mainSvg.querySelectorAll('image');
     let loadedCount = 0;
-    urls.forEach(u => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
+    allImages.forEach(img => {
+        const src = img.getAttribute('data-src') || img.getAttribute('href');
+        const tempImg = new Image();
+        tempImg.onload = () => {
+            img.setAttribute('href', src); // إظهار الصورة فور تحميلها
             loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
-            if(loadedCount >= urls.length) {
-                document.getElementById('bulb-4')?.classList.add('on');
-                setTimeout(() => {
-                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
-                    setTimeout(() => { 
-                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                        mainSvg.style.opacity = 1;
-                        updateWoodInterface();
-                        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-                    }, 300);
-                }, 500);
-                mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
-            }
+            updateProgress();
         };
-        img.src = u;
+        tempImg.onerror = () => { loadedCount++; updateProgress(); };
+        tempImg.src = src;
     });
 
-    new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
+    function updateProgress() {
+        const p = (loadedCount / allImages.length) * 100;
+        if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
+        if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
+        if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
+        if(loadedCount >= allImages.length) {
+            document.getElementById('bulb-4')?.classList.add('on');
+            setTimeout(() => {
+                if(loadingOverlay) loadingOverlay.style.opacity = 0;
+                setTimeout(() => { 
+                    if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                    mainSvg.style.opacity = 1;
+                    updateWoodInterface();
+                    scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+                }, 300);
+            }, 500);
+        }
+    }
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        const q = e.target.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m').forEach(rect => {
+            const h = (rect.getAttribute('data-href') || '').toLowerCase();
+            const parent = rect.parentNode;
+            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            const match = h.includes(q);
+            rect.style.display = (q && !match) ? 'none' : '';
+            if(label) label.style.display = (q && !match) ? 'none' : '';
+            if(bg) bg.style.display = (q && !match) ? 'none' : '';
+        });
+    }, 150));
 
     jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
-    document.getElementById('move-toggle')?.addEventListener('click', () => {
-        const container = document.getElementById('js-toggle-container');
-        container.classList.toggle('top'); container.classList.toggle('bottom');
-    });
+    document.getElementById('move-toggle')?.addEventListener('click', () => { document.getElementById('js-toggle-container').classList.toggle('top'); document.getElementById('js-toggle-container').classList.toggle('bottom'); });
 };
