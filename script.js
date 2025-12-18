@@ -37,7 +37,7 @@ window.onload = function() {
         if (!dynamicGroup) return;
         dynamicGroup.innerHTML = ''; 
 
-        backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
+        backBtnText.textContent = currentFolder === "" ? "الرجوع";
 
         const allRects = Array.from(mainSvg.querySelectorAll('rect.m:not(.list-item)'));
         const folders = new Set();
