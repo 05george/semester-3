@@ -74,7 +74,7 @@ html, body {
 
 /* شعار شاشة البدء مع تأثير النبض */
 #splash-image {
-  max-width: 50vw;
+  width: 50vw;
   height: auto;
   display: block;
   margin: 0 auto 20px auto;
