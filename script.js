@@ -131,13 +131,13 @@ window.onload = function() {
             activeState.zoomPart = zPart;
         }
 
-        const parentGroup = rect.parentNode;
-        let bText = parentGroup.querySelector('.rect-label');
-        let bBg = parentGroup.querySelector('.label-bg');
+        // ربط النص بالخانة المحددة
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
 
         if (bText) {
-            bText.style.opacity = '1';
-            if(bBg) bBg.style.opacity = '1';
+            bText.style.opacity = '0';
+            if(bBg) bBg.style.opacity = '0';
             activeState.baseText = bText;
             activeState.baseBg = bBg;
 
@@ -168,7 +168,7 @@ window.onload = function() {
             zBg.setAttribute('width', bgW);
             zBg.setAttribute('height', bgH);
             zBg.setAttribute('rx', '8');
-            zBg.style.fill = 'black'; 
+            zBg.style.fill = 'black';
             zBg.style.stroke = 'white';
             zBg.style.strokeWidth = '1.5px';
             zBg.style.pointerEvents = 'none';
@@ -236,6 +236,7 @@ window.onload = function() {
             txt.setAttribute('text-anchor', 'middle');
             txt.setAttribute('class', 'rect-label');
             txt.setAttribute('data-original-text', name);
+            txt.setAttribute('data-original-for', href); // ربط النص بالrect
             txt.style.fontSize = fs + 'px';
             txt.style.fill = 'white';
             txt.style.pointerEvents = 'none';
@@ -251,7 +252,8 @@ window.onload = function() {
             bg.setAttribute('width', w);
             bg.setAttribute('height', bbox.height + 8);
             bg.setAttribute('class', 'label-bg');
-            bg.style.fill = 'black'; 
+            bg.setAttribute('data-original-for', href); // ربط الخلفية بالrect
+            bg.style.fill = 'black';
             bg.style.pointerEvents = 'none';
 
             r.parentNode.insertBefore(bg, txt);
@@ -288,35 +290,35 @@ window.onload = function() {
     }
     scan();
 
-    // --- البحث ---
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
 
         allRects.forEach(rect => {
-            const parent = rect.parentNode;
-            const label = parent.querySelector('.rect-label');
-            const bg = parent.querySelector('.label-bg');
-
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const parent = rect.parentNode;
+            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
             const isMatch = href.includes(query);
 
-            if (!isMatch && query.length > 0) {
+            if(query.length > 0 && !isMatch) {
                 rect.style.display = 'none';
-                if (label) label.style.display = 'none';
-                if (bg) bg.style.display = 'none';
+                rect.style.opacity = '0';
+                rect.style.pointerEvents = 'none';
+                if(label) { label.style.display = 'none'; label.style.opacity = '0'; }
+                if(bg) { bg.style.display = 'none'; bg.style.opacity = '0'; }
             } else {
                 rect.style.display = '';
                 rect.style.opacity = '1';
                 rect.style.pointerEvents = 'auto';
-                rect.style.filter = ''; 
-                if (label) label.style.display = '';
-                if (bg) bg.style.display = '';
+                if(label) { label.style.display = ''; label.style.opacity = '1'; }
+                if(bg) { bg.style.display = ''; bg.style.opacity = '1'; }
             }
         });
     }, 150));
 
-    // --- Loading Logic ---
+    // Loading logic
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
