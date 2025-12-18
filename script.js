@@ -6,6 +6,7 @@ window.onload = function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
+    // إضافة العناصر الجديدة (تأكد من وجود هذه الـ IDs في الـ HTML الخاص بك)
     const searchIcon = document.getElementById('search-icon');
     const backButtonGroup = document.getElementById('back-button-group');
 
@@ -20,7 +21,7 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- 1. وظائف المساعدة والتحجيم (من الكود القياسي) ---
+    // --- 1. وظائف المساعدة (نفس الكود القديم بالضبط) ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -69,7 +70,7 @@ window.onload = function() {
         return null;
     }
 
-    // --- 2. نظام المجلدات (الخشب) المطور - عمودين ---
+    // --- 2. نظام المجلدات (الخشب) - عمودين مع التمرير ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -138,22 +139,23 @@ window.onload = function() {
         dynamicGroup.appendChild(g);
     }
 
-    backButtonGroup.onclick = function() {
-        if (currentFolder !== "") {
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            updateWoodInterface();
-        } else {
-            // العودة لأقصى اليمين (الجداول)
-            scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
-        }
-    };
+    if (backButtonGroup) {
+        backButtonGroup.onclick = function() {
+            if (currentFolder !== "") {
+                let parts = currentFolder.split('/');
+                parts.pop();
+                currentFolder = parts.join('/');
+                updateWoodInterface();
+            } else {
+                scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
+            }
+        };
+    }
 
     // --- 3. البحث المطور (العدسة + Enter + Go + تمرير يسار) ---
     function performSearch() {
         const query = searchInput.value.toLowerCase().trim();
-        const allRects = mainSvg.querySelectorAll('rect.m');
+        const allRects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
 
         allRects.forEach(rect => {
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
@@ -163,17 +165,16 @@ window.onload = function() {
             const isMatch = href.includes(query);
 
             if(query.length > 0 && !isMatch) {
-                rect.style.display = 'none';
+                rect.style.display = 'none'; rect.style.opacity = '0';
                 if(label) label.style.display = 'none';
                 if(bg) bg.style.display = 'none';
             } else {
-                rect.style.display = '';
+                rect.style.display = ''; rect.style.opacity = '1';
                 if(label) label.style.display = '';
                 if(bg) bg.style.display = '';
             }
         });
 
-        // ميزة إضافية: عند البحث، التمرير لأقصى اليسار لرؤية النتائج في قائمة الخشب
         if(query.length > 0) {
             scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
         }
@@ -181,14 +182,11 @@ window.onload = function() {
 
     searchInput.addEventListener('input', debounce(performSearch, 150));
     searchInput.addEventListener('keypress', (e) => { 
-        if (e.key === 'Enter') { 
-            performSearch(); 
-            searchInput.blur(); 
-        } 
+        if (e.key === 'Enter') { performSearch(); searchInput.blur(); } 
     });
-    searchIcon.onclick = performSearch;
+    if (searchIcon) searchIcon.onclick = performSearch;
 
-    // --- 4. تأثيرات الـ Zoom والـ Hover (من الكود القياسي) ---
+    // --- 4. تأثيرات الـ Zoom والـ Hover (الكود القديم بالكامل) ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -282,7 +280,7 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- 5. معالجة المستطيلات وتوليد النصوص (من الكود القياسي) ---
+    // --- 5. معالجة المستطيلات (wrapText و processRect) ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -304,7 +302,7 @@ window.onload = function() {
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
         const href = r.getAttribute('data-href') || '';
-        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('.')[0] : '');
+        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
 
@@ -338,10 +336,10 @@ window.onload = function() {
         r.setAttribute('data-processed', 'true');
     }
 
-    function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }
+    function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
     scan();
 
-    // --- 6. نظام التحميل واللمبات والمراقب (من الكود القياسي) ---
+    // --- 6. نظام التحميل واللمبات والمراقب ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     urls.forEach(u => {
@@ -369,9 +367,11 @@ window.onload = function() {
         img.src = u;
     });
 
-    // مراقب التغييرات لإعادة المسح (MutationObserver)
     new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
 
     jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
-    document.getElementById('move-toggle')?.addEventListener('click', () => { document.getElementById('js-toggle-container').classList.toggle('top'); document.getElementById('js-toggle-container').classList.toggle('bottom'); });
+    document.getElementById('move-toggle')?.addEventListener('click', () => {
+        const container = document.getElementById('js-toggle-container');
+        container.classList.toggle('top'); container.classList.toggle('bottom');
+    });
 };
