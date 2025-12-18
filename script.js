@@ -6,10 +6,11 @@ window.onload = function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
+    const searchIcon = document.getElementById('search-icon');
     const backButtonGroup = document.getElementById('back-button-group');
 
     let interactionEnabled = jsToggle.checked;
-    let currentFolder = ""; // لتتبع المسار الحالي للمجلدات
+    let currentFolder = ""; 
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
@@ -67,7 +68,7 @@ window.onload = function() {
         return null;
     }
 
-    // --- 2. نظام المجلدات (الخشب) وزر الرجوع ---
+    // --- 2. نظام المجلدات (الخشب) - عمودين ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -85,27 +86,38 @@ window.onload = function() {
             if (currentFolder === "") {
                 if (href.includes('/')) folders.add(href.split('/')[0]);
                 else files.push({ href, text: fullText || href, originalRect: r });
-            } else {
-                if (href.startsWith(currentFolder + '/')) {
-                    const relativePath = href.replace(currentFolder + '/', '');
-                    if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
-                    else files.push({ href, text: fullText || relativePath, originalRect: r });
-                }
+            } else if (href.startsWith(currentFolder + '/')) {
+                const relativePath = href.replace(currentFolder + '/', '');
+                if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
+                else files.push({ href, text: fullText || relativePath, originalRect: r });
             }
         });
 
-        let currentY = 250; 
-        folders.forEach(f => { createWoodItem(f, f, true, currentY); currentY += 65; });
-        files.forEach(f => { createWoodItem(f.text, f.href, false, currentY, f.originalRect); currentY += 65; });
+        const items = [
+            ...Array.from(folders).map(f => ({ label: f, path: f, isFolder: true })),
+            ...files.map(f => ({ label: f.text, path: f.href, isFolder: false, sourceRect: f.originalRect }))
+        ];
+
+        // إعدادات العمودين
+        const startY = 250, itemHeight = 50, gapY = 15;
+        const colWidth = 380, startX = 130; 
+
+        items.forEach((item, index) => {
+            const col = index % 2;
+            const row = Math.floor(index / 2);
+            const x = startX + (col * colWidth);
+            const y = startY + (row * (itemHeight + gapY));
+            createWoodItem(item.label, item.path, item.isFolder, x, y, item.sourceRect);
+        });
     }
 
-    function createWoodItem(label, path, isFolder, y, sourceRect = null) {
+    function createWoodItem(label, path, isFolder, x, y, sourceRect = null) {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.style.cursor = "pointer";
 
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", "120"); r.setAttribute("y", y);
+        r.setAttribute("x", x); r.setAttribute("y", y);
         r.setAttribute("width", "350"); r.setAttribute("height", "50"); r.setAttribute("rx", "10");
         r.setAttribute("class", sourceRect ? sourceRect.getAttribute('class') + " list-item" : "m list-item");
         r.setAttribute("data-href", path);
@@ -113,9 +125,9 @@ window.onload = function() {
         r.style.stroke = "#fff";
 
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", "295"); t.setAttribute("y", y + 32);
+        t.setAttribute("x", x + 175); t.setAttribute("y", y + 32);
         t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; t.style.fontSize = "16px";
+        t.style.fontWeight = "bold"; t.style.fontSize = "14px"; t.style.pointerEvents = "none";
         t.textContent = (isFolder ? "📁 " : "📄 ") + label;
 
         g.appendChild(r); g.appendChild(t);
@@ -129,6 +141,7 @@ window.onload = function() {
         dynamicGroup.appendChild(g);
     }
 
+    // زر الرجوع الذكي
     backButtonGroup.onclick = function() {
         if (currentFolder !== "") {
             let parts = currentFolder.split('/');
@@ -140,7 +153,26 @@ window.onload = function() {
         }
     };
 
-    // --- 3. تأثيرات الـ Zoom والـ Hover (الكود القياسي) ---
+    // --- 3. البحث (دعم العدسة و Enter) ---
+    function performSearch() {
+        const q = searchInput.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m').forEach(rect => {
+            const h = (rect.getAttribute('data-href') || '').toLowerCase();
+            const parent = rect.parentNode;
+            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            const match = h.includes(q);
+            rect.style.display = (q && !match) ? 'none' : '';
+            if(label) label.style.display = (q && !match) ? 'none' : '';
+            if(bg) bg.style.display = (q && !match) ? 'none' : '';
+        });
+    }
+
+    searchInput.addEventListener('input', debounce(performSearch, 150));
+    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { performSearch(); searchInput.blur(); } });
+    searchIcon.onclick = performSearch;
+
+    // --- 4. تأثيرات الـ Zoom والـ Hover ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -158,7 +190,7 @@ window.onload = function() {
     }
 
     function startHover() {  
-        if (!interactionEnabled) return;  
+        if (!interactionEnabled || this.classList.contains('list-item')) return;  
         const rect = this;  
         if (activeState.rect === rect) return;  
         cleanupHover();  
@@ -234,7 +266,7 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- 4. معالجة المستطيلات وتوليد النصوص ---
+    // --- 5. معالجة المستطيلات وتوليد النصوص ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -293,17 +325,13 @@ window.onload = function() {
     function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }
     scan();
 
-    // --- 5. نظام التحميل واللمبات المطور ---
+    // --- 6. نظام التحميل واللمبات ---
     const allImages = mainSvg.querySelectorAll('image');
     let loadedCount = 0;
     allImages.forEach(img => {
         const src = img.getAttribute('data-src') || img.getAttribute('href');
         const tempImg = new Image();
-        tempImg.onload = () => {
-            img.setAttribute('href', src); // إظهار الصورة فور تحميلها
-            loadedCount++;
-            updateProgress();
-        };
+        tempImg.onload = () => { img.setAttribute('href', src); loadedCount++; updateProgress(); };
         tempImg.onerror = () => { loadedCount++; updateProgress(); };
         tempImg.src = src;
     });
@@ -326,20 +354,6 @@ window.onload = function() {
             }, 500);
         }
     }
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const q = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const h = (rect.getAttribute('data-href') || '').toLowerCase();
-            const parent = rect.parentNode;
-            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            const match = h.includes(q);
-            rect.style.display = (q && !match) ? 'none' : '';
-            if(label) label.style.display = (q && !match) ? 'none' : '';
-            if(bg) bg.style.display = (q && !match) ? 'none' : '';
-        });
-    }, 150));
 
     jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
     document.getElementById('move-toggle')?.addEventListener('click', () => { document.getElementById('js-toggle-container').classList.toggle('top'); document.getElementById('js-toggle-container').classList.toggle('bottom'); });
