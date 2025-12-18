@@ -1,5 +1,6 @@
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
+    mainSvg.style.colorScheme = 'only light'; 
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
