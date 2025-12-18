@@ -1,8 +1,21 @@
-/* ===== Reset & Base ===== */
+/* ===== 1. منع تلاعب المتصفح بالألوان (Dark Mode Protection) ===== */
 * {
-  box-sizing: border-box; /* يضمن عدم خروج العناصر عن حاوياتها بسبب الـ padding */
+  box-sizing: border-box; /* حل مشكلة خروج شريط البحث عن الحاوية */
 }
 
+:root {
+  color-scheme: only light; /* إجبار المتصفح على احترام التصميم الأصلي */
+  
+  /* الألوان المركزية محمية لمنع التغيير التلقائي */
+  --color-q: #ff4d4d !important;    /* أحمر */
+  --color-v: #4da6ff !important;    /* أزرق */
+  --color-i: #ffffff !important;    /* أبيض */
+  --color-a: #b366ff !important;    /* بنفسجي */
+  --color-s: #4dff88 !important;    /* أخضر */
+  --color-l: #ffff4d !important;    /* أصفر */
+}
+
+/* ===== 2. الإعدادات الأساسية للهيكل ===== */
 html, body {
   margin: 0;
   padding: 0;
@@ -12,17 +25,6 @@ html, body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* الألوان المركزية */
-:root {
-  --color-q: #ff4d4d;    /* أسئلة - أحمر */
-  --color-v: #4da6ff;    /* فيديو - أزرق */
-  --color-i: #ffffff;    /* مواد أخرى - أبيض */
-  --color-a: #b366ff;    /* إجابات - بنفسجي */
-  --color-s: #4dff88;    /* عملي - أخضر */
-  --color-l: #ffff4d;    /* محاضرات - أصفر */
-}
-
-/* ===== Scroll Container & SVG ===== */
 #scroll-container {
   width: 100vw;
   height: 100svh;
@@ -38,18 +40,21 @@ html, body {
   display: block;
   transition: opacity .3s ease-out;
   opacity: 0; 
+  filter: none !important; /* حماية إضافية ضد فلاتر الوضع الداكن */
+  forced-color-adjust: none;
 }
 
-/* ===== Rectangles & Interactions ===== */
+/* ===== 3. المستطيلات والتفاعلات ===== */
 .m {
   fill: transparent;
   stroke: transparent;
   stroke-width: 2px;
   transform-origin: center center;
-  transition: filter .3s ease, stroke-width .3s ease;
+  transition: filter .3s ease, stroke-width .3s ease, transform .3s ease;
   cursor: pointer;
 }
 
+/* ربط ألوان الخريطة بالمتغيرات */
 .q { stroke: var(--color-q); }
 .v { stroke: var(--color-v); }
 .i { stroke: var(--color-i); }
@@ -57,7 +62,7 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
-/* ===== Loading Overlay ===== */
+/* ===== 4. شاشة التحميل (Loading & Bulbs) ===== */
 #loading-overlay {
   overflow: hidden;
   position: fixed;
@@ -68,12 +73,6 @@ html, body {
   justify-content: center;
   z-index: 9999;
   transition: opacity .5s ease-out;
-}
-
-#loading-content {
-  text-align: center;
-  width: 90%;
-  max-width: 600px;
 }
 
 #splash-image {
@@ -87,15 +86,6 @@ html, body {
   animation: logo-glow 2s infinite ease-in-out;
 }
 
-#loading-content h1 {
-  color: #ffcc00;
-  margin: 10px 0;
-  font-size: 1.8rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-/* ===== Loader Lights (Bulbs) ===== */
 #loader-lights {
   display: flex;
   justify-content: center;
@@ -118,44 +108,7 @@ html, body {
   border-color: #fff;
 }
 
-/* ===== Legend ===== */
-#legend {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 30px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #eee;
-  font-size: 13px;
-}
-
-.legend-item::before {
-  content: "";
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  background-color: var(--item-color);
-  box-shadow: 0 0 10px var(--item-color);
-  flex-shrink: 0;
-}
-
-.legend-item.red    { --item-color: var(--color-q); }
-.legend-item.blue   { --item-color: var(--color-v); }
-.legend-item.white  { --item-color: var(--color-i); }
-.legend-item.purple { --item-color: var(--color-a); }
-.legend-item.green  { --item-color: var(--color-s); }
-.legend-item.yellow { --item-color: var(--color-l); }
-
-/* ===== Toggle & Search UI (التعديل الجديد هنا) ===== */
+/* ===== 5. صندوق التحكم (UI Container) ===== */
 #js-toggle-container {
   position: fixed;
   right: 20px;
@@ -166,7 +119,7 @@ html, body {
   gap: 12px;
   color: white;
   background-color: rgba(0, 0, 0, 0.85); /* تعتيم الخلفية لراحة العين */
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   padding: 15px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -181,22 +134,18 @@ html, body {
 
 #search-container {
   position: relative;
-  width: 100%; /* تملأ عرض الحاوية السوداء */
+  width: 100%; 
 }
 
 #search-input {
-  padding: 10px 10px 10px 35px; /* مسافة للأيقونة من اليسار */
+  padding: 10px 10px 10px 35px;
   border: 1px solid #444;
   border-radius: 8px;
-  width: 100%; /* تلتزم بالحدود الداخلية */
+  width: 100%;
   background: #1a1a1a;
   color: white;
   font-size: 14px;
   outline: none;
-}
-
-#search-input:focus {
-  border-color: #2196F3;
 }
 
 #search-icon {
@@ -208,13 +157,7 @@ html, body {
   opacity: 0.6;
 }
 
-#move-toggle {
-  cursor: pointer;
-  font-size: 18px;
-  user-select: none;
-}
-
-/* ===== Switch Toggle ===== */
+/* ===== 6. أزرار التبديل (Switch) ===== */
 .switch {
   position: relative;
   display: inline-block;
@@ -244,31 +187,28 @@ html, body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(22px); }
 
-/* ===== Animations ===== */
-@keyframes logo-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
-  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
-}
-
-/* ===== Labels & Extras ===== */
+/* ===== 7. تسميات الـ SVG (Labels & BG) ===== */
 .label-bg {
   rx: 3;
   ry: 3;
   opacity: 0.9;
+  forced-color-adjust: none; /* حماية المستطيلات السوداء من التغيير */
 }
 .rect-label {
   font-weight: bold;
   pointer-events: none;
 }
 
-/* تحسين العرض على الموبايل */
+/* ===== 8. الأنيميشن وتحسينات الموبايل ===== */
+@keyframes logo-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
+}
+
 @media (max-width: 600px) {
-  #legend { grid-template-columns: repeat(2, 1fr); }
   #js-toggle-container { 
     right: 10px; 
     min-width: 190px;
     padding: 10px;
   }
-  #loading-content h1 { font-size: 1.3rem; }
-  #splash-image { max-width: 180px; }
 }
