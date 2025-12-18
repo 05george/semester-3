@@ -1,11 +1,12 @@
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
+    mainSvg.style.colorScheme = 'only light'; 
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-    const searchIcon = document.getElementById('search-icon');
+    const searchIcon = document.getElementById('search-icon'); // الإضافة الجديدة
 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -17,7 +18,6 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- 1. وظائف المساعدة والبحث ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -27,81 +27,53 @@ window.onload = function() {
         }
     }
 
+    // --- إضافة: وظيفة التمرير لليسار ---
     function scrollToResults() {
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-
-    // --- 2. توليد قائمة الملفات والمجلدات فوق صورة الخشب تلقائياً ---
-    function generateFilesList() {
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        if (!dynamicGroup) return;
-
-        const allRects = mainSvg.querySelectorAll('rect.m:not(.list-item)');
-        const uniqueHrefs = new Set();
-        const items = [];
-
-        allRects.forEach(r => {
-            const href = r.getAttribute('data-href');
-            if (href && !uniqueHrefs.has(href)) {
-                uniqueHrefs.add(href);
-                items.push({
-                    href: href,
-                    className: r.getAttribute('class'),
-                    fullText: r.getAttribute('data-full-text')
-                });
-            }
-        });
-
-        let currentY = 150; 
-        const itemHeight = 40; 
-        const columnWidth = 280;
-
-        items.forEach(item => {
-            const newRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            newRect.setAttribute('x', "120"); 
-            newRect.setAttribute('y', currentY);
-            newRect.setAttribute('width', columnWidth);
-            newRect.setAttribute('height', itemHeight);
-            newRect.setAttribute('class', item.className + " list-item");
-            newRect.setAttribute('data-href', item.href);
-            if(item.fullText) newRect.setAttribute('data-full-text', item.fullText);
-            
-            dynamicGroup.appendChild(newRect);
-            processRect(newRect); 
-            currentY += itemHeight + 10; 
+        scrollContainer.scrollTo({
+            left: 0,
+            behavior: 'smooth'
         });
     }
 
-    // --- 3. منطق البحث والتحريك ---
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        const allRects = mainSvg.querySelectorAll('rect.m, rect.image-mapper-shape');
+    function updateDynamicSizes() {
+        const images = mainSvg.querySelectorAll('image');
+        if (!images.length) return;
+        const imgW = parseFloat(images[0].getAttribute('width')) || 1024;
+        const imgH = parseFloat(images[0].getAttribute('height')) || 2454;
+        mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
+    }
+    updateDynamicSizes();
 
-        allRects.forEach(rect => {
-            const href = (rect.getAttribute('data-href') || '').toLowerCase();
-            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
-            const isMatch = href.includes(query) || fullText.includes(query);
-
-            const parent = rect.parentNode;
-            const label = parent.querySelector(`.rect-label[data-original-for='${rect.getAttribute('data-href')}']`);
-            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.getAttribute('data-href')}']`);
-
-            if(query.length > 0 && !isMatch) {
-                rect.style.display = 'none';
-                if(label) label.style.display = 'none';
-                if(bg) bg.style.display = 'none';
-            } else {
-                rect.style.display = '';
-                if(label) label.style.display = '';
-                if(bg) bg.style.display = '';
+    function getCumulativeTranslate(element) {
+        let x = 0, y = 0, current = element;
+        while (current && current.tagName !== 'svg') {
+            const trans = current.getAttribute('transform');
+            if (trans) {
+                const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
             }
-        });
-    }, 150));
+            current = current.parentNode;
+        }
+        return { x, y };
+    }
 
-    searchInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') scrollToResults(); });
-    searchIcon.addEventListener('click', scrollToResults);
+    function getGroupImage(element) {
+        let current = element;
+        while (current && current.tagName !== 'svg') {
+            if (current.tagName === 'g') {
+                const imgs = [...current.children].filter(c => c.tagName === 'image');
+                if (imgs.length) return {
+                    src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
+                    width: parseFloat(imgs[0].getAttribute('width')),
+                    height: parseFloat(imgs[0].getAttribute('height')),
+                    group: current
+                };
+            }
+            current = current.parentNode;
+        }
+        return null;
+    }
 
-    // --- 4. التعامل مع التكبير (Hover) والحركات ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -141,7 +113,8 @@ window.onload = function() {
         const centerX = absX + rW / 2;  
 
         const scaleFactor = 1.1;
-        const hoveredY = absY - (rH * (scaleFactor - 1)) / 2;
+        const yOffset = (rH * (scaleFactor - 1)) / 2;
+        const hoveredY = absY - yOffset;
 
         rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
         rect.style.transform = `scale(${scaleFactor})`;  
@@ -171,10 +144,10 @@ window.onload = function() {
             activeState.zoomPart = zPart;  
         }  
 
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.getAttribute('data-href')}']`);  
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
         if (bText) {  
             bText.style.opacity = '0';  
-            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.getAttribute('data-href')}']`);  
+            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
             if(bBg) bBg.style.opacity = '0';  
             activeState.baseText = bText;  
             activeState.baseBg = bBg;  
@@ -192,19 +165,23 @@ window.onload = function() {
             zText.style.fontSize = (baseFs * 2) + 'px';  
 
             mainSvg.appendChild(zText);  
+
             const bbox = zText.getBBox();  
+            const padW = 20, padH = 10;
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2);  
+
+            zBg.setAttribute('x', centerX - (bbox.width + padW) / 2);  
             zBg.setAttribute('y', hoveredY);  
-            zBg.setAttribute('width', bbox.width + 20);  
-            zBg.setAttribute('height', bbox.height + 10);  
+            zBg.setAttribute('width', bbox.width + padW);  
+            zBg.setAttribute('height', bbox.height + padH);  
             zBg.setAttribute('rx', '5');  
             zBg.style.fill = 'black';  
             zBg.style.strokeWidth = '2px';  
             zBg.style.pointerEvents = 'none';  
 
             mainSvg.insertBefore(zBg, zText);  
-            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);
+            zText.setAttribute('y', hoveredY + (bbox.height + padH) / 2);
+
             activeState.zoomText = zText;  
             activeState.zoomBg = zBg;  
         }  
@@ -219,7 +196,6 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- 5. معالجة المستطيلات (تسمية، لمس، ضغط) ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
         if(!txt) return;
@@ -246,43 +222,56 @@ window.onload = function() {
         });
     }
 
-    function getCumulativeTranslate(element) {
-        let x = 0, y = 0, current = element;
-        while (current && current.tagName !== 'svg') {
-            const trans = current.getAttribute('transform');
-            if (trans) {
-                const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
-            }
-            current = current.parentNode;
-        }
-        return { x, y };
-    }
+    // --- إضافة: وظيفة توليد القائمة تلقائياً ---
+    function generateFilesList() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
 
-    function getGroupImage(element) {
-        let current = element;
-        while (current && current.tagName !== 'svg') {
-            if (current.tagName === 'g') {
-                const imgs = [...current.children].filter(c => c.tagName === 'image');
-                if (imgs.length) return {
-                    src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
-                    width: parseFloat(imgs[0].getAttribute('width')),
-                    height: parseFloat(imgs[0].getAttribute('height')),
-                    group: current
-                };
+        const allRects = mainSvg.querySelectorAll('rect.m:not(.list-item)');
+        const uniqueHrefs = new Set();
+        const items = [];
+
+        allRects.forEach(r => {
+            const href = r.getAttribute('data-href');
+            if (href && !uniqueHrefs.has(href)) {
+                uniqueHrefs.add(href);
+                items.push({
+                    href: href,
+                    className: r.getAttribute('class'),
+                    fullText: r.getAttribute('data-full-text')
+                });
             }
-            current = current.parentNode;
-        }
-        return null;
+        });
+
+        let currentY = 150; 
+        const itemHeight = 45; 
+        const columnWidth = 300;
+
+        items.forEach(item => {
+            const newRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            newRect.setAttribute('x', "120"); 
+            newRect.setAttribute('y', currentY);
+            newRect.setAttribute('width', columnWidth);
+            newRect.setAttribute('height', itemHeight);
+            newRect.setAttribute('class', item.className + " list-item");
+            newRect.setAttribute('data-href', item.href);
+            if(item.fullText) newRect.setAttribute('data-full-text', item.fullText);
+            
+            dynamicGroup.appendChild(newRect);
+            processRect(newRect); 
+            currentY += itemHeight + 12; 
+        });
     }
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
+
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
         const href = r.getAttribute('data-href') || '';
         const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x'));
         const y = parseFloat(r.getAttribute('y'));
@@ -300,16 +289,21 @@ window.onload = function() {
             txt.style.fill = 'white';
             txt.style.pointerEvents = 'none';
             txt.style.dominantBaseline = 'hanging';
+
             r.parentNode.appendChild(txt);
             wrapText(txt, w);
 
             const bbox = txt.getBBox();
             const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            bg.setAttribute('x', x); bg.setAttribute('y', y);
-            bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
+            bg.setAttribute('x', x);
+            bg.setAttribute('y', y);
+            bg.setAttribute('width', w);
+            bg.setAttribute('height', bbox.height + 8); 
             bg.setAttribute('class', 'label-bg');
             bg.setAttribute('data-original-for', href);
-            bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
+            bg.style.fill = 'black';
+            bg.style.pointerEvents = 'none';
+
             r.parentNode.insertBefore(bg, txt);
         }
 
@@ -339,25 +333,50 @@ window.onload = function() {
         r.setAttribute('data-processed', 'true');
     }
 
-    // --- 6. التشغيل والتحميل ---
-    function updateDynamicSizes() {
-        const images = mainSvg.querySelectorAll('image');
-        if (!images.length) return;
-        const imgW = parseFloat(images[0].getAttribute('width')) || 1024;
-        const imgH = parseFloat(images[0].getAttribute('height')) || 2454;
-        mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
+    function scan() {
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
     }
-    updateDynamicSizes();
+    scan();
+    generateFilesList(); // توليد قائمة الخشب بعد المسح الأول
 
-    generateFilesList();
-    mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r));
+    // --- تعديل: البحث (إخفاء فقط أثناء الكتابة) ---
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const allRects = mainSvg.querySelectorAll('rect.m, rect.image-mapper-shape');
 
+        allRects.forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = href.includes(query) || fullText.includes(query);
+
+            const parent = rect.parentNode;
+            const label = parent.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = parent.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
+            if(query.length > 0 && !isMatch) {
+                rect.style.display = 'none';
+                if(label) label.style.display = 'none';
+                if(bg) bg.style.display = 'none';
+            } else {
+                rect.style.display = '';
+                if(label) label.style.display = '';
+                if(bg) bg.style.display = '';
+            }
+        });
+    }, 150));
+
+    // --- إضافة: التحويل لليسار عند Enter أو العدسة ---
+    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') scrollToResults(); });
+    if(searchIcon) searchIcon.addEventListener('click', scrollToResults);
+
+    // منطق التحميل الأصلي مع تصحيح روابط الصور
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
-    urls.forEach(u => {
+    urls.forEach((u, index) => {
         const img = new Image();
         img.onload = img.onerror = () => {
             loadedCount++;
+            mainSvg.querySelectorAll('image')[index].setAttribute('href', u);
             const p = (loadedCount / urls.length) * 100;
             if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
             if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
@@ -365,9 +384,9 @@ window.onload = function() {
             if(p === 100) {
                 document.getElementById('bulb-4')?.classList.add('on');
                 setTimeout(() => {
-                    loadingOverlay.style.opacity = 0;
+                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
-                        loadingOverlay.style.display = 'none'; 
+                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
                         mainSvg.style.opacity = 1;
                         scrollContainer.scrollLeft = scrollContainer.scrollWidth;
                     }, 300);
@@ -376,6 +395,8 @@ window.onload = function() {
         };
         img.src = u;
     });
+
+    new MutationObserver(() => scan()).observe(mainSvg, { childList: true, subtree: true });
 
     jsToggle.addEventListener('change', function() {
         interactionEnabled = this.checked;
