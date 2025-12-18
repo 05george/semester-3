@@ -73,8 +73,8 @@ html, body {
 }
 
 #splash-image {
-  width: 100svw;
-  max-width: 100%;
+  width: 80svw;
+  max-width: 80%;
   height: auto;
   display: block;
   margin: 0 auto 20px auto;
