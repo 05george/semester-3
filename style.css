@@ -1,11 +1,11 @@
-/* ===== 1. الإعدادات العامة ومنع تلاعب المتصفح ===== */
+/* 1. الإعدادات العامة ومنع تلاعب المتصفح */
 * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* منع الوميض الأزرق في الموبايل */
+    -webkit-tap-highlight-color: transparent; /* منع الوميض عند اللمس في الأندرويد */
 }
 
 :root {
-    color-scheme: only light; /* منع الـ Dark Mode الإجباري في بعض المتصفحات */
+    color-scheme: only light; /* حماية الألوان من الـ Dark Mode الإجباري */
     --color-q: #ff4d4d; /* أحمر - أسئلة */
     --color-v: #4da6ff; /* أزرق - فيديو */
     --color-i: #ffffff; /* أبيض - مواد أخرى */
@@ -18,31 +18,34 @@ html, body {
     margin: 0;
     padding: 0;
     height: 100svh;
+    width: 100vw;
     overflow: hidden;
-    background: black;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #000;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* ===== 2. حاوية الخريطة (SVG Container) ===== */
+/* 2. حاوية الخريطة (SVG Scroll Container) */
 #scroll-container {
     width: 100vw;
     height: 100svh;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
-    scrollbar-color: #444 black;
+    scrollbar-color: #444 #000;
+    display: flex;
+    align-items: center;
 }
 
 #main-svg {
     height: 100%;
     width: auto;
     display: block;
-    transition: opacity .3s ease-out;
-    opacity: 0; 
+    transition: opacity .4s ease-in-out;
+    opacity: 0; /* يبدأ مخفي ويظهره الـ JS بعد التحميل */
     filter: none !important;
 }
 
-/* ===== 3. الأشكال التفاعلية (Rectangles) ===== */
+/* 3. الأشكال التفاعلية (Rectangles) */
 .m {
     fill: transparent;
     stroke: transparent;
@@ -52,6 +55,7 @@ html, body {
     cursor: pointer;
 }
 
+/* فئات الألوان المعتمدة في الخريطة */
 .q { stroke: var(--color-q); }
 .v { stroke: var(--color-v); }
 .i { stroke: var(--color-i); }
@@ -59,71 +63,76 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
-/* ===== 4. شاشة التحميل والدليل (Loading & Legend) ===== */
+/* 4. شاشة التحميل والدليل (Loading Overlay & Legend) */
 #loading-overlay {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    transition: opacity .5s ease-out;
+    z-index: 99999;
+    transition: opacity .6s ease-out;
     color: white;
 }
 
 #loading-content {
     text-align: center;
-    width: 90%;
-    max-width: 400px;
+    width: 85%;
+    max-width: 450px;
 }
 
 #splash-image {
-    width: 150px;
+    width: 160px;
     height: auto;
-    border-radius: 15px;
+    border-radius: 20px;
     margin-bottom: 20px;
-    animation: logo-glow 2s infinite ease-in-out;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+    animation: logo-glow 2.5s infinite ease-in-out;
 }
 
 #loading-content h1 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    opacity: 0.9;
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    font-weight: 300;
+    letter-spacing: 1px;
 }
 
-/* اللمبات */
+/* اللمبات (Progress Bulbs) */
 #loader-lights {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
 }
 
 .light-bulb {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background-color: #222;
     border: 1px solid #444;
-    transition: all .4s ease;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .light-bulb.on {
     background-color: #ffcc00;
     box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff9900;
+    border-color: #fff;
 }
 
-/* تنسيق دليل الألوان الجديد */
+/* تنسيق دليل الألوان (Legend) داخل شاشة البدء */
 #legend {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* عمودين */
     gap: 12px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     text-align: left;
+    margin-top: 10px;
 }
 
 .legend-item {
@@ -131,97 +140,135 @@ html, body {
     align-items: center;
     gap: 10px;
     font-size: 13px;
-    color: #ddd;
+    color: #ccc;
+    white-space: nowrap;
 }
 
 .legend-item::before {
     content: "";
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
     flex-shrink: 0;
 }
 
-/* ربط ألوان الدليل بالمتغيرات */
-.legend-item.red::before    { background: var(--color-q); box-shadow: 0 0 5px var(--color-q); }
-.legend-item.yellow::before { background: var(--color-l); box-shadow: 0 0 5px var(--color-l); }
-.legend-item.white::before  { background: var(--color-i); box-shadow: 0 0 5px var(--color-i); }
-.legend-item.purple::before { background: var(--color-a); box-shadow: 0 0 5px var(--color-a); }
-.legend-item.green::before  { background: var(--color-s); box-shadow: 0 0 5px var(--color-s); }
-.legend-item.blue::before   { background: var(--color-v); box-shadow: 0 0 5px var(--color-v); }
+/* ربط ألوان الدليل بالمتغيرات لتطابق الخريطة */
+.legend-item.red::before    { background: var(--color-q); box-shadow: 0 0 8px var(--color-q); }
+.legend-item.yellow::before { background: var(--color-l); box-shadow: 0 0 8px var(--color-l); }
+.legend-item.white::before  { background: var(--color-i); box-shadow: 0 0 8px var(--color-i); }
+.legend-item.purple::before { background: var(--color-a); box-shadow: 0 0 8px var(--color-a); }
+.legend-item.green::before  { background: var(--color-s); box-shadow: 0 0 8px var(--color-s); }
+.legend-item.blue::before   { background: var(--color-v); box-shadow: 0 0 8px var(--color-v); }
 
-/* ===== 5. صندوق التحكم (UI Container) ===== */
+/* 5. صندوق التحكم والبحث (UI Controls) */
 #js-toggle-container {
     position: fixed;
     right: 20px;
-    z-index: 10000;
+    z-index: 100000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     color: white;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 250px;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 15px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    width: 260px;
     max-width: 85vw;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: top 0.4s ease, bottom 0.4s ease;
 }
 
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
 
-.controls-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+#search-container {
+    position: relative;
+    width: 100%;
 }
 
 #search-input {
     width: 100%;
-    padding: 8px 10px 8px 35px;
-    border: 1px solid #444;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid #333;
     border-radius: 8px;
-    background: #111;
+    background: #0a0a0a;
     color: white;
+    font-size: 14px;
     outline: none;
+    transition: border-color 0.3s;
 }
 
-/* ===== 6. السويتش (Toggle Switch) ===== */
+#search-input:focus { border-color: #555; }
+
+#search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+}
+
+.controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+/* 6. السويتش (Toggle Switch) */
 .switch {
     position: relative;
-    width: 40px;
-    height: 20px;
+    width: 42px;
+    height: 22px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
     position: absolute;
     cursor: pointer;
     inset: 0;
-    background-color: #444;
+    background-color: #333;
     transition: .4s;
     border-radius: 20px;
 }
 .slider:before {
     position: absolute;
     content: "";
-    height: 14px; width: 14px;
+    height: 16px; width: 16px;
     left: 3px; bottom: 3px;
     background: white;
     transition: .4s;
     border-radius: 50%;
 }
-input:checked + .slider { background-color: #2196F3; }
+input:checked + .slider { background-color: #007bff; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* ===== 7. الأنيميشن والتحسينات ===== */
+/* 7. تسميات الـ SVG (Labels & Dyn-Text) */
+.label-bg {
+    rx: 4; ry: 4;
+    opacity: 0.85;
+}
+.rect-label {
+    font-weight: 600;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* 8. الأنيميشن وتحسينات الشاشات */
 @keyframes logo-glow {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.05); opacity: 1; }
+    0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 20px rgba(255, 204, 0, 0.1); }
+    50% { transform: scale(1.03); opacity: 1; box-shadow: 0 0 35px rgba(255, 204, 0, 0.4); }
 }
 
 @media (max-width: 600px) {
-    #js-toggle-container { right: 10px; width: 220px; }
-    #legend { grid-template-columns: 1fr; gap: 8px; }
+    #js-toggle-container { right: 10px; width: 230px; padding: 12px; }
+    #legend { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+    #loading-content h1 { font-size: 1.2rem; }
 }
+
+/* إخفاء السكرول بار في المتصفحات المبنية على Webkit (اختياري للشكل الجمالي) */
+#scroll-container::-webkit-scrollbar { height: 6px; }
+#scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+#scroll-container::-webkit-scrollbar-track { background: transparent; }
