@@ -88,106 +88,108 @@ window.onload = function() {
         });
     }
 
-    function startHover() {
-        if (!interactionEnabled) return;
-        const rect = this;
-        if (activeState.rect === rect) return;
-        cleanupHover();
-        activeState.rect = rect;
+function startHover() {  
+    if (!interactionEnabled) return;  
+    const rect = this;  
+    if (activeState.rect === rect) return;  
+    cleanupHover();  
+    activeState.rect = rect;  
 
-        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
-        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
-        const cum = getCumulativeTranslate(rect);
-        const absX = parseFloat(rect.getAttribute('x')) + cum.x;
-        const absY = parseFloat(rect.getAttribute('y')) + cum.y;
-        const centerX = absX + rW / 2;
-        const centerY = absY + rH / 2;
+    const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
+    const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
+    const cum = getCumulativeTranslate(rect);  
+    const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
+    const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
+    const centerX = absX + rW / 2;  
+    const centerY = absY + rH / 2;  
 
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
-        rect.style.transform = `scale(1.1)`;
-        rect.style.strokeWidth = '4px';
+    rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
+    rect.style.transform = `scale(1.1)`;  
+    rect.style.strokeWidth = '4px';  
 
-        const imgData = getGroupImage(rect);
-        if (imgData) {
-            const clipId = `clip-${Date.now()}`;
-            activeState.clipPathId = clipId;
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
-            clip.setAttribute('id', clipId);
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
-            clipDefs.appendChild(clip).appendChild(cRect);
+    const imgData = getGroupImage(rect);  
+    if (imgData) {  
+        const clipId = `clip-${Date.now()}`;  
+        activeState.clipPathId = clipId;  
+        const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
+        clip.setAttribute('id', clipId);  
+        const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        cRect.setAttribute('x', absX);  
+        cRect.setAttribute('y', absY);  
+        cRect.setAttribute('width', rW);  
+        cRect.setAttribute('height', rH);  
+        clipDefs.appendChild(clip).appendChild(cRect);  
 
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-            zPart.setAttribute('href', imgData.src);
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
-            zPart.setAttribute('clip-path', `url(#${clipId})`);
-            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(([\d.-]+),([\d.-]+)\)/);
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
-            zPart.style.pointerEvents = 'none';
-            zPart.style.transformOrigin = `${centerX}px ${centerY}px`;
-            zPart.style.transform = `scale(1.1)`;
-            mainSvg.appendChild(zPart);
-            activeState.zoomPart = zPart;
-        }
+        const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
+        zPart.setAttribute('href', imgData.src);  
+        zPart.setAttribute('width', imgData.width);  
+        zPart.setAttribute('height', imgData.height);  
+        zPart.setAttribute('clip-path', `url(#${clipId})`);  
+        const mTrans = imgData.group.getAttribute('transform')?.match(/translate([\d.-]+),([\d.-]+)/);  
+        zPart.setAttribute('x', mTrans ? mTrans[1] : 0);  
+        zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
+        zPart.style.pointerEvents = 'none';  
+        zPart.style.transformOrigin = `${centerX}px ${centerY}px`;  
+        zPart.style.transform = `scale(1.1)`;  
+        mainSvg.appendChild(zPart);  
+        activeState.zoomPart = zPart;  
+    }  
 
-        // ربط النص بالخانة المحددة
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-        let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+    // النص والمستطيل الأسود
+    let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
+    if (bText) {  
+        bText.style.opacity = '0';  
+        let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
+        if(bBg) bBg.style.opacity = '0';  
+        activeState.baseText = bText;  
+        activeState.baseBg = bBg;  
 
-        if (bText) {
-            bText.style.opacity = '0';
-            if(bBg) bBg.style.opacity = '0';
-            activeState.baseText = bText;
-            activeState.baseBg = bBg;
+        const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
+        const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
+        zText.textContent = fullTitle;  
+        zText.setAttribute('x', absX + rW/2);  
+        zText.setAttribute('y', absY + rH/2);  
+        zText.setAttribute('text-anchor', 'middle');  
+        zText.style.dominantBaseline = 'middle';  
+        zText.style.fill = 'white';  
+        zText.style.fontWeight = 'bold';  
+        zText.style.pointerEvents = 'none';  
+        const baseFs = parseFloat(bText.style.fontSize) || 10;  
+        zText.style.fontSize = (baseFs * 2) + 'px';  
 
-            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            const fullTitle = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
-            zText.textContent = fullTitle;
+        mainSvg.appendChild(zText);  
 
-            const baseFs = parseFloat(bText.style.fontSize) || 10;
-            zText.style.fontSize = (baseFs * 2) + 'px';
-            zText.style.fill = 'white';
-            zText.style.fontWeight = 'bold';
-            zText.setAttribute('x', centerX);
-            zText.setAttribute('text-anchor', 'middle');
-            zText.style.dominantBaseline = 'central';
-            zText.style.pointerEvents = 'none';
+        const bbox = zText.getBBox();  
+        const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
+        zBg.setAttribute('x', absX);  
+        zBg.setAttribute('y', absY);  
+        zBg.setAttribute('width', rW);  
+        zBg.setAttribute('height', Math.max(rH, bbox.height));  
+        zBg.style.fill = 'black';  
+        zBg.style.stroke = 'none';  
+        zBg.style.pointerEvents = 'none';  
 
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            mainSvg.appendChild(zBg);
-            mainSvg.appendChild(zText);
+        mainSvg.insertBefore(zBg, zText);  
 
-            const bbox = zText.getBBox();
-            const pad = 20;
-            const bgW = bbox.width + pad;
-            const bgH = bbox.height + pad;
+        // الزوم ×2
+        zBg.style.transformOrigin = `${absX + rW/2}px ${absY}px`;  
+        zBg.style.transform = `scale(2)`;  
+        zText.style.transformOrigin = `${absX + rW/2}px ${absY + Math.max(rH, bbox.height)/2}px`;  
+        zText.style.transform = `scale(2)`;  
 
-            zBg.setAttribute('x', centerX - bgW / 2);
-            zBg.setAttribute('y', absY - bgH - 15);
-            zBg.setAttribute('width', bgW);
-            zBg.setAttribute('height', bgH);
-            zBg.setAttribute('rx', '8');
-            zBg.style.fill = 'black';
-            zBg.style.stroke = 'white';
-            zBg.style.strokeWidth = '1.5px';
-            zBg.style.pointerEvents = 'none';
+        activeState.zoomText = zText;  
+        activeState.zoomBg = zBg;  
+    }  
 
-            zText.setAttribute('y', parseFloat(zBg.getAttribute('y')) + (bgH / 2));
-
-            activeState.zoomText = zText;
-            activeState.zoomBg = zBg;
-        }
-
-        let h = 0;
-        activeState.animationId = setInterval(() => {
-            h = (h + 10) % 360;
-            const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%))`;
-            rect.style.filter = glow;
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = `hsl(${h},100%,60%)`;
-        }, 100);
-    }
+    let h = 0;  
+    activeState.animationId = setInterval(() => {  
+        h = (h + 10) % 360;  
+        const glow = `drop-shadow(0 0 8px hsl(${h},100%,55%))`;  
+        rect.style.filter = glow;  
+        if (activeState.zoomPart) activeState.zoomPart.style.filter = glow;  
+        if (activeState.zoomBg) activeState.zoomBg.style.filter = glow;  
+    }, 100);  
+}
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text');
