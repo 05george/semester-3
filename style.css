@@ -1,21 +1,21 @@
-html, body {
-  /* منع المتصفحات من تكبير الخط تلقائياً */
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+/* 1. إعدادات توحيد الرؤية ومنع المتصفحات من الاجتهاد في تكبير الخطوط */
+*, *::before, *::after {
+  box-sizing: border-box !important;
+  -webkit-tap-highlight-color: transparent;
 }
-/* 1. إعدادات منع الوضع الداكن (في البداية دائماً) */
+
 :root {
   color-scheme: only light !important;
-  
+  -webkit-text-size-adjust: 100%; /* منع تكبير النصوص في سامسونج و iOS */
+  text-size-adjust: 100%;
+
   /* الألوان المركزية الخاصة بك */
-  --color-q: #ff4d4d;    /* أسئلة - أحمر */
-  --color-v: #4da6ff;    /* فيديو - أزرق */
-  --color-i: #ffffff;    /* مواد أخرى - أبيض */
-  --color-a: #b366ff;    /* إجابات - بنفسجي */
-  --color-s: #4dff88;    /* عملي - أخضر */
-  --color-l: #ffff4d;    /* محاضرات - أصفر */
+  --color-q: #ff4d4d;
+  --color-v: #4da6ff;
+  --color-i: #ffffff;
+  --color-a: #b366ff;
+  --color-s: #4dff88;
+  --color-l: #ffff4d;
 }
 
 html, body {
@@ -24,9 +24,12 @@ html, body {
   height: 100svh;
   width: 100vw;
   overflow: hidden;
-  background-color: black !important; /* إجبار الخلفية على اللون الأسود */
+  background-color: black !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  filter: none !important;            /* منع عكس الألوان القسري */
+  filter: none !important;
+  /* توحيد الرؤية */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ضمان عدم تأثر الـ SVG وإضافات التكبير */
@@ -86,7 +89,6 @@ html, body {
   max-width: 600px;
 }
 
-/* شعار شاشة البدء مع تأثير النبض */
 #splash-image {
   width: 400px;
   max-width: 85vw;
@@ -98,13 +100,13 @@ html, body {
   box-shadow: 0 0 25px rgba(255, 204, 0, 0.4);
   animation: logo-glow 2s infinite ease-in-out;
 }
+
 @media (max-width: 480px) {
   #splash-image {
     margin-top: -40px;
     max-width: 75vw;
   }
 }
-
 
 #loading-content h1 {
   color: #ffcc00;
@@ -114,13 +116,6 @@ html, body {
   letter-spacing: 2px;
 }
 
-#loading-text {
-  color: #888;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-/* ===== Loader Lights (Bulbs) ===== */
 #loader-lights {
   display: flex;
   justify-content: center;
@@ -143,7 +138,6 @@ html, body {
   border-color: #fff;
 }
 
-/* ===== Legend (شاشة البدء) ===== */
 #legend {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -173,7 +167,6 @@ html, body {
   flex-shrink: 0;
 }
 
-/* ربط الكلاسات بالمتغيرات */
 .legend-item.red    { --item-color: var(--color-q); }
 .legend-item.blue   { --item-color: var(--color-v); }
 .legend-item.white  { --item-color: var(--color-i); }
@@ -181,7 +174,7 @@ html, body {
 .legend-item.green  { --item-color: var(--color-s); }
 .legend-item.yellow { --item-color: var(--color-l); }
 
-/* ===== Toggle & Search UI ===== */
+/* ===== Toggle & Search UI (الموحد لكروم وسامسونج) ===== */
 #js-toggle-container {
   position: fixed;
   right: 20px;
@@ -193,14 +186,11 @@ html, body {
   color: white;
   background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(5px);
-  padding: 10px; /* تقليل بسيط للحواف */
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all .3s ease;
-  
-  /* إضافة حدود قصوى للعرض ليناسب الهاتف */
-  max-width: 200px; 
-  width: auto;
+  width: 180px;
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -208,27 +198,17 @@ html, body {
 
 #search-container {
   position: relative;
-  width: 100%; /* جعل العرض مرن */
+  width: 100%;
 }
 
 #search-input {
   padding: 8px 10px 8px 30px;
   border: 1px solid #444;
   border-radius: 5px;
-  width: 100%; /* يملأ مساحة الحاوية */
+  width: 100%;
   background: #222;
   color: white;
   font-size: 14px;
-  box-sizing: border-box; /* لضمان عدم خروج الإطار عن المساحة */
-}
-
-/* تنسيق إضافي لضمان تناسق العناصر في المساحات الصغيرة */
-.controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
 }
 
 #search-icon {
@@ -240,25 +220,21 @@ html, body {
   opacity: 0.6;
 }
 
-/* تعديلات خاصة للهواتف (متصفح سامسونج والوضع العادي) */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* وضع الهاتف الموحد */
 @media (max-width: 480px) {
   #js-toggle-container {
     right: 10px;
     padding: 8px;
-    max-width: 160px; /* تصغير الحاوية في الهاتف */
+    width: 150px; /* حجم وسط يرضي كروم وسامسونج */
   }
-  
   #search-input {
     font-size: 12px;
-    padding: 6px 10px 6px 25px;
-  }
-
-  .controls-row span {
-    font-size: 10px !important; /* تصغير كلمة Interaction */
-  }
-
-  #move-toggle {
-    font-size: 16px !important;
   }
 }
 
@@ -292,29 +268,12 @@ html, body {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* ===== Animations (Keyframes) ===== */
+/* ===== Animations ===== */
 @keyframes logo-glow {
-  0% {
-    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(255, 204, 0, 0.6);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
-    transform: scale(1);
-  }
+  0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
+  100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
 }
 
-/* ===== Labels & Extras ===== */
-.label-bg {
-  rx: 3;
-  ry: 3;
-  opacity: 0.9;
-}
-.rect-label {
-  font-weight: bold;
-  pointer-events: none;
-}
+.label-bg { rx: 3; ry: 3; opacity: 0.9; }
+.rect-label { font-weight: bold; pointer-events: none; }
