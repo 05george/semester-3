@@ -7,13 +7,35 @@ window.onload = function() {
 const moveToggle = document.getElementById('move-toggle');
 const toggleContainer = document.getElementById('js-toggle-container');
 
-moveToggle.onclick = () => {
+// وظيفة للتحرك لأقصى اليسار (بداية شريط التمرير)
+const scrollToStart = () => {
+    scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+};
+
+// 1. عند الضغط على أيقونة البحث 🔍
+searchIcon.onclick = () => {
+    scrollToStart(); // تحريك الموقع لليسار
+    searchInput.focus(); // فتح لوحة المفاتيح
+};
+
+// 2. عند الضغط على Enter (كمبيوتر) أو Go/Search (تليفون)
+searchInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+        scrollToStart(); // تحريك الموقع لليسار
+        searchInput.blur(); // إغلاق لوحة المفاتيح
+    }
+};
+
+// 3. تأكيد عمل زر التبديل ↕️ (لنقل القائمة للأعلى والأسفل)
+const moveToggle = document.getElementById('move-toggle');
+const toggleContainer = document.getElementById('js-toggle-container');
+
+moveToggle.onclick = (e) => {
+    e.preventDefault();
     if (toggleContainer.classList.contains('top')) {
-        toggleContainer.classList.remove('top');
-        toggleContainer.classList.add('bottom');
+        toggleContainer.classList.replace('top', 'bottom');
     } else {
-        toggleContainer.classList.remove('bottom');
-        toggleContainer.classList.add('top');
+        toggleContainer.classList.replace('bottom', 'top');
     }
 };
     const jsToggle = document.getElementById('js-toggle');
