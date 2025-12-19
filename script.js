@@ -1,4 +1,5 @@
 window.onload = function() {
+    // 1. العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -24,14 +25,13 @@ window.onload = function() {
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
+    // مجموعة افتراضية للملفات الديناميكية
     const dynamicVirtualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     dynamicVirtualGroup.id = "dynamic-github-pdfs";
     dynamicVirtualGroup.style.display = "none";
     mainSvg.appendChild(dynamicVirtualGroup);
 
-    const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
-    const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-
+    // --- [الدوال القديمة - كما هي بالضبط] ---
     function getCumulativeTranslate(element) {
         let x = 0, y = 0, current = element;
         while (current && current.tagName !== 'svg') {
@@ -42,7 +42,7 @@ window.onload = function() {
             }
             current = current.parentNode;
         }
-        return { x: isNaN(x) ? 0 : x, y: isNaN(y) ? 0 : y };
+        return { x, y };
     }
 
     function getGroupImage(element) {
@@ -52,8 +52,8 @@ window.onload = function() {
                 const imgs = [...current.children].filter(c => c.tagName === 'image');
                 if (imgs.length) return {
                     src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
-                    width: parseFloat(imgs[0].getAttribute('width')) || 0,
-                    height: parseFloat(imgs[0].getAttribute('height')) || 0,
+                    width: parseFloat(imgs[0].getAttribute('width')),
+                    height: parseFloat(imgs[0].getAttribute('height')),
                     group: current
                 };
             }
@@ -66,46 +66,28 @@ window.onload = function() {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
         let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-        ts.setAttribute('x', el.getAttribute('x') || 0); ts.setAttribute('dy', '0');
+        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
         el.appendChild(ts); let line = '';
-        const lh = parseFloat(el.style.fontSize) * 1.1 || 12;
+        const lh = parseFloat(el.style.fontSize) * 1.1;
         words.forEach(word => {
             let test = line + (line ? ' ' : '') + word;
             ts.textContent = test;
             if (ts.getComputedTextLength() > maxW - 5 && line) {
                 ts.textContent = line;
                 ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                ts.setAttribute('x', el.getAttribute('x') || 0); ts.setAttribute('dy', lh + 'px');
+                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
                 ts.textContent = word; el.appendChild(ts); line = word;
             } else { line = test; }
         });
     }
 
-    const performSearch = () => {
-        const query = searchInput.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const href = (rect.getAttribute('data-href') || '').toLowerCase();
-            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
-            const isMatch = (query === "") || href.includes(query) || fullText.includes(query);
-            rect.style.opacity = isMatch ? "1" : "0";
-            rect.style.pointerEvents = isMatch ? "auto" : "none";
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            if (label) label.style.display = isMatch ? "" : "none";
-            if (bg) bg.style.display = isMatch ? "" : "none";
-        });
-        document.querySelectorAll('.wood-item-group').forEach(group => {
-            const key = group.getAttribute('data-search-key') || "";
-            const isMatch = (query === "") || key.includes(query);
-            group.style.opacity = isMatch ? "1" : "0";
-        });
-    };
-
+    // --- [نظام التفاعل والزووم - الأصلي] ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
         activeState.rect.style.filter = 'none';
         activeState.rect.style.transform = 'scale(1)';
+        activeState.rect.style.strokeWidth = '2px';
         if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
@@ -113,27 +95,31 @@ window.onload = function() {
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
         const clip = document.getElementById(activeState.clipPathId);
         if (clip) clip.remove();
-        activeState.rect = null;
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, animationId: null });
     }
 
     function startHover() {
         if (!interactionEnabled || this.style.opacity === "0" || this.classList.contains('list-item')) return;
-        const rect = this; cleanupHover(); activeState.rect = rect;
+        const rect = this;
+        if (activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
 
-        const rW = parseFloat(rect.getAttribute('width')) || 0;
-        const rH = parseFloat(rect.getAttribute('height')) || 0;
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
         const cum = getCumulativeTranslate(rect);
-        const absX = (parseFloat(rect.getAttribute('x')) || 0) + cum.x;
-        const absY = (parseFloat(rect.getAttribute('y')) || 0) + cum.y;
+        const absX = parseFloat(rect.getAttribute('x')) + cum.x;
+        const absY = parseFloat(rect.getAttribute('y')) + cum.y;
         const centerX = absX + rW / 2;
         const hoveredY = absY - (rH * 0.05);
 
-        rect.style.transformOrigin = `${(parseFloat(rect.getAttribute('x')) || 0) + rW/2}px ${(parseFloat(rect.getAttribute('y')) || 0) + rH/2}px`;
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
         rect.style.transform = `scale(1.1)`;
 
         const imgData = getGroupImage(rect);
         if (imgData) {
-            const clipId = `clip-${Date.now()}`; activeState.clipPathId = clipId;
+            const clipId = `clip-${Date.now()}`;
+            activeState.clipPathId = clipId;
             const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
             clip.setAttribute('id', clipId);
             const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -145,9 +131,12 @@ window.onload = function() {
             zPart.setAttribute('href', imgData.src);
             zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);
             zPart.setAttribute('clip-path', `url(#${clipId})`);
+            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
             zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;
             zPart.style.transform = `scale(1.1)`;
-            mainSvg.appendChild(zPart); activeState.zoomPart = zPart;
+            mainSvg.appendChild(zPart);
+            activeState.zoomPart = zPart;
         }
 
         let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
@@ -160,26 +149,45 @@ window.onload = function() {
             const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
             zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');
-            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 1.8) + 'px';
+            zText.style.fontSize = (parseFloat(bText.style.fontSize) * 2) + 'px';
             zText.style.fill = 'white'; zText.style.fontWeight = 'bold';
             mainSvg.appendChild(zText);
 
             const bbox = zText.getBBox();
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY - bbox.height);
-            zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);
+            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY - bbox.height - 10);
+            zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 15);
             zBg.setAttribute('rx', '5'); zBg.style.fill = 'black';
             mainSvg.insertBefore(zBg, zText);
-            zText.setAttribute('y', hoveredY - 5);
+            zText.setAttribute('y', hoveredY - 15);
             activeState.zoomText = zText; activeState.zoomBg = zBg;
         }
 
         let h = 0;
         activeState.animationId = setInterval(() => {
-            h = (h + 15) % 360;
+            h = (h + 10) % 360;
             rect.style.filter = `drop-shadow(0 0 8px hsl(${h},100%,60%))`;
         }, 100);
     }
+
+    // --- [نظام البحث والتحكم] ---
+    const performSearch = () => {
+        const query = searchInput.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = (query === "") || href.includes(query) || fullText.includes(query);
+            rect.style.opacity = isMatch ? "1" : "0";
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            if (label) label.style.display = isMatch ? "" : "none";
+            if (bg) bg.style.display = isMatch ? "" : "none";
+        });
+        document.querySelectorAll('.wood-item-group').forEach(group => {
+            const key = group.getAttribute('data-search-key') || "";
+            group.style.opacity = (query === "" || key.includes(query)) ? "1" : "0";
+        });
+    };
 
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
@@ -219,7 +227,7 @@ window.onload = function() {
             r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
             r.style.stroke = "#fff";
 
-            // --- الإصلاح هنا: إزالة .pdf من الاسم قبل العرض ---
+            // إزالة .pdf من الاسم
             let displayName = item.label.replace(/\.pdf$/i, ""); 
 
             const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -235,16 +243,14 @@ window.onload = function() {
             };
             dynamicGroup.appendChild(g);
         });
-        performSearch();
     }
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
         const href = r.getAttribute('data-href') || '';
-        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0,-1).join('.') : '');
-        const w = parseFloat(r.getAttribute('width')) || 50;
-        const x = parseFloat(r.getAttribute('x')) || 0;
-        const y = parseFloat(r.getAttribute('y')) || 0;
+        const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('.')[0] : '');
+        const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
+        const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
 
         if (name && name.trim() !== '' && !r.classList.contains('list-item')) {
             const fs = Math.max(8, Math.min(12, w * 0.11));
@@ -264,7 +270,7 @@ window.onload = function() {
 
         if (!isTouchDevice) { r.addEventListener('mouseover', startHover); r.addEventListener('mouseout', cleanupHover); }
         r.onclick = () => { if(r.style.opacity !== "0" && href !== "#") window.open(href, '_blank'); };
-        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0" && interactionEnabled) startHover.call(this); });
+        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0") startHover.call(this); });
         r.addEventListener('touchend', cleanupHover);
         r.setAttribute('data-processed', 'true');
     }
@@ -288,31 +294,36 @@ window.onload = function() {
         } catch (e) { console.error(e); }
     }
 
+    // --- [بدء التشغيل] ---
+    const goToWoodBtn = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
+    const goToMapEndBtn = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+
     const images = mainSvg.querySelectorAll('image');
+    let loaded = 0;
     images.forEach(img => {
         const url = img.getAttribute('data-src') || img.getAttribute('href');
         const i = new Image();
         i.onload = () => {
             loaded++;
-            if((loaded/images.length)*100 === 100) {
+            if(loaded === images.length) {
                 loadingOverlay.style.display = 'none';
                 mainSvg.style.opacity = 1;
-                updateWoodInterface(); goToMapEnd();
+                updateWoodInterface();
+                goToMapEndBtn();
             }
         };
         i.src = url; img.setAttribute('href', url);
     });
 
-    let loaded = 0;
     searchInput.addEventListener('input', performSearch);
-    searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
+    searchIcon.onclick = (e) => { e.preventDefault(); goToWoodBtn(); };
     moveToggle.onclick = () => toggleContainer.classList.toggle('bottom');
     jsToggle.onchange = () => { interactionEnabled = jsToggle.checked; if(!interactionEnabled) cleanupHover(); };
     backButtonGroup.onclick = () => {
         if (currentFolder !== "") {
             let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/');
             updateWoodInterface();
-        } else { goToMapEnd(); }
+        } else { goToMapEndBtn(); }
     };
 
     loadAllPdfFromGithub();
