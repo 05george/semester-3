@@ -1,7 +1,8 @@
 window.onload = function() {
-    // 1. العناصر الأساسية
+    // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
+    const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
@@ -11,35 +12,42 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
+    // إعدادات GitHub
     const GITHUB_OWNER = "05george";
     const GITHUB_REPO  = "semester-3";
     const BRANCH = "main";
 
-    let activeState = { rect: null, animationId: null, touchStartTime: 0, initialScrollLeft: 0 };
+    // حالة التفاعل
+    let activeState = {
+        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        touchStartTime: 0, initialScrollLeft: 0
+    };
+
     let currentFolder = "";
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // مجموعة وهمية لبيانات GitHub
+    // مجموعة وهمية للملفات القادمة من GitHub
     const dynamicVirtualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     dynamicVirtualGroup.id = "dynamic-github-pdfs";
     dynamicVirtualGroup.style.display = "none";
     mainSvg.appendChild(dynamicVirtualGroup);
 
-    // --- وظائف الحركة والتنقل ---
+    // --- وظائف الحركة ---
     const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
     const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
 
-    // --- وظيفة البحث (إخفاء في المكان) ---
+    // --- وظيفة البحث الموحدة (إخفاء في المكان) ---
     const performSearch = () => {
         const query = searchInput.value.toLowerCase().trim();
         
-        // فلترة الخريطة
+        // 1. فلترة الخريطة
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = (rect.getAttribute('data-href') || '').toLowerCase();
             const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
-            const isMatch = query === "" || href.includes(query) || fullText.includes(query);
+            const isMatch = (query === "") || href.includes(query) || fullText.includes(query);
             
             rect.style.opacity = isMatch ? "1" : "0";
             rect.style.pointerEvents = isMatch ? "auto" : "none";
@@ -50,17 +58,16 @@ window.onload = function() {
             if (bg) bg.style.display = isMatch ? "" : "none";
         });
 
-        // فلترة قائمة الخشب
-        const groups = document.querySelectorAll('.wood-item-group');
-        groups.forEach(group => {
+        // 2. فلترة قائمة الخشب
+        document.querySelectorAll('.wood-item-group').forEach(group => {
             const key = group.getAttribute('data-search-key') || "";
-            const isMatch = query === "" || key.includes(query);
+            const isMatch = (query === "") || key.includes(query);
             group.style.opacity = isMatch ? "1" : "0";
             group.style.pointerEvents = isMatch ? "auto" : "none";
         });
     };
 
-    // --- إدارة واجهة الخشب وزر الرجوع ---
+    // --- بناء واجهة الخشب وزر الرجوع ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -92,7 +99,8 @@ window.onload = function() {
         ];
 
         items.forEach((item, index) => {
-            const col = index % 2; const row = Math.floor(index / 2);
+            const col = index % 2; 
+            const row = Math.floor(index / 2);
             const x = col === 0 ? 120 : 550; const y = 250 + (row * 90);
 
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -102,7 +110,7 @@ window.onload = function() {
 
             const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-            r.setAttribute("class", "list-item m");
+            r.setAttribute("class", "list-item");
             r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
             r.style.stroke = "#fff";
 
@@ -122,28 +130,31 @@ window.onload = function() {
             };
             dynamicGroup.appendChild(g);
         });
-        performSearch(); // تحديث الحالة البصرية بعد البناء
+        performSearch();
     }
 
-    backButtonGroup.onclick = () => {
+    backButtonGroup.onclick = (e) => {
+        e.preventDefault();
         if (currentFolder !== "") {
-            let parts = currentFolder.split('/'); 
-            parts.pop(); 
-            currentFolder = parts.join('/');
+            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/');
             updateWoodInterface();
-        } else {
-            goToMapEnd();
-        }
+        } else { goToMapEnd(); }
     };
 
-    // --- نظام التفاعل (Hover) ---
+    // --- نظام الـ Zoom والتفاعل ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
         activeState.rect.style.filter = 'none';
         activeState.rect.style.transform = 'scale(1)';
-        activeState.rect.style.strokeWidth = '2px';
-        activeState.rect = null;
+        if (activeState.zoomPart) activeState.zoomPart.remove();
+        if (activeState.zoomText) activeState.zoomText.remove();
+        if (activeState.zoomBg) activeState.zoomBg.remove();
+        if (activeState.baseText) activeState.baseText.style.opacity = '1';
+        if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
+        const clip = document.getElementById(activeState.clipPathId);
+        if (clip) clip.remove();
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, animationId: null });
     }
 
     function startHover() {
@@ -153,15 +164,28 @@ window.onload = function() {
         const rW = parseFloat(this.getAttribute('width')) || this.getBBox().width;
         const rH = parseFloat(this.getAttribute('height')) || this.getBBox().height;
         this.style.transformOrigin = `${parseFloat(this.getAttribute('x')) + rW/2}px ${parseFloat(this.getAttribute('y')) + rH/2}px`;
-        this.style.transform = `scale(1.1)`;
+        this.style.transform = "scale(1.1)";
+
         let h = 0;
         activeState.animationId = setInterval(() => {
             h = (h + 10) % 360;
-            if(activeState.rect) activeState.rect.style.filter = `drop-shadow(0 0 8px hsl(${h},100%,60%))`;
+            this.style.filter = `drop-shadow(0 0 8px hsl(${h},100%,60%))`;
         }, 100);
     }
 
-    // --- جلب البيانات وبدء التحميل ---
+    function processRect(r) {
+        if (r.hasAttribute('data-processed')) return;
+        if (!isTouchDevice) {
+            r.addEventListener('mouseover', startHover);
+            r.addEventListener('mouseout', cleanupHover);
+        }
+        r.onclick = () => { if(r.style.opacity !== "0" && r.getAttribute('data-href') !== "#") window.open(r.getAttribute('data-href'), '_blank'); };
+        
+        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0") startHover.call(this); });
+        r.addEventListener('touchend', cleanupHover);
+        r.setAttribute('data-processed', 'true');
+    }
+
     async function loadAllPdfFromGithub() {
         try {
             const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
@@ -183,20 +207,7 @@ window.onload = function() {
         } catch (e) { console.error(e); }
     }
 
-    function processRect(r) {
-        if (r.hasAttribute('data-proc')) return;
-        r.setAttribute('data-proc', 'true');
-        if (!isTouchDevice) {
-            r.addEventListener('mouseover', startHover);
-            r.addEventListener('mouseout', cleanupHover);
-        }
-        r.onclick = () => { if(r.style.opacity !== "0" && r.getAttribute('data-href') !== "#") window.open(r.getAttribute('data-href'), '_blank'); };
-        
-        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0") startHover.call(this); });
-        r.addEventListener('touchend', cleanupHover);
-    }
-
-    // التنفيذ
+    // --- بدء التحميل ---
     const images = mainSvg.querySelectorAll('image');
     mainSvg.setAttribute('viewBox', `0 0 ${images.length * 1024} 2454`);
     
@@ -206,14 +217,21 @@ window.onload = function() {
         const i = new Image();
         i.onload = () => {
             loaded++;
-            if (loaded === images.length) {
-                loadingOverlay.style.opacity = 0;
-                setTimeout(() => { 
-                    loadingOverlay.style.display = 'none'; 
-                    mainSvg.style.opacity = 1;
-                    updateWoodInterface();
-                    goToMapEnd();
-                }, 300);
+            const p = (loaded / images.length) * 100;
+            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
+            if(p === 100) {
+                document.getElementById('bulb-4')?.classList.add('on');
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = 0;
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        mainSvg.style.opacity = 1;
+                        updateWoodInterface();
+                        goToMapEnd();
+                    }, 300);
+                }, 500);
             }
         };
         i.src = url;
@@ -222,8 +240,11 @@ window.onload = function() {
 
     searchInput.addEventListener('input', performSearch);
     searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
-    moveToggle.onclick = () => toggleContainer.classList.toggle('top') || toggleContainer.classList.toggle('bottom');
-    jsToggle.onchange = () => { interactionEnabled = jsToggle.checked; if(!interactionEnabled) cleanupHover(); };
+    moveToggle.onclick = () => {
+        if (toggleContainer.classList.contains('top')) toggleContainer.classList.replace('top', 'bottom');
+        else toggleContainer.classList.replace('bottom', 'top');
+    };
+    jsToggle.onchange = () => { interactionEnabled = jsToggle.checked; };
 
     loadAllPdfFromGithub();
 };
