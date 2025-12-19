@@ -2,7 +2,6 @@ window.onload = function() {
     // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
-    const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
@@ -11,38 +10,15 @@ window.onload = function() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
-const params = new URLSearchParams(location.search);
-const file = params.get("file");
 
-if(!file){
-  alert("لا يوجد ملف PDF");
-  throw new Error("No PDF");
-}
+    // عناصر PDF Overlay
+    const pdfOverlay = document.getElementById('pdf-overlay');
+    const pdfFrame = document.getElementById('pdfFrame');
+    const closePdfBtn = document.getElementById('closePdfBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const shareBtn = document.getElementById('shareBtn');
 
-document.getElementById("pdfFrame").src =
-  "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
-  encodeURIComponent(file);
-
-// رجوع
-backBtn.onclick = () => history.back();
-
-// تحميل
-downloadBtn.onclick = () => {
-  const a = document.createElement("a");
-  a.href = file;
-  a.download = "";
-  a.click();
-};
-
-// مشاركة
-shareBtn.onclick = async () => {
-  if(navigator.share){
-    await navigator.share({ title:"PDF", url:file });
-  }else{
-    navigator.clipboard.writeText(file);
-    alert("تم نسخ رابط الملف");
-  }
-};
+    let currentPdfUrl = ""; // لتخزين رابط الملف الحالي
 
     const repoOwner = "05george";
     const repoName = "semester-3";
@@ -58,68 +34,80 @@ shareBtn.onclick = async () => {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- 1. دالة الفلترة الذكية (الخشب) ---
-    // هذه الدالة تضمن بقاء المجلدات وإخفاء الملفات غير المطابقة فقط
-// --- دالة الفلترة المعدلة للحفاظ على المسافات ---
-function applyWoodSearchFilter() {
-    const query = searchInput.value.toLowerCase().trim();
-    
-    mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
-        const textElement = group.querySelector('text');
-        if (!textElement) return;
+    // --- منطق PDF Viewer (داخل الصفحة) ---
+    function openPdfViewer(url) {
+        currentPdfUrl = url;
+        // استخدام Google Docs Viewer أو pdf.js (هنا نستخدم طريقتك الأصلية مع تعديل الرابط)
+        // ملاحظة: روابط github تحتاج لمعالجة لتفتح مباشرة
+        let viewerUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+        
+        pdfFrame.src = viewerUrl;
+        pdfOverlay.classList.remove('hidden');
+    }
 
-        const name = textElement.getAttribute('data-search-name') || "";
-        const isFolder = textElement.textContent.includes("📁");
+    closePdfBtn.onclick = () => {
+        pdfOverlay.classList.add('hidden');
+        pdfFrame.src = ""; // إيقاف التحميل لتوفير الذاكرة
+    };
 
-        if (isFolder) {
-            // المجلدات دائماً ظاهرة
-            group.style.visibility = 'visible';
+    downloadBtn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = currentPdfUrl;
+        a.download = "";
+        a.click();
+    };
+
+    shareBtn.onclick = async () => {
+        if(navigator.share){
+            await navigator.share({ title: "PDF File", url: currentPdfUrl });
         } else {
-            // الملفات: إذا كانت تطابق البحث تظهر، وإذا لم تطابق تختفي مع بقاء مكانها فارغاً
-            if (query === "" || name.includes(query)) {
+            navigator.clipboard.writeText(currentPdfUrl);
+            alert("تم نسخ رابط الملف");
+        }
+    };
+
+    // --- 2. وظيفة الفتح الذكي للروابط (معدلة) ---
+    function smartOpen(url) {
+        if (!url || url === '#') return;
+
+        let targetUrl = url;
+        
+        // معالجة روابط GitHub لتصبح قابلة للعرض المباشر (CDN)
+        if (url.includes('github.com') && url.includes('/blob/')) {
+            targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
+                           .replace('/blob/', '@');
+        }
+
+        if (targetUrl.toLowerCase().endsWith('.pdf')) {
+            openPdfViewer(targetUrl);
+        } else {
+            // روابط أخرى
+            window.open(targetUrl, '_blank');
+        }
+    }
+
+    // --- 3. دالة الفلترة الذكية (الخشب) ---
+    function applyWoodSearchFilter() {
+        const query = searchInput.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
+            const textElement = group.querySelector('text');
+            if (!textElement) return;
+            const name = textElement.getAttribute('data-search-name') || "";
+            const isFolder = textElement.textContent.includes("📁");
+
+            if (isFolder) {
                 group.style.visibility = 'visible';
             } else {
-                group.style.visibility = 'hidden'; // هنا السر: يختفي ويترك مكانه محجوزاً
+                if (query === "" || name.includes(query)) {
+                    group.style.visibility = 'visible';
+                } else {
+                    group.style.visibility = 'hidden';
+                }
             }
-        }
-    });
-}
-
-    // --- 2. وظيفة الفتح الذكي للروابط ---
- function smartOpen(url) {
-    if (!url || url === '#') return;
-
-// ⭐ جديد ⭐ فتح ملفات PDF داخل viewer.html
-if (url.toLowerCase().endsWith('.pdf')) {
-    location.href = `viewer.html?file=${encodeURIComponent(url)}`;
-    return;
-}
-
-    let targetUrl = url;
-
-    // التحقق مما إذا كان الرابط ملف PDF وموجود على GitHub
-    if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
-        // تحويل الرابط إلى صيغة CDN التي تجبر المتصفح على العرض بدلاً من التحميل
-        // يحول: https://github.com/user/repo/blob/main/file.pdf
-        // إلى: https://cdn.jsdelivr.net/gh/user/repo@main/file.pdf
-        targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
-                       .replace('/blob/', '@'); 
+        });
     }
 
-    // فتح الرابط
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
-    
-    if (isMobile) {
-        // للموبايل: افتح في نفس النافذة
-        window.location.href = targetUrl;
-    } else {
-        // للكمبيوتر: افتح في نافذة جديدة (Tab)
-        window.open(targetUrl, '_blank');
-    }
-}
-
-
-    // --- 3. إدارة واجهة الخشب (GitHub API) ---
+    // --- 4. إدارة واجهة الخشب (GitHub API) ---
     async function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -127,8 +115,9 @@ if (url.toLowerCase().endsWith('.pdf')) {
         backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
 
         try {
+            // ملاحظة: تأكد من أن المستودع عام (Public) ليعمل هذا الكود
             const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${currentFolder}`);
-            if (!response.ok) throw new Error('Error');
+            if (!response.ok) throw new Error('Network Error');
             const data = await response.json();
 
             const items = data.filter(item => {
@@ -137,7 +126,7 @@ if (url.toLowerCase().endsWith('.pdf')) {
             }).sort((a, b) => (a.type === 'dir' ? -1 : 1));
 
             renderWoodItems(items);
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("GitHub API Error:", e); }
     }
 
     function renderWoodItems(items) {
@@ -165,20 +154,19 @@ if (url.toLowerCase().endsWith('.pdf')) {
             g.onclick = (e) => {
                 e.stopPropagation();
                 if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); }
-                else { smartOpen(item.download_url); }
+                else { smartOpen(item.download_url); } // هنا نستخدم download_url من GitHub
             };
             dynamicGroup.appendChild(g);
         });
-
-        // تطبيق الفلتر فوراً بعد رندر العناصر الجديدة لضمان اختفاء غير المطابق
         applyWoodSearchFilter();
     }
 
-    // --- 4. نظام البحث الموحد ---
+    // --- 5. وظائف الحركة والبحث ---
+    const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
+    const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
-        
-        // أ) بحث الخريطة (الأسابيع)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
@@ -187,16 +175,9 @@ if (url.toLowerCase().endsWith('.pdf')) {
             if(label) label.style.display = rect.style.display;
             if(bg) bg.style.display = rect.style.display;
         });
-
-        // ب) بحث الخشب
         applyWoodSearchFilter();
     }, 150));
 
-    // --- 5. وظائف الحركة (RTL) ---
-    const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
-    const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-
-    // --- 6. ربط الأحداث العامة ---
     searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
     searchInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); goToWood(); } };
     moveToggle.onclick = (e) => {
@@ -220,7 +201,7 @@ if (url.toLowerCase().endsWith('.pdf')) {
         }
     }
 
-    // --- 7. دوال التفاعل (Hover & Zoom) والمقاسات ---
+    // --- 6. Helper Functions & Hover Logic (باقي الكود كما هو تقريباً) ---
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (images.length) mainSvg.setAttribute('viewBox', `0 0 ${images.length * 1024} 2454`);
@@ -251,9 +232,7 @@ if (url.toLowerCase().endsWith('.pdf')) {
         if (activeState.zoomBg) activeState.zoomBg.remove();
         if (activeState.baseText) activeState.baseText.style.opacity = '1';
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
-        const clip = document.getElementById(activeState.clipPathId);
-        if (clip) clip.remove();
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null, clipPathId: null });
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null });
     }
 
     function startHover() {  
@@ -352,9 +331,17 @@ if (url.toLowerCase().endsWith('.pdf')) {
         r.setAttribute('data-processed', 'true');
     }
 
-    // --- 8. التحميل النهائي وإطلاق الواجهة ---
+    // --- 7. التحميل النهائي ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
+    
+    // التعامل مع الحالة إذا لم يكن هناك صور
+    if(urls.length === 0) {
+        if(loadingOverlay) loadingOverlay.style.display = 'none';
+        mainSvg.style.opacity = 1;
+        updateWoodInterface();
+    }
+
     urls.forEach(u => {
         const img = new Image();
         img.onload = img.onerror = () => {
@@ -363,13 +350,13 @@ if (url.toLowerCase().endsWith('.pdf')) {
             if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
             if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
             if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            if(p === 100) {
+            if(loadedCount === urls.length) {
                 document.getElementById('bulb-1')?.classList.add('on');
                 setTimeout(() => {
                     if(loadingOverlay) loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
                         loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; 
-                        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
+                        mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r));
                         updateWoodInterface(); goToMapEnd(); 
                     }, 300);
                     mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
