@@ -25,17 +25,28 @@ window.onload = function() {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // --- وظائف الحركة ---
-    const goToWood = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    const goToMapEnd = () => scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
+    // --- وظائف الحركة --- //
+const goToWood = () => {
+    scrollContainer.scrollTo({ 
+        left: -scrollContainer.scrollWidth, // للقيمة السالبة في وضع RTL
+        behavior: 'smooth' 
+    });
+    if (scrollContainer.scrollLeft > 0) {
+        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+};
 
-    // --- أحداث أزرار الواجهة الجديدة ---
+searchIcon.onclick = () => {
+    goToWood();
+    searchInput.focus();
+};
 
-    // 1. عند الضغط على أيقونة البحث 🔍
-    searchIcon.onclick = () => {
-        goToWood(); // التحرك لأقصى اليسار
-        searchInput.focus(); // فتح لوحة المفاتيح
-    };
+searchInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+        goToWood();
+        searchInput.blur();
+    }
+};
 
     // 2. عند الضغط على Enter أو Go في الكيبورد
     searchInput.onkeydown = (e) => {
