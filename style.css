@@ -3,8 +3,7 @@
     stroke-width: 1px !important;
     rx: 5;
     ry: 5;
-    -webkit-touch-callout: none;
-    user-select: none;
+}
 /* 1. إعدادات توحيد الرؤية ومنع المتصفحات من الاجتهاد في تكبير الخطوط */
 *, *::before, *::after {
   box-sizing: border-box !important;
@@ -68,8 +67,6 @@ html, body {
   transform-origin: center center;
   transition: filter .3s ease, stroke-width .3s ease;
   cursor: pointer;
-  -webkit-touch-callout: none;
-  user-select: none;
 }
 
 /* ربط ألوان الخريطة */
@@ -99,7 +96,7 @@ html, body {
 }
 
 #splash-image {
-  width: 250px;
+  width: 400px;
   max-width: 85vw;
   height: auto;
   display: block;
@@ -220,31 +217,13 @@ html, body {
   font-size: 14px;
 }
 
-/* تنسيق موحد لأيقونة البحث وزر التحريك */
-#search-icon, #move-toggle {
-    cursor: pointer;
-    pointer-events: auto !important;
-    z-index: 10001; /* طبقة عالية جداً فوق كل شيء */
-}
-
 #search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 14px; /* كبر الخط قليلاً لسهولة النقر */
-    opacity: 0.8;    /* زيادة الوضوح قليلاً */
-}
-
-#move-toggle {
-    font-size: 20px;
-    padding: 5px;
-    user-select: none;
-    transition: transform 0.2s;
-}
-
-#move-toggle:active {
-    transform: scale(0.9); /* تأثير بصري عند الضغط */
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0.6;
 }
 
 .controls-row {
