@@ -1,245 +1,133 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive Map</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="js-toggle-container" class="top">
-        <div id="search-container">
-            <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
-        </div>
-        <div class="controls-row">
-            <span id="move-toggle">↕️</span>
-            <label class="switch">
-                <input type="checkbox" id="js-toggle" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
+<!DOCTYPE html>  <html lang="ar" dir="rtl">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="darkreader-lock">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+  <title>Interactive Map</title>  
+  <link rel="stylesheet" href="style.css">  
+<link rel="icon" type="image/webp" href="image/o.webp">  
+</head>  
+<body>  
+<div id="js-toggle-container" class="top">  
+  <div id="search-container">  
+    <input type="text" id="search-input" placeholder="ابحث باسم الملف...">  
+    <span id="search-icon">🔍</span>  
+  </div>    <div class="controls-row">  
+    <span id="move-toggle" style="cursor:pointer; font-size: 18px;">↕️</span>  
+    <div style="display: flex; align-items: center; gap: 8px;">  
+      <span style="font-size: 12px; opacity: 0.8;">Interaction</span>  
+      <label class="switch">  
+        <input type="checkbox" id="js-toggle" checked>  
+        <span class="slider round"></span>  
+      </label>  
+    </div>  
+  </div>  
+</div>  <div id="loading-overlay">  
+  <div id="loading-content">  
+    <img id="splash-image" src="image/o.webp" />  
+    <h1>Interactive College Map</h1>  
+    <div id="loader-lights">  
+      <div class="light-bulb" id="bulb-1"></div>  
+      <div class="light-bulb" id="bulb-2"></div>  
+      <div class="light-bulb" id="bulb-3"></div>  
+      <div class="light-bulb" id="bulb-4"></div>  
+    </div>  
+    <div id="legend">  
+      <div class="legend-item red">أسئلة</div>  
+      <div class="legend-item yellow">محاضرات</div>  
+      <div class="legend-item white">مواد أخرى</div>  
+      <div class="legend-item purple">إجابات</div>  
+      <div class="legend-item green">سكاشن العملي</div>  
+      <div class="legend-item blue">فيديو شرح</div>  
+    </div>  
+  </div>  
+</div>  <div id="scroll-container">  
+  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">  
+    <defs></defs>  <g transform="translate(0,0)" id="files-list-container">  
+  <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />  
 
-    <div id="loading-overlay">
-        <div id="loading-content">
-            <img id="splash-image" src="image/o.webp" />
-            <div id="loader-lights">
-                <div class="light-bulb" id="bulb-1"></div>
-                <div class="light-bulb" id="bulb-2"></div>
-                <div class="light-bulb" id="bulb-3"></div>
-                <div class="light-bulb" id="bulb-4"></div>
-            </div>
-        </div>
-    </div>
+  <g id="back-button-group" style="cursor: pointer;">  
+    <rect id="back-btn" x="120" y="150" width="350" height="60" rx="15" fill="#5d4037" stroke="#fff" stroke-width="2" />  
+    <text x="295" y="188" id="back-btn-text" text-anchor="middle" fill="white" font-size="20" font-weight="bold" font-family="Arial">إلى الخريطة ←</text>  
+  </g>  
 
-    <div id="scroll-container">
-        <svg id="main-svg" xmlns="http://www.w3.org/2000/svg">
-            <defs></defs>
-            <g id="files-list-container">
-                <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />
-                <g id="back-button-group">
-                    <rect x="120" y="150" width="350" height="60" rx="15" fill="#5d4037" stroke="#fff" />
-                    <text x="295" y="188" id="back-btn-text" text-anchor="middle" fill="white" font-weight="bold">إلى الخريطة ←</text>
-                </g>
-                <g id="dynamic-links-group"></g>
-            </g>
-<!-- الاسبوع الأول -->
-<g transform="translate(1024,0)">
-<image data-src="image/1.webp" width="1024" height="2454" />
+  <g id="dynamic-links-group"></g>  
 </g>
-<!-- الاسبوع الثاني -->
-<g transform="translate(2048,0)">
-<image data-src="image/2.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الثالث -->
-<g transform="translate(3072,0)">
-<image data-src="image/3.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الرابع -->
-<g transform="translate(4096,0)">
-<image data-src="image/4.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الخامس -->
-<g transform="translate(5120,0)">
-<image data-src="image/5.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع السادس -->
-<g transform="translate(6144,0)">
-<image data-src="image/6.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع السابع -->
-<g transform="translate(7168,0)">
-<image data-src="image/7.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الثامن -->
-<g transform="translate(8192,0)">
-<image data-src="image/8.webp" width="1024" height="2454" />
 
-<!-- Monday 8 -->
-<g transform="translate(368,0)">
-
-<rect x="0" y="703" height="380" class="m w l" data-href="rrs/micro-1.pdf"/>
-
-<rect x="0" y="1083" height="253.5" class="m w l" data-href="rrs/patho-1.pdf"/>
-
-<rect x="0" y="1339" height="125" class="m w q" data-href="rrs/patho-q1.pdf"/>
-
-<rect x="0" y="1465" height="378.5" class="m w l" data-href="rrs/physio-2.pdf"/>
-
-<rect x="0" y="1845" height="380" class="m w s" data-href="rrs/anatomy-s1.pdf"/>
-
-</g>
-<!-- Wednesday 8 -->
-<g transform="translate(598,0)">
-
-<rect x="0" y="366" height="315" class="m w l" data-href="rrs/physio-1.pdf"/>
-
-<rect x="0" y="1846" height="253.4" class="m w l" data-href="rrs/physio-2.pdf"/>
-
-<rect x="0" y="2100" height="127" class="m w q" data-href="rrs/physio-q1.pdf"/>
-
-</g>
-<!-- Thursday 8 -->
-<g transform="translate(712.35,0)">
-
-<rect x="0" y="702" height="380" class="m w l" data-href="rrs/histo-1.pdf"/>
-
-<rect x="0" y="1465" height="380" class="m w l" data-href="rrs/anatomy-2.pdf"/>
-
-</g>
-</g>
-<!-- الاسبوع التاسع -->
-<g transform="translate(9216,0)">
-    <image data-src="image/9.webp" width="1024" height="2454"/>
-
-<!-- Saturday 9 -->
-<g transform="translate(140,0)">
-
-<rect x="0" y="309" height="340.63" class="m w l" data-href="rrs/pharma-1.pdf"/>
-
-<rect x="0" y="876" height="349" class="m w i" data-href="ipc/book.pdf"/>
-
-<rect x="0" y="1225" height="121" class="m hw q" data-href="ipc/q/9.pdf"/>
-
-<rect x="57.5" y="1225" height="121" class="m hw a" data-href="ipc/a/9.pdf"/>
-
-<rect x="0" y="1810.38" height="470.24" class="m w " data-href="#"/>
-
-</g>
-<!-- Monday 9 -->
-<g transform="translate(370,0)">
-
-<rect x="0" y="422.3" height="456.42" class="m w l" data-href="rrs/physio-3.pdf"/>
-
-<rect x="0" y="1369" height="450" class="m w " data-href="rrs/histo-2.pdf"/>
-
-<rect x="0" y="1812.1" height="471.44" class="m w " data-href="#"/>
-
-</g>
-<!-- Tuesday 9 -->
-<g transform="translate(485,0)">
-
-<rect x="0" y="1121.29" height="347.86" class="m w " data-href="#"/>
-
-<rect x="0" y="1470.58" height="340.47" class="m w " data-href="#"/>
-
-<rect x="0" y="1813.77" height="361.36" class="m w " data-href="#"/>
-
-</g>
-<!-- Wednesday 9 -->
-<g transform="translate(600,0)">
-
-<rect x="0" y="421.64" height="457.44" class="m w " data-href="#"/>
-
-<rect x="0" y="1469.19" height="343.19" class="m w l" data-href="rrs/physio-4.pdf"/>
-
-</g>
-<!-- Thursday 9 -->
-<g transform="translate(715,0)">
-
-<rect x="0" y="422.25" height="340.47" class="m w " data-href="#"/>
-
-<rect x="0" y="877.49" height="485.43" class="m w " data-href="#"/>
-
-<rect x="0" y="1364.73" height="447.54" class="m w " data-href="#"/>
-
-</g>
-</g>
-<!-- الاسبوع العاشر -->
-<g transform="translate(10240,0)">
-    <image data-src="image/10.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الحادي عشر-->
-<g transform="translate(11264,0)">
-    <image href="image/11.webp" width="1024" height="2454" />
-</g>
-<!-- الاسبوع الثاني عشر -->
-<g transform="translate(12288,0)">
-<image href="image/12.webp" width="1024" height="2454" />
-
-<!-- Saturday 12 -->
-<g transform="translate(138.41,0)">
-
-<rect x="0" y="557.66" height="628.7" class="m w l" data-href="uri/pharma-1.pdf"/>
-
-</g>
-</g>
-<!-- الاسبوع الثالث عشر-->
-<g transform="translate(13312,0)">
-    <image href="image/13.webp" width="1024" height="2454" />
-
-<!-- Saturday 13 -->
-<g transform="translate(139,0)">
-
-<rect x="0" y="937.7" height="468.3" class="m w " data-href="#"/>
-
-<rect x="0" y="1409" height="472.3" class="m w l" data-href="uri/pharma-2.pdf"/>
-
-<rect x="0" y="1883.5" height="395.5" class="m w s" data-href="uri/micro-s1.pdf"/>
-
-</g>
-<!-- Monday 13 -->
-<g transform="translate(368,0)">
-
-<rect x="0" y="415.1" height="424.1" class="m w " data-href="#"/>
-
-<rect x="0" y="839.15" height="445" class="m w " data-href="#"/>
-
-<rect x="0" y="1287.75" height="484.32" class="m w i" data-href="ipc/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
-
-<rect x="0" y="1773.4" height="505.15" class="m w l" data-href="uri/physio-1.pdf"/>
-
-</g>
-<!-- Tuesday 13 -->
-<g transform="translate(485,0)">
-
-<rect x="0" y="311.4" height="426.454" class="m w " data-href="#"/>
-
-<rect x="0" y="1285.3" height="486" class="m w " data-href="#"/>
-
-</g>
-<!-- Wednesday 13 -->
-<g transform="translate(598,0)">
-
-<rect x="0" y="415.1" height="323.85" class="m w l" data-href="uri/micro-1.pdf"/>
-
-<rect x="0" y="841.4" height="444" class="m w l " data-href="uri/histo-1.pdf"/>
-
-<rect x="0" y="1286.2" height="486.5" class="m w " data-href="#"/>
-
-</g>
-<!-- Thursday 13 -->
-<g transform="translate(714,0)">
-
-<rect x="0" y="418.7" height="420" class="m w " data-href="#"/>
-
-<rect x="0" y="1286.5" height="485" class="m w " data-href="#"/>
-
-<rect x="0" y="1772.3" height="508.2" class="m w " data-href="#"/>
-</g>
-</g>
-            </svg>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>
+<!-- الاسبوع الأول -->  <g transform="translate(1024,0)">  
+<image data-src="image/1.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الثاني -->  
+<g transform="translate(2048,0)">  
+<image data-src="image/2.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الثالث -->  
+<g transform="translate(3072,0)">  
+<image data-src="image/3.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الرابع -->  
+<g transform="translate(4096,0)">  
+<image data-src="image/4.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الخامس -->  
+<g transform="translate(5120,0)">  
+<image data-src="image/5.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع السادس -->  
+<g transform="translate(6144,0)">  
+<image data-src="image/6.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع السابع -->  
+<g transform="translate(7168,0)">  
+<image data-src="image/7.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الثامن -->  
+<g transform="translate(8192,0)">  
+<image data-src="image/8.webp" width="1024" height="2454" />  <!-- Monday 8 -->  <g transform="translate(368,0)">  <rect x="0" y="703" height="380" class="m w l" data-href="rrs/micro-1.pdf"/>  <rect x="0" y="1083" height="253.5" class="m w l" data-href="rrs/patho-1.pdf"/>  <rect x="0" y="1339" height="125" class="m w q" data-href="rrs/patho-q1.pdf"/>  <rect x="0" y="1465" height="378.5" class="m w l" data-href="rrs/physio-2.pdf"/>  <rect x="0" y="1845" height="380" class="m w s" data-href="rrs/anatomy-s1.pdf"/>  </g>  
+<!-- Wednesday 8 -->  
+<g transform="translate(598,0)">  <rect x="0" y="366" height="315" class="m w l" data-href="rrs/physio-1.pdf"/>  <rect x="0" y="1846" height="253.4" class="m w l" data-href="rrs/physio-2.pdf"/>  <rect x="0" y="2100" height="127" class="m w q" data-href="rrs/physio-q1.pdf"/>  </g>  
+<!-- Thursday 8 -->  
+<g transform="translate(712.35,0)">  <rect x="0" y="702" height="380" class="m w l" data-href="rrs/histo-1.pdf"/>  <rect x="0" y="1465" height="380" class="m w l" data-href="rrs/anatomy-2.pdf"/>  </g>  
+</g>  
+<!-- الاسبوع التاسع -->  
+<g transform="translate(9216,0)">  
+    <image data-src="image/9.webp" width="1024" height="2454"/>  <!-- Saturday 9 -->  <g transform="translate(140,0)">  <rect x="0" y="309" height="340.63" class="m w l" data-href="rrs/pharma-1.pdf"/>  <rect x="0" y="876" height="349" class="m w i" data-href="ipc/book.pdf"/>  <rect x="0" y="1225" height="121" class="m hw q" data-href="ipc/q/9.pdf"/>  <rect x="57.5" y="1225" height="121" class="m hw a" data-href="ipc/a/9.pdf"/>  <rect x="0" y="1810.38" height="470.24" class="m w " data-href="#"/>  </g>  
+<!-- Monday 9 -->  
+<g transform="translate(370,0)">  <rect x="0" y="422.3" height="456.42" class="m w l" data-href="rrs/physio-3.pdf"/>  <rect x="0" y="1369" height="450" class="m w " data-href="rrs/histo-2.pdf"/>  <rect x="0" y="1812.1" height="471.44" class="m w " data-href="#"/>  </g>  
+<!-- Tuesday 9 -->  
+<g transform="translate(485,0)">  <rect x="0" y="1121.29" height="347.86" class="m w " data-href="#"/>  <rect x="0" y="1470.58" height="340.47" class="m w " data-href="#"/>  <rect x="0" y="1813.77" height="361.36" class="m w " data-href="#"/>  </g>  
+<!-- Wednesday 9 -->  
+<g transform="translate(600,0)">  <rect x="0" y="421.64" height="457.44" class="m w " data-href="#"/>  <rect x="0" y="1469.19" height="343.19" class="m w l" data-href="rrs/physio-4.pdf"/>  </g>  
+<!-- Thursday 9 -->  
+<g transform="translate(715,0)">  <rect x="0" y="422.25" height="340.47" class="m w " data-href="#"/>  <rect x="0" y="877.49" height="485.43" class="m w " data-href="#"/>  <rect x="0" y="1364.73" height="447.54" class="m w " data-href="#"/>  </g>  
+</g>  
+<!-- الاسبوع العاشر -->  
+<g transform="translate(10240,0)">  
+    <image data-src="image/10.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الحادي عشر-->  
+<g transform="translate(11264,0)">  
+    <image href="image/11.webp" width="1024" height="2454" />  
+</g>  
+<!-- الاسبوع الثاني عشر -->  
+<g transform="translate(12288,0)">  
+<image href="image/12.webp" width="1024" height="2454" />  <!-- Saturday 12 -->  <g transform="translate(138.41,0)">  <rect x="0" y="557.66" height="628.7" class="m w l" data-href="uri/pharma-1.pdf"/>  </g>  
+</g>  
+<!-- الاسبوع الثالث عشر-->  
+<g transform="translate(13312,0)">  
+    <image href="image/13.webp" width="1024" height="2454" />  <!-- Saturday 13 -->  <g transform="translate(139,0)">  <rect x="0" y="937.7" height="468.3" class="m w " data-href="#"/>  <rect x="0" y="1409" height="472.3" class="m w l" data-href="uri/pharma-2.pdf"/>  <rect x="0" y="1883.5" height="395.5" class="m w s" data-href="uri/micro-s1.pdf"/>  </g>  
+<!-- Monday 13 -->  
+<g transform="translate(368,0)">  <rect x="0" y="415.1" height="424.1" class="m w " data-href="#"/>  <rect x="0" y="839.15" height="445" class="m w " data-href="#"/>  <rect x="0" y="1287.75" height="484.32" class="m w i" data-href="ipc/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>  <rect x="0" y="1773.4" height="505.15" class="m w l" data-href="uri/physio-1.pdf"/>  </g>  
+<!-- Tuesday 13 -->  
+<g transform="translate(485,0)">  <rect x="0" y="311.4" height="426.454" class="m w " data-href="#"/>  <rect x="0" y="1285.3" height="486" class="m w " data-href="#"/>  </g>  
+<!-- Wednesday 13 -->  
+<g transform="translate(598,0)">  <rect x="0" y="415.1" height="323.85" class="m w l" data-href="uri/micro-1.pdf"/>  <rect x="0" y="841.4" height="444" class="m w l " data-href="uri/histo-1.pdf"/>  <rect x="0" y="1286.2" height="486.5" class="m w " data-href="#"/>  </g>  
+<!-- Thursday 13 -->  
+<g transform="translate(714,0)">  <rect x="0" y="418.7" height="420" class="m w " data-href="#"/>  <rect x="0" y="1286.5" height="485" class="m w " data-href="#"/>  <rect x="0" y="1772.3" height="508.2" class="m w " data-href="#"/>  
+</g>  
+</g>  
+</svg>  
+</div>  
+<script src="script.js"></script>  
+</body>  
+</html> 
