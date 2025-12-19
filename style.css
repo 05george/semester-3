@@ -218,6 +218,8 @@ html, body {
 }
 
 #search-icon {
+  cursor: pointer;
+  pointer-events: auto;
   position: absolute;
   left: 10px;
   top: 50%;
