@@ -384,4 +384,58 @@ window.onload = function() {
         interactionEnabled = this.checked; 
         if(!interactionEnabled) cleanupHover(); 
     });
+
+const GITHUB_OWNER = "05george";
+const GITHUB_REPO  = "semester-3";
+const BRANCH = "main";
+
+// مجلد وهمي نضيف فيه العناصر
+const dynamicVirtualGroup = document.createElementNS(
+  "http://www.w3.org/2000/svg",
+  "g"
+);
+dynamicVirtualGroup.setAttribute("id", "dynamic-github-pdfs");
+dynamicVirtualGroup.style.display = "none";
+document.getElementById("main-svg").appendChild(dynamicVirtualGroup);
+
+// قراءة كل الملفات باستخدام Git Tree API
+async function loadAllPdfFromGithub() {
+  try {
+    const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
+    const res = await fetch(api);
+    const data = await res.json();
+
+    if (!data.tree) return;
+
+    data.tree.forEach(item => {
+      if (item.type === "blob" && item.path.toLowerCase().endsWith(".pdf")) {
+
+        // إنشاء rect وهمي بنفس منطق القديم
+        const r = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect"
+        );
+
+        r.setAttribute("class", "m");
+        r.setAttribute("data-href", item.path);
+
+        const name = item.path.split("/").pop();
+        r.setAttribute("data-full-text", name);
+
+        dynamicVirtualGroup.appendChild(r);
+      }
+    });
+
+    // إعادة بناء القائمة بعد الإضافة
+    if (typeof updateWoodInterface === "function") {
+      updateWoodInterface();
+    }
+
+  } catch (e) {
+    console.error("GitHub PDF Loader Error:", e);
+  }
+}
+
+// تشغيل التحميل الديناميكي
+loadAllPdfFromGithub();
 };
