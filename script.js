@@ -28,25 +28,30 @@ window.onload = function() {
 
     // --- 1. دالة الفلترة الذكية (الخشب) ---
     // هذه الدالة تضمن بقاء المجلدات وإخفاء الملفات غير المطابقة فقط
-    function applyWoodSearchFilter() {
-        const query = searchInput.value.toLowerCase().trim();
-        
-        mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
-            const textElement = group.querySelector('text');
-            if (!textElement) return;
+// --- دالة الفلترة المعدلة للحفاظ على المسافات ---
+function applyWoodSearchFilter() {
+    const query = searchInput.value.toLowerCase().trim();
+    
+    mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
+        const textElement = group.querySelector('text');
+        if (!textElement) return;
 
-            const name = textElement.getAttribute('data-search-name') || "";
-            const isFolder = textElement.textContent.includes("📁");
+        const name = textElement.getAttribute('data-search-name') || "";
+        const isFolder = textElement.textContent.includes("📁");
 
-            if (isFolder) {
-                // المجلدات تظل ظاهرة دائماً كما طلبت
-                group.style.display = ''; 
+        if (isFolder) {
+            // المجلدات دائماً ظاهرة
+            group.style.visibility = 'visible';
+        } else {
+            // الملفات: إذا كانت تطابق البحث تظهر، وإذا لم تطابق تختفي مع بقاء مكانها فارغاً
+            if (query === "" || name.includes(query)) {
+                group.style.visibility = 'visible';
             } else {
-                // الملفات تخضع للفلترة
-                group.style.display = (query === "" || name.includes(query)) ? '' : 'none';
+                group.style.visibility = 'hidden'; // هنا السر: يختفي ويترك مكانه محجوزاً
             }
-        });
-    }
+        }
+    });
+}
 
     // --- 2. وظيفة الفتح الذكي للروابط ---
     function smartOpen(url) {
