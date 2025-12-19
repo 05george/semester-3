@@ -199,6 +199,9 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all .3s ease;
   width: 180px;
+  max-width: 80vw;
+  pointer-events: auto;
+  touch-action: none
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -214,6 +217,8 @@ html, body {
   border: 1px solid #444;
   border-radius: 5px;
   width: 100%;
+  font-size: 16px !important;
+  height: 40px;
   background: #222;
   color: white;
   font-size: 14px;
