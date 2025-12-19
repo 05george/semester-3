@@ -2,19 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="darkreader-lock">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Interactive Map</title>
   <link rel="stylesheet" href="style.css">
-<link rel="icon" type="image/webp" href="image/o.webp">
+  <link rel="icon" type="image/webp" href="image/o.webp">
 </head>
 <body>
+
 <div id="js-toggle-container" class="top">
   <div id="search-container">
     <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
     <span id="search-icon">🔍</span>
   </div>
-
   <div class="controls-row">
     <span id="move-toggle" style="cursor:pointer; font-size: 18px;">↕️</span>
     <div style="display: flex; align-items: center; gap: 8px;">
@@ -48,34 +47,28 @@
   </div>
 </div>
 
-<div id="scroll-container">
-  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
-<body>
-
-<div id="toolbar">
-  <button id="backBtn">⬅ رجوع</button>
-  <button id="downloadBtn">⬇ تحميل</button>
-  <button id="shareBtn">🔗 مشاركة</button>
+<div id="pdf-overlay" class="hidden">
+  <div id="toolbar">
+    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
+    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
+    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
+  </div>
+  <iframe id="pdfFrame" src="" loading="lazy"></iframe>
 </div>
 
-<iframe
-  id="pdfFrame"
-  src=""
-  loading="lazy">
-</iframe>
-
+<div id="scroll-container">
+  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
     <defs></defs>
-
+    
     <g transform="translate(0,0)" id="files-list-container">
-      <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />
-
+      <image href="image/wood.webp" x="0" y="0" width="1024" height="2454" />
       <g id="back-button-group" style="cursor: pointer;">
         <rect id="back-btn" x="120" y="150" width="350" height="60" rx="15" fill="#5d4037" stroke="#fff" stroke-width="2" />
         <text x="295" y="188" id="back-btn-text" text-anchor="middle" fill="white" font-size="20" font-weight="bold" font-family="Arial">إلى الخريطة ←</text>
       </g>
-
       <g id="dynamic-links-group"></g>
     </g>
+
 <!-- الاسبوع الأول -->
 <g transform="translate(1024,0)">
 <image data-src="image/1.webp" width="1024" height="2454" />
