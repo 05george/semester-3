@@ -1,4 +1,3 @@
-
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
     mainSvg.style.colorScheme = 'only light'; 
