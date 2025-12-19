@@ -22,29 +22,49 @@ window.onload = function() {
     // --- وظائف الحركة (تعريفها في البداية لتجنب ReferenceError) ---
     
     // الذهاب لليسار (صفحة الخشب)
-    const goToWood = () => {
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    };
+    // الذهاب لأقصى اليسار (صفحة الخشب والقائمة)
+const goToWood = () => {
+    // في نظام RTL، أقصى اليسار هو عرض الحاوية بالسالب
+    scrollContainer.scrollTo({ 
+        left: -scrollContainer.scrollWidth, 
+        behavior: 'smooth' 
+    });
+};
 
-    // الذهاب لليمين (نهاية الخريطة)
-    const goToMapEnd = () => {
-        scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
-    };
+// الذهاب لأقصى اليمين (نهاية الخريطة/الأسبوع الأخير)
+const goToMapEnd = () => {
+    scrollContainer.scrollTo({ 
+        left: 0, 
+        behavior: 'smooth' 
+    });
+};
 
     // --- ربط أحداث الأزرار ---
+// عند النقر على أيقونة العدسة 🔍
+searchIcon.onclick = (e) => {
+    e.preventDefault();
+    goToWood(); // سينقلك الآن لأقصى اليسار
+};
 
-    // تفعيل العدسة 🔍
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        goToWood(); 
-    };
+// عند كتابة اسم ملف والضغط على Enter في الكيبورد
+searchInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault(); // منع تحديث الصفحة
+        goToWood(); // الانتقال للقائمة لمشاهدة النتائج
+    }
+};
 
-    // تفعيل زر Enter/Go في البحث
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            goToWood();
-        }
-    };
+// تعديل زر "إلى الخريطة" الموجود في صفحة الخشب للعودة لليمين
+backButtonGroup.onclick = () => { 
+    if (currentFolder !== "") { 
+        let parts = currentFolder.split('/'); 
+        parts.pop(); 
+        currentFolder = parts.join('/'); 
+        updateWoodInterface(); 
+    } else { 
+        goToMapEnd(); // سيعود بك إلى الصفر (أقصى اليمين)
+    } 
+};
     // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
     moveToggle.onclick = (e) => {
         e.preventDefault();
