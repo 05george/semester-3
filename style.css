@@ -218,12 +218,21 @@ html, body {
 }
 
 #search-icon {
+  z-index: 10;
+  cursor: pointer;
+  pointer-events: auto;
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
   font-size: 12px;
   opacity: 0.6;
+}
+
+#move-toggle {
+    cursor: pointer;
+    padding: 5px;
+    user-select: none;
 }
 
 .controls-row {
