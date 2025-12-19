@@ -78,7 +78,10 @@ function smartOpen(item) {
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
-        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+        
+#zoom=page-width
+        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                        encodeURIComponent(url) + "#zoom=page-width"; 
     } else {
         window.open(url, '_blank');
     }
