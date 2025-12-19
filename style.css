@@ -3,7 +3,8 @@
     stroke-width: 1px !important;
     rx: 5;
     ry: 5;
-}
+    -webkit-touch-callout: none;
+    user-select: none;
 /* 1. إعدادات توحيد الرؤية ومنع المتصفحات من الاجتهاد في تكبير الخطوط */
 *, *::before, *::after {
   box-sizing: border-box !important;
@@ -68,6 +69,7 @@ html, body {
   transition: filter .3s ease, stroke-width .3s ease;
   cursor: pointer;
   -webkit-touch-callout: none;
+  user-select: none;
 }
 
 /* ربط ألوان الخريطة */
