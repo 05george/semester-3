@@ -217,6 +217,12 @@ html, body {
   font-size: 14px;
 }
 
+#search-icon, #move-toggle {
+    cursor: pointer;
+    pointer-events: auto !important; /* لضمان تخطي أي تداخل */
+    z-index: 10001; 
+}
+
 #search-icon {
   z-index: 10;
   cursor: pointer;
