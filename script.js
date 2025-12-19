@@ -12,7 +12,7 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // --- حل مشكلة الخطأ في الكونسول: تعريف activeState ---
+    // --- تعريف activeState بشكل صحيح لمنع خطأ الكونسول ---
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -24,18 +24,14 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- حل مشكلة الاتجاه RTL للبحث ---
-    
-    // الانتقال لليسار (صفحة الخشب)
+    // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
-        // في RTL، أقصى اليسار هو قيمة سالبة
         scrollContainer.scrollTo({ 
             left: -scrollContainer.scrollWidth, 
             behavior: 'smooth' 
         });
     };
 
-    // العودة لليمين (نهاية الخريطة)
     const goToMapEnd = () => {
         scrollContainer.scrollTo({ 
             left: 0, 
@@ -43,8 +39,7 @@ window.onload = function() {
         });
     };
 
-    // --- ربط الأحداث المحدث ---
-
+    // --- ربط الأحداث ---
     searchIcon.onclick = (e) => {
         e.preventDefault();
         goToWood(); 
@@ -57,19 +52,6 @@ window.onload = function() {
         }
     };
 
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
-            updateWoodInterface(); 
-        } else { 
-            goToMapEnd(); 
-        } 
-    };
-
-    // ... (بقية الدوال البرمجية الأصلية scan, processRect, wrapText إلخ مع التأكد من وجودها)
-    // ملاحظة: تأكد من إدراج بقية الدوال التي كانت في الكود الأصلي لضمان عمل الخريطة بالكامل.
-};
-    // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
     moveToggle.onclick = (e) => {
         e.preventDefault();
         if (toggleContainer.classList.contains('top')) {
@@ -79,8 +61,16 @@ window.onload = function() {
         }
     };
 
-    // --- باقي الوظائف البرمجية الخاصة بالخريطة ---
+    backButtonGroup.onclick = () => { 
+        if (currentFolder !== "") { 
+            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
+            updateWoodInterface(); 
+        } else { 
+            goToMapEnd(); 
+        } 
+    };
 
+    // --- الدوال المساعدة ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -347,30 +337,11 @@ window.onload = function() {
     }
 
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
-    scan();
-
-    // أحداث البحث والرجوع
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
-            updateWoodInterface(); 
-        } else { goToMapEnd(); } 
-    };
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; if(bg) bg.style.display = rect.style.display;
-        });
-    }, 150));
-
-    // Loading & Start
+    
+    // --- بدء التشغيل والتحميل ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
+    
     urls.forEach(u => {
         const img = new Image();
         img.onload = img.onerror = () => {
@@ -386,6 +357,7 @@ window.onload = function() {
                     setTimeout(() => { 
                         if(loadingOverlay) loadingOverlay.style.display = 'none'; 
                         mainSvg.style.opacity = 1; 
+                        scan(); // مسح العناصر وتفعيل الخصائص بعد التحميل
                         updateWoodInterface(); 
                         goToMapEnd(); 
                     }, 300);
@@ -395,6 +367,18 @@ window.onload = function() {
         };
         img.src = u;
     });
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m').forEach(rect => {
+            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display; 
+            if(bg) bg.style.display = rect.style.display;
+        });
+    }, 150));
 
     jsToggle.addEventListener('change', function() { 
         interactionEnabled = this.checked; 
