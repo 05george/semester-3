@@ -11,21 +11,13 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // عناصر PDF Overlay
-    const pdfOverlay = document.getElementById('pdf-overlay');
-    const pdfFrame = document.getElementById('pdfFrame');
-    const closePdfBtn = document.getElementById('closePdfBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const shareBtn = document.getElementById('shareBtn');
-
-    let currentPdfUrl = ""; // لتخزين رابط الملف الحالي
-
-    const repoOwner = "05george";
-    const repoName = "semester-3";
+    // --- إعدادات الموقع الجديد (API) ---
+    // قم بتغيير هذا الرابط إلى رابط موقعك الجديد الذي يوفر البيانات
+    const NEW_API_BASE = "https://api.github.com/repos/05george/semester-3/contents";
 
     let activeState = {
-        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        rect: null, zoomText: null, zoomBg: null,
+        baseText: null, baseBg: null, animationId: null,
         touchStartTime: 0, initialScrollLeft: 0
     };
 
@@ -34,80 +26,14 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- منطق PDF Viewer (داخل الصفحة) ---
-    function openPdfViewer(url) {
-        currentPdfUrl = url;
-        // استخدام Google Docs Viewer أو pdf.js (هنا نستخدم طريقتك الأصلية مع تعديل الرابط)
-        // ملاحظة: روابط github تحتاج لمعالجة لتفتح مباشرة
-        let viewerUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
-        
-        pdfFrame.src = viewerUrl;
-        pdfOverlay.classList.remove('hidden');
-    }
-
-    closePdfBtn.onclick = () => {
-        pdfOverlay.classList.add('hidden');
-        pdfFrame.src = ""; // إيقاف التحميل لتوفير الذاكرة
-    };
-
-    downloadBtn.onclick = () => {
-        const a = document.createElement("a");
-        a.href = currentPdfUrl;
-        a.download = "";
-        a.click();
-    };
-
-    shareBtn.onclick = async () => {
-        if(navigator.share){
-            await navigator.share({ title: "PDF File", url: currentPdfUrl });
-        } else {
-            navigator.clipboard.writeText(currentPdfUrl);
-            alert("تم نسخ رابط الملف");
-        }
-    };
-
-    // --- 2. وظيفة الفتح الذكي للروابط (معدلة) ---
+    // --- 2. وظيفة الفتح الطبيعي في المتصفح ---
     function smartOpen(url) {
         if (!url || url === '#') return;
-
-        let targetUrl = url;
-        
-        // معالجة روابط GitHub لتصبح قابلة للعرض المباشر (CDN)
-        if (url.includes('github.com') && url.includes('/blob/')) {
-            targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
-                           .replace('/blob/', '@');
-        }
-
-        if (targetUrl.toLowerCase().endsWith('.pdf')) {
-            openPdfViewer(targetUrl);
-        } else {
-            // روابط أخرى
-            window.open(targetUrl, '_blank');
-        }
+        // فتح الرابط مباشرة في لسان جديد ليعمل المتصفح تلقائياً (SVG, PDF, إلخ)
+        window.open(url, '_blank');
     }
 
-    // --- 3. دالة الفلترة الذكية (الخشب) ---
-    function applyWoodSearchFilter() {
-        const query = searchInput.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
-            const textElement = group.querySelector('text');
-            if (!textElement) return;
-            const name = textElement.getAttribute('data-search-name') || "";
-            const isFolder = textElement.textContent.includes("📁");
-
-            if (isFolder) {
-                group.style.visibility = 'visible';
-            } else {
-                if (query === "" || name.includes(query)) {
-                    group.style.visibility = 'visible';
-                } else {
-                    group.style.visibility = 'hidden';
-                }
-            }
-        });
-    }
-
-    // --- 4. إدارة واجهة الخشب (GitHub API) ---
+    // --- 3. إدارة واجهة الخشب (تجلب من الموقع الجديد عبر API) ---
     async function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -115,18 +41,22 @@ window.onload = function() {
         backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
 
         try {
-            // ملاحظة: تأكد من أن المستودع عام (Public) ليعمل هذا الكود
-            const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${currentFolder}`);
-            if (!response.ok) throw new Error('Network Error');
+            // بناء رابط الطلب بناءً على المجلد الحالي
+            const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
+            
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('API Response Error');
             const data = await response.json();
 
             const items = data.filter(item => {
                 const name = item.name.toLowerCase();
-                return name !== 'image' && (item.type === 'dir' || name.endsWith('.pdf'));
+                return name !== 'image'; // استثناء مجلد الصور
             }).sort((a, b) => (a.type === 'dir' ? -1 : 1));
 
             renderWoodItems(items);
-        } catch (e) { console.error("GitHub API Error:", e); }
+        } catch (e) { 
+            console.error("خطأ في جلب البيانات من الموقع الجديد:", e);
+        }
     }
 
     function renderWoodItems(items) {
@@ -153,24 +83,43 @@ window.onload = function() {
             g.appendChild(r); g.appendChild(t);
             g.onclick = (e) => {
                 e.stopPropagation();
-                if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); }
-                else { smartOpen(item.download_url); } // هنا نستخدم download_url من GitHub
+                if (item.type === 'dir') { 
+                    currentFolder = item.path; 
+                    updateWoodInterface(); 
+                } else { 
+                    smartOpen(item.download_url || item.html_url); 
+                }
             };
             dynamicGroup.appendChild(g);
         });
         applyWoodSearchFilter();
     }
 
-    // --- 5. وظائف الحركة والبحث ---
-    const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
-    const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    // --- 4. نظام البحث والفلترة ---
+    function applyWoodSearchFilter() {
+        const query = searchInput.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
+            const textElement = group.querySelector('text');
+            if (!textElement) return;
+            const name = textElement.getAttribute('data-search-name') || "";
+            if (textElement.textContent.includes("📁") || query === "" || name.includes(query)) {
+                group.style.visibility = 'visible';
+            } else {
+                group.style.visibility = 'hidden';
+            }
+        });
+    }
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = href.includes(query) || fullText.includes(query);
+            
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
             const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            
             rect.style.display = (query && !isMatch) ? 'none' : '';
             if(label) label.style.display = rect.style.display;
             if(bg) bg.style.display = rect.style.display;
@@ -178,8 +127,11 @@ window.onload = function() {
         applyWoodSearchFilter();
     }, 150));
 
+    // --- 5. وظائف التنقل ---
+    const goToWood = () => scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
+    const goToMapEnd = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+
     searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
-    searchInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); goToWood(); } };
     moveToggle.onclick = (e) => {
         e.preventDefault();
         toggleContainer.classList.contains('top') ? 
@@ -187,7 +139,8 @@ window.onload = function() {
     };
     backButtonGroup.onclick = () => { 
         if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
+            let parts = currentFolder.split('/'); parts.pop(); 
+            currentFolder = parts.join('/'); 
             updateWoodInterface(); 
         } else { goToMapEnd(); } 
     };
@@ -198,10 +151,10 @@ window.onload = function() {
             const context = this; const args = arguments;
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(context, args), delay);
-        }
+        };
     }
 
-    // --- 6. Helper Functions & Hover Logic (باقي الكود كما هو تقريباً) ---
+    // --- 6. معالجة العناصر والرسوم (Hover) ---
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (images.length) mainSvg.setAttribute('viewBox', `0 0 ${images.length * 1024} 2454`);
@@ -227,12 +180,11 @@ window.onload = function() {
         activeState.rect.style.filter = 'none';
         activeState.rect.style.transform = 'scale(1)';
         activeState.rect.style.strokeWidth = '2px';
-        if (activeState.zoomPart) activeState.zoomPart.remove();
         if (activeState.zoomText) activeState.zoomText.remove();
         if (activeState.zoomBg) activeState.zoomBg.remove();
         if (activeState.baseText) activeState.baseText.style.opacity = '1';
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null });
+        Object.assign(activeState, { rect: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null });
     }
 
     function startHover() {  
@@ -256,12 +208,14 @@ window.onload = function() {
             bText.style.opacity = '0'; 
             let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`); 
             if(bBg) bBg.style.opacity = '0'; activeState.baseText = bText; activeState.baseBg = bBg;  
+            
             const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text'); 
             zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || ""; 
             zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle'); 
             zText.style.dominantBaseline = 'central'; zText.style.fill = 'white'; zText.style.fontWeight = 'bold'; 
             zText.style.pointerEvents = 'none'; zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px'; 
             mainSvg.appendChild(zText);  
+            
             const bbox = zText.getBBox(); 
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); 
             zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', absY - 20); 
@@ -331,18 +285,17 @@ window.onload = function() {
         r.setAttribute('data-processed', 'true');
     }
 
-    // --- 7. التحميل النهائي ---
-    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
+    // --- 7. التحميل وإطلاق الواجهة ---
+    const imageElements = mainSvg.querySelectorAll('image');
+    const urls = Array.from(imageElements).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
-    
-    // التعامل مع الحالة إذا لم يكن هناك صور
-    if(urls.length === 0) {
-        if(loadingOverlay) loadingOverlay.style.display = 'none';
+
+    if (urls.length === 0) {
+        loadingOverlay.style.display = 'none';
         mainSvg.style.opacity = 1;
-        updateWoodInterface();
     }
 
-    urls.forEach(u => {
+    urls.forEach((u, idx) => {
         const img = new Image();
         img.onload = img.onerror = () => {
             loadedCount++;
@@ -353,13 +306,16 @@ window.onload = function() {
             if(loadedCount === urls.length) {
                 document.getElementById('bulb-1')?.classList.add('on');
                 setTimeout(() => {
-                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
+                    loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
-                        loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; 
+                        loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = 1; 
                         mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r));
-                        updateWoodInterface(); goToMapEnd(); 
+                        updateWoodInterface(); 
+                        goToMapEnd(); 
                     }, 300);
-                    mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
+                    // تثبيت روابط الصور الحقيقية بعد التحميل
+                    imageElements.forEach((si, i) => si.setAttribute('href', urls[i]));
                 }, 500);
             }
         };
