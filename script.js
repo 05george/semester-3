@@ -79,17 +79,22 @@ function smartOpen(item) {
     const pdfViewer = document.getElementById("pdfFrame");
 
     if(url.endsWith('.pdf')) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
 
         pdfViewer.src = ""; 
-        
         overlay.classList.remove("hidden");
         
+ #view=FitH
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width"; 
+                        encodeURIComponent(url) + "#zoom=page-width&view=FitH"; 
     } else {
         window.open(url, '_blank');
     }
 }
+
 
     // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
