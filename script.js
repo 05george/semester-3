@@ -54,24 +54,32 @@ function applyWoodSearchFilter() {
 }
 
     // --- 2. وظيفة الفتح الذكي للروابط ---
-    function smartOpen(url) {
-        if (!url || url === '#') return;
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
-        let targetUrl = url;
+ function smartOpen(url) {
+    if (!url || url === '#') return;
 
-        if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
-            targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
-                           .replace('/blob/main/', '@main/')
-                           .replace('/blob/master/', '@master/');
-        }
+    let targetUrl = url;
 
-        if (isMobile) {
-            window.location.href = targetUrl;
-        } else {
-            const newWindow = window.open(targetUrl, '_blank');
-            if (!newWindow || newWindow.closed) window.location.href = targetUrl;
-        }
+    // التحقق مما إذا كان الرابط ملف PDF وموجود على GitHub
+    if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
+        // تحويل الرابط إلى صيغة CDN التي تجبر المتصفح على العرض بدلاً من التحميل
+        // يحول: https://github.com/user/repo/blob/main/file.pdf
+        // إلى: https://cdn.jsdelivr.net/gh/user/repo@main/file.pdf
+        targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
+                       .replace('/blob/', '@'); 
     }
+
+    // فتح الرابط
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0);
+    
+    if (isMobile) {
+        // للموبايل: افتح في نفس النافذة
+        window.location.href = targetUrl;
+    } else {
+        // للكمبيوتر: افتح في نافذة جديدة (Tab)
+        window.open(targetUrl, '_blank');
+    }
+}
+
 
     // --- 3. إدارة واجهة الخشب (GitHub API) ---
     async function updateWoodInterface() {
