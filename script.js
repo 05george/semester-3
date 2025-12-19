@@ -80,7 +80,6 @@ window.onload = function() {
         }
     }
 
-    // --- تحديث viewBox ديناميكياً ---
     function updateDynamicSizes() {
         const images = mainSvg.querySelectorAll('image');
         if (!images.length) return;
@@ -90,7 +89,6 @@ window.onload = function() {
     }
     updateDynamicSizes();
 
-    // --- باقي الكود القديم كما هو ---
     function getCumulativeTranslate(element) {
         let x = 0, y = 0, current = element;
         while (current && current.tagName !== 'svg') {
@@ -222,25 +220,6 @@ window.onload = function() {
         }, 100);  
     }
 
-    // --- الكود المتعلق بشريط البحث والـ API ---
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-    }, 150));
-
-    jsToggle.addEventListener('change', function() { 
-        interactionEnabled = this.checked; 
-        if(!interactionEnabled) cleanupHover(); 
-    });
-
-    // --- باقي الكود القديم كما هو بعد تحميل الصور ---
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -257,6 +236,62 @@ window.onload = function() {
                 ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
                 ts.textContent = word; el.appendChild(ts); line = word;
             } else { line = test; }
+        });
+    }
+
+    function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
+
+        backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
+
+        const allRects = Array.from(mainSvg.querySelectorAll('rect.m:not(.list-item)'));
+        const folders = new Set();
+        const files = [];
+
+        allRects.forEach(r => {
+            const href = r.getAttribute('data-href') || "";
+            if (!href || href === "#") return;
+
+            if (currentFolder === "") {
+                if (href.includes('/')) folders.add(href.split('/')[0]);
+                else files.push({ href, text: r.getAttribute('data-full-text') || href });
+            } else if (href.startsWith(currentFolder + '/')) {
+                const relativePath = href.replace(currentFolder + '/', '');
+                if (relativePath.includes('/')) folders.add(relativePath.split('/')[0]);
+                else files.push({ href, text: r.getAttribute('data-full-text') || relativePath });
+            }
+        });
+
+        const items = [...Array.from(folders).map(f => ({ label: f, path: f, isFolder: true })), ...files.map(f => ({ label: f.text, path: f.href, isFolder: false }))];
+
+        items.forEach((item, index) => {
+            const col = index % 2; const row = Math.floor(index / 2);
+            const x = col === 0 ? 120 : 550; const y = 250 + (row * 90);
+
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.style.cursor = "pointer";
+
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+            r.setAttribute("class", "list-item");
+            r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
+            r.style.stroke = "#fff";
+
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+            t.textContent = (item.isFolder ? "📁 " : "📄 ") + (item.label.length > 25 ? item.label.substring(0, 22) + "..." : item.label);
+
+            g.appendChild(r); g.appendChild(t);
+            g.onclick = (e) => {
+                e.stopPropagation();
+                if (item.isFolder) { currentFolder = currentFolder === "" ? item.path : currentFolder + "/" + item.path; updateWoodInterface(); }
+                else { window.open(item.path, '_blank'); }
+            };
+            dynamicGroup.appendChild(g);
         });
     }
 
@@ -303,6 +338,7 @@ window.onload = function() {
 
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
     
+    // --- بدء التشغيل والتحميل ---
     const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
     let loadedCount = 0;
     
@@ -330,5 +366,22 @@ window.onload = function() {
             }
         };
         img.src = u;
+    });
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m').forEach(rect => {
+            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display; 
+            if(bg) bg.style.display = rect.style.display;
+        });
+    }, 150));
+
+    jsToggle.addEventListener('change', function() { 
+        interactionEnabled = this.checked; 
+        if(!interactionEnabled) cleanupHover(); 
     });
 };
