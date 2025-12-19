@@ -25,7 +25,29 @@ window.onload = function() {
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const TAP_THRESHOLD_MS = 300;
+
+    // --- وظيفة فتح الروابط الذكية ---
+    function smartOpen(url) {
+        if (!url || url === '#') return;
+        
+        // تجهيز الرابط لضمان العرض وليس التحميل (خاصة لملفات PDF)
+        let targetUrl = url;
+        if (url.toLowerCase().endsWith('.pdf')) {
+            // تحويل الروابط النسبية إلى مطلقة إذا لزم الأمر
+            const absoluteUrl = url.startsWith('http') ? url : window.location.origin + '/' + url;
+            targetUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
+        }
+
+        if (isMobile) {
+            // على الهاتف: فتح في نفس الصفحة
+            window.location.href = targetUrl;
+        } else {
+            // على الكمبيوتر: فتح في نافذة جديدة
+            window.open(targetUrl, '_blank');
+        }
+    }
 
     // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
@@ -45,7 +67,7 @@ window.onload = function() {
     // --- ربط الأحداث ---
     searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
     searchInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); goToWood(); } };
-    
+
     moveToggle.onclick = (e) => {
         e.preventDefault();
         if (toggleContainer.classList.contains('top')) {
@@ -85,7 +107,7 @@ window.onload = function() {
     }
     updateDynamicSizes();
 
-    // --- وظائف عرض واجهة الخشب (GitHub API) المحدثة ---
+    // --- وظائف عرض واجهة الخشب (GitHub API) ---
     async function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -100,23 +122,19 @@ window.onload = function() {
             if (!response.ok) throw new Error('فشل جلب البيانات');
             const data = await response.json();
 
-            // 1. تصفية العناصر (إخفاء مجلد image والملفات غير المطلوبة)
-            // 2. فرز العناصر (المجلدات أولاً ثم الملفات)
             const items = data
                 .filter(item => {
                     const name = item.name.toLowerCase();
-                    // إخفاء مجلد image وأي ملفات ليست PDF أو مجلدات
                     if (name === 'image') return false; 
                     return item.type === 'dir' || name.endsWith('.pdf');
                 })
                 .sort((a, b) => {
-                    // ترتيب المجلدات (dir) قبل الملفات (file)
                     if (a.type === 'dir' && b.type !== 'dir') return -1;
                     if (a.type !== 'dir' && b.type === 'dir') return 1;
-                    return 0; // الحفاظ على الترتيب الأبجدي للبقية
+                    return 0;
                 })
                 .map(item => ({
-                    label: item.name.replace(/\.[^/.]+$/, ""), // حذف الامتداد
+                    label: item.name.replace(/\.[^/.]+$/, ""), 
                     path: item.path,
                     isFolder: item.type === 'dir',
                     downloadUrl: item.download_url || item.html_url
@@ -125,98 +143,84 @@ window.onload = function() {
             renderWoodItems(items);
         } catch (error) {
             console.error("Error:", error);
-            const errorText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            errorText.setAttribute("x", "512"); errorText.setAttribute("y", "500");
-            errorText.setAttribute("fill", "white"); errorText.setAttribute("text-anchor", "middle");
-            errorText.textContent = "خطأ في الاتصال بالمستودع..";
-            dynamicGroup.appendChild(errorText);
         }
     }
-/* --- استبدل الدوال التالية في ملف script.js عندك --- */
 
-// 1. تحديث دالة بناء عناصر الخشب لتسهيل البحث
-function renderWoodItems(items) {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-    dynamicGroup.innerHTML = ''; 
+    function renderWoodItems(items) {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
 
-    items.forEach((item, index) => {
-        const col = index % 2; 
-        const row = Math.floor(index / 2);
-        const x = col === 0 ? 120 : 550; 
-        const y = 250 + (row * 90);
+        items.forEach((item, index) => {
+            const col = index % 2; 
+            const row = Math.floor(index / 2);
+            const x = col === 0 ? 120 : 550; 
+            const y = 250 + (row * 90);
 
-        // إنشاء مجموعة (Group) لكل عنصر لضمان إخفاء المربع والنص معاً
-        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        g.setAttribute("class", "wood-list-item-group"); // كلاس موحد للبحث
-        g.style.cursor = "pointer";
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", "wood-list-item-group");
+            g.style.cursor = "pointer";
 
-        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", x); r.setAttribute("y", y); 
-        r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
-        r.setAttribute("rx", "12");
-        r.setAttribute("class", "list-item");
-        r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
-        r.style.stroke = "#fff";
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", x); r.setAttribute("y", y); 
+            r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
+            r.setAttribute("rx", "12");
+            r.setAttribute("class", "list-item");
+            r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
+            r.style.stroke = "#fff";
 
-        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-        
-        // تنظيف الاسم للعرض والبحث
-        const cleanName = item.label;
-        t.textContent = (item.isFolder ? "📁 " : "📄 ") + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-        t.setAttribute("data-search-name", cleanName.toLowerCase()); // تخزين الاسم للبحث
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 
-        g.appendChild(r); 
-        g.appendChild(t);
-        
-        g.onclick = (e) => {
-            e.stopPropagation();
-            if (item.isFolder) { 
-                currentFolder = item.path; 
-                updateWoodInterface(); 
-            } else { 
-                window.open(item.downloadUrl, '_blank'); 
-            }
-        };
-        dynamicGroup.appendChild(g);
-    });
-}
+            const cleanName = item.label;
+            t.textContent = (item.isFolder ? "📁 " : "📄 ") + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            t.setAttribute("data-search-name", cleanName.toLowerCase());
 
-// 2. تحديث دالة البحث الموحدة (Unified Search)
-searchInput.addEventListener('input', debounce(function(e) {
-    const query = e.target.value.toLowerCase().trim();
+            g.appendChild(r); 
+            g.appendChild(t);
 
-    // أولاً: البحث في مستطيلات الخريطة (SVG Rects)
-    mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-        const href = (rect.getAttribute('data-href') || '').toLowerCase();
-        const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
-        const isMatch = href.includes(query) || fullText.includes(query);
-        
-        const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-        const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-        
-        rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-        if(label) label.style.display = rect.style.display; 
-        if(bg) bg.style.display = rect.style.display;
-    });
+            g.onclick = (e) => {
+                e.stopPropagation();
+                if (item.isFolder) { 
+                    currentFolder = item.path; 
+                    updateWoodInterface(); 
+                } else { 
+                    smartOpen(item.downloadUrl); 
+                }
+            };
+            dynamicGroup.appendChild(g);
+        });
+    }
 
-    // ثانياً: البحث في قائمة الخشب (GitHub API Items)
-    mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
-        const textNode = group.querySelector('text');
-        const searchName = textNode ? textNode.getAttribute('data-search-name') : "";
-        
-        if (query.length > 0 && !searchName.includes(query)) {
-            group.style.display = 'none';
-        } else {
-            group.style.display = '';
-        }
-    });
-}, 150));
+    // --- نظام البحث الموحد ---
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
 
-    // --- وظائف التفاعل مع الخريطة ---
+        // البحث في الخريطة
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = href.includes(query) || fullText.includes(query);
+
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display; 
+            if(bg) bg.style.display = rect.style.display;
+        });
+
+        // البحث في القائمة الخشبية
+        mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
+            const textNode = group.querySelector('text');
+            const searchName = textNode ? textNode.getAttribute('data-search-name') : "";
+            group.style.display = (query.length > 0 && !searchName.includes(query)) ? 'none' : '';
+        });
+    }, 150));
+
+    // --- وظائف التفاعل مع الخريطة (Hover & Effects) ---
     function getCumulativeTranslate(element) {
         let x = 0, y = 0, current = element;
         while (current && current.tagName !== 'svg') {
@@ -348,31 +352,11 @@ searchInput.addEventListener('input', debounce(function(e) {
         }, 100);  
     }
 
-    function wrapText(el, maxW) {
-        const txt = el.getAttribute('data-original-text'); if(!txt) return;
-        const words = txt.split(/\s+/); el.textContent = '';
-        let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
-        el.appendChild(ts); let line = '';
-        const lh = parseFloat(el.style.fontSize) * 1.1;
-        words.forEach(word => {
-            let test = line + (line ? ' ' : '') + word;
-            ts.textContent = test;
-            if (ts.getComputedTextLength() > maxW - 5 && line) {
-                ts.textContent = line;
-                ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
-                ts.textContent = word; el.appendChild(ts); line = word;
-            } else { line = test; }
-        });
-    }
-
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
-        if(r.classList.contains('w')) r.setAttribute('width', '113.5');
-        if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
-
         const href = r.getAttribute('data-href') || '';
+        
+        // إعداد النصوص والعناوين (نفس الكود الأصلي)
         const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
@@ -384,7 +368,27 @@ searchInput.addEventListener('input', debounce(function(e) {
             txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
             txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
             txt.style.fontSize = fs + 'px'; txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
-            r.parentNode.appendChild(txt); wrapText(txt, w);
+            r.parentNode.appendChild(txt); 
+            // wrapText function definition needed here if not global
+            const wrapText = (el, maxW) => {
+                const txtVal = el.getAttribute('data-original-text'); if(!txtVal) return;
+                const words = txtVal.split(/\s+/); el.textContent = '';
+                let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
+                el.appendChild(ts); let line = '';
+                const lh = parseFloat(el.style.fontSize) * 1.1;
+                words.forEach(word => {
+                    let test = line + (line ? ' ' : '') + word;
+                    ts.textContent = test;
+                    if (ts.getComputedTextLength() > maxW - 5 && line) {
+                        ts.textContent = line;
+                        ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
+                        ts.textContent = word; el.appendChild(ts); line = word;
+                    } else { line = test; }
+                });
+            };
+            wrapText(txt, w);
 
             const bbox = txt.getBBox();
             const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -395,13 +399,15 @@ searchInput.addEventListener('input', debounce(function(e) {
         }
 
         if (!isTouchDevice) { r.addEventListener('mouseover', startHover); r.addEventListener('mouseout', cleanupHover); }
-        r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
+        
+        // التعديل هنا لفتح الملفات ذكياً
+        r.onclick = () => { if (href && href !== '#') smartOpen(href); };
 
         r.addEventListener('touchstart', function(e) { if(!interactionEnabled) return; activeState.touchStartTime = Date.now(); activeState.initialScrollLeft = scrollContainer.scrollLeft; startHover.call(this); });
         r.addEventListener('touchend', function(e) { 
             if (!interactionEnabled) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if (href && href !== '#') window.open(href, '_blank');
+                if (href && href !== '#') smartOpen(href);
             }
             cleanupHover();
         });
@@ -433,24 +439,14 @@ searchInput.addEventListener('input', debounce(function(e) {
                         updateWoodInterface(); 
                         goToMapEnd(); 
                     }, 300);
-                    mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
+                    mainSvg.querySelectorAll('image').forEach((si, idx) => {
+                        if (urls[idx]) si.setAttribute('href', urls[idx]);
+                    });
                 }, 500);
             }
         };
         img.src = u;
     });
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-    }, 150));
 
     jsToggle.addEventListener('change', function() { 
         interactionEnabled = this.checked; 
