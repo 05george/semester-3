@@ -1,3 +1,9 @@
+document.getElementById("closePdfBtn").onclick = () => {
+    const overlay = document.getElementById("pdf-overlay");
+    const pdfViewer = document.getElementById("pdfFrame");
+    pdfViewer.src = "";
+    overlay.classList.add("hidden");
+};
 window.onload = function() {
     // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
@@ -28,24 +34,25 @@ window.onload = function() {
     const TAP_THRESHOLD_MS = 300;
 
     // --- وظيفة الفتح الذكي المخصصة ---
-    function smartOpen(item) {
-        const url = item.download_url || item.html_url;
-        if (!url || url === '#') return;
+function smartOpen(item) {
+    const url = item.download_url || item.html_url;
+    if (!url || url === '#') return;
 
-        const fileName = item.name.toLowerCase();
-        if (fileName.endsWith('.pdf')) {
-            // فتح الـ PDF في الـ iframe المخصص باستخدام القارئ
-            const pdfViewer = document.getElementById("pdfFrame");
-            if (pdfViewer) {
-                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
-            } else {
-                window.open("https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url), '_blank');
-            }
-        } else {
-            // فتح الـ SVG وأي ملفات أخرى في المتصفح مباشرة
-            window.open(url, '_blank');
-        }
+    const fileName = item.name.toLowerCase();
+
+    if (fileName.endsWith('.pdf')) {
+        const overlay = document.getElementById("pdf-overlay");
+        const pdfViewer = document.getElementById("pdfFrame");
+
+        pdfViewer.src =
+          "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+          encodeURIComponent(url);
+
+        overlay.classList.remove("hidden"); // ← السطر الحاسم
+    } else {
+        window.open(url, '_blank');
     }
+}
 
     // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
