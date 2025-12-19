@@ -271,14 +271,26 @@ function smartOpen(item) {
         }  
 
         let h = 0;  
-        activeState.animationId = setInterval(() => {  
-            h = (h + 10) % 360;  
-            const color = `hsl(${h},100%,60%)`;
-            rect.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 15px ${color})`;  
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
-        }, 100);  
+ let step = 0; // متغير للتحكم في سرعة النبض
+activeState.animationId = setInterval(() => {  
+    h = (h + 10) % 360;  // دوران الألوان (كما هو)
+    step += 0.2;         // سرعة النبض (كلما زاد الرقم زادت السرعة)
+
+    // حساب قوة التوهج لتتأرجح بين 5px و 15px
+    const glowPower = 10 + Math.sin(step) * 5; 
+    const color = `hsl(${h},100%,60%)`;
+
+    // تطبيق التوهج النابض
+    rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
+    
+    if (activeState.zoomPart) {
+        activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
     }
+    if (activeState.zoomBg) {
+        activeState.zoomBg.style.stroke = color;  
+    }
+}, 100);
+
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
