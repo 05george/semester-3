@@ -48,6 +48,8 @@ html, body {
   height: 100svh;
   overflow-x: auto;
   overflow-y: hidden;
+  scroll-behavior: smooth; 
+  direction: rtl;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
 }
