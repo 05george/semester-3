@@ -29,35 +29,42 @@ window.onload = function() {
     const TAP_THRESHOLD_MS = 300;
 
     // --- وظيفة الفتح الذكي (تحديث شامل لجميع المتصفحات Chrome, Edge, Safari) ---
+ 
     function smartOpen(url) {
         if (!url || url === '#') return;
         
-        // 1. تحويل الرابط لرابط مطلق لضمان عمل عارض جوجل
+        // 1. تحديد ما إذا كان الرابط هو رابط Google Drive
+        const isGoogleDrive = url.includes('drive.google.com');
+        
+        // 2. تحويل الرابط لرابط مطلق (فقط إذا لم يكن رابط Drive)
         const absoluteUrl = url.startsWith('http') ? url : window.location.origin + '/' + url;
         
-        // 2. التحقق مما إذا كان الملف PDF
-        const isPdf = url.toLowerCase().split(/[?#]/)[0].endsWith('.pdf');
+        // 3. التحقق مما إذا كان الملف PDF (وليس من درايف)
+        const isPdf = !isGoogleDrive && url.toLowerCase().split(/[?#]/)[0].endsWith('.pdf');
         
-        // 3. كشف الجهاز (شامل للهواتف والتابلت والمتصفحات المختلفة)
+        // 4. كشف الجهاز
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
                         || (navigator.maxTouchPoints > 0);
 
-        if (isPdf) {
-            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
-            
+        // المنطق الجديد للفتح:
+        if (isGoogleDrive) {
+            // إذا كان الرابط من جوجل درايف، نفتحه مباشرة كما هو دون تدخل
             if (isMobile) {
-                // للهاتف: الفتح في نفس الصفحة لضمان الاستقرار في Edge و Safari
-                window.location.href = viewerUrl; 
+                window.location.href = url;
             } else {
-                // للكمبيوتر: محاولة الفتح في نافذة جديدة
+                window.open(url, '_blank');
+            }
+        } else if (isPdf) {
+            // إذا كان ملف PDF عادي (GitHub أو محلي)، نستخدم العارض
+            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
+            if (isMobile) {
+                window.location.href = viewerUrl;
+            } else {
                 const newWindow = window.open(viewerUrl, '_blank');
-                // إذا كان المتصفح يحظر النوافذ المنبثقة (مثل Edge أحياناً)
-                if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                    window.location.href = viewerUrl;
-                }
+                if (!newWindow || newWindow.closed) window.location.href = viewerUrl;
             }
         } else {
-            // للملفات غير الـ PDF
+            // أي روابط أخرى
             if (isMobile) {
                 window.location.href = absoluteUrl;
             } else {
