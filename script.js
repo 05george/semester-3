@@ -41,6 +41,14 @@ document.getElementById("shareBtn").onclick = () => {
             .catch(() => alert("فشل نسخ الرابط."));
     }
 };
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Service Worker Registered'))
+      .catch(err => console.log('Service Worker Failed', err));
+  });
+}
+
 window.onload = function() {
     // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
