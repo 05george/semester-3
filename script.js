@@ -277,13 +277,15 @@ window.onload = function() {
             const data = await response.json();
 
             // تصفية: إخفاء مجلد image، إخفاء ملف إيميلي، إظهار (المجلدات + PDF) فقط
-            const filteredData = data.filter(item => {
-    const isFolder = (item.type === 'dir' && name !== 'image');
-    const isPdf = name.endsWith('.pdf');
-    // ...
+const filteredData = data.filter(item => {
+    const name = item.name.toLowerCase();
+
+    const isFolder = item.type === 'dir' && name !== 'image';
+    const isPdf = item.type === 'file' && name.endsWith('.pdf');
+    const isEmail = name.includes('@'); // لو عندك ملف باسم إيميل
+
     return (isFolder || isPdf) && !isEmail;
 });
-
 
             filteredData.sort((a, b) => (a.type === 'dir' ? -1 : 1))
                 .forEach((item, index) => {
