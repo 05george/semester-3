@@ -35,7 +35,7 @@ window.onload = function() {
 
     // --- وظيفة الفتح الذكي المخصصة ---
 function smartOpen(item) {
-    const url = item.download_url || item.html_url;
+    const url = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
     if (!url || url === '#') return;
 
     const fileName = item.name.toLowerCase();
