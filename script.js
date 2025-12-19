@@ -385,4 +385,4 @@ jsToggle.addEventListener('change', function() {
     if(!interactionEnabled) cleanupHover();   
 });
 
-}; 
+};
