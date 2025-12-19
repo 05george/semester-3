@@ -73,13 +73,17 @@ window.onload = function() {
     // --- وظيفة الفتح الذكي المخصصة ---
 function smartOpen(item) {
     if(!item || !item.path) return;
+    
     const url = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
+    const overlay = document.getElementById("pdf-overlay");
+    const pdfViewer = document.getElementById("pdfFrame");
+
     if(url.endsWith('.pdf')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
+
+        pdfViewer.src = ""; 
+        
         overlay.classList.remove("hidden");
         
-#zoom=page-width
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                         encodeURIComponent(url) + "#zoom=page-width"; 
     } else {
