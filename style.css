@@ -218,6 +218,9 @@ html, body {
 }
 
 #search-icon {
+   cursor: pointer;   
+  user-select: none;       -webkit-tap-highlight-color: transparent;
+  padding: 5px;
   cursor: pointer;
   pointer-events: auto;
   position: absolute;
@@ -226,6 +229,17 @@ html, body {
   transform: translateY(-50%);
   font-size: 12px;
   opacity: 0.6;
+}
+#move-toggle {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: 5px;
+}
+
+#search-icon:active, #move-toggle:active {
+    opacity: 0.6;
+    transform: scale(1.1);
 }
 
 .controls-row {
