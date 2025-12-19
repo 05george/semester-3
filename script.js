@@ -4,6 +4,18 @@ window.onload = function() {
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
+const moveToggle = document.getElementById('move-toggle');
+const toggleContainer = document.getElementById('js-toggle-container');
+
+moveToggle.onclick = () => {
+    if (toggleContainer.classList.contains('top')) {
+        toggleContainer.classList.remove('top');
+        toggleContainer.classList.add('bottom');
+    } else {
+        toggleContainer.classList.remove('bottom');
+        toggleContainer.classList.add('top');
+    }
+};
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
