@@ -26,16 +26,14 @@ window.onload = function() {
         setTimeout(() => searchInput.focus(), 500); // تأخير بسيط لضمان انتهاء الحركة
     };
 
-    moveToggle.onclick = () => {
-    // سيقوم بتبديل الكلاسين مهما كانت الحالة الابتدائية
-    toggleContainer.classList.toggle('top');
-    toggleContainer.classList.toggle('bottom');
-        if (toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
+move-toggle.onclick = () => {
+    // استخدم toggle فقط وهي ستتكفل بالتبديل بين الحالتين تلقائياً
+    if (toggleContainer.classList.contains('top')) {
+        toggleContainer.classList.replace('top', 'bottom');
+    } else {
+        toggleContainer.classList.replace('bottom', 'top');
+    }
+};
 
     // باقي الوظائف (activeState, debounce, updateDynamicSizes... إلخ كما هي في كودك)
     const activeState = {
