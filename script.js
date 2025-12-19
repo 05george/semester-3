@@ -73,27 +73,20 @@ window.onload = function() {
     // --- وظيفة الفتح الذكي المخصصة ---
 function smartOpen(item) {
     if(!item || !item.path) return;
-    
     const url = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
-    const overlay = document.getElementById("pdf-overlay");
-    const pdfViewer = document.getElementById("pdfFrame");
-
     if(url.endsWith('.pdf')) {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-        }
-
-        pdfViewer.src = ""; 
+        const overlay = document.getElementById("pdf-overlay");
+        const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
         
- #view=FitH
+        // إضافة #zoom=page-width في نهاية الرابط لضمان تناسق العرض
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width&view=FitH"; 
+                        encodeURIComponent(url) + "#zoom=page-width"; 
     } else {
         window.open(url, '_blank');
     }
 }
+
 
 
     // --- وظائف الحركة بنظام RTL ---
