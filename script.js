@@ -1,5 +1,5 @@
 window.onload = function() {
-    // 1. التعريفات الأساسية من ملفك القياسي
+    // 1. التعريفات الأساسية والعناصر (كاملة كما في ملفك)
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -12,12 +12,12 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // إعدادات الربط مع GitHub
+    // إعدادات GitHub
     const GITHUB_OWNER = "05george";
     const GITHUB_REPO  = "semester-3";
     const BRANCH = "main";
 
-    // حالة التفاعل (Active State)
+    // حالة التفاعل النشطة
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -29,13 +29,13 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // مجموعة وهمية للملفات الديناميكية
+    // مجموعة الملفات الديناميكية (مخفية)
     const dynamicVirtualGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     dynamicVirtualGroup.id = "dynamic-github-pdfs";
     dynamicVirtualGroup.style.display = "none";
     mainSvg.appendChild(dynamicVirtualGroup);
 
-    // --- وظائف الحركة بنظام RTL ---
+    // --- [1] وظائف الحركة بنظام RTL ---
     const goToWood = () => {
         scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
     };
@@ -44,35 +44,7 @@ window.onload = function() {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     };
 
-    // --- وظيفة البحث الموحدة (إخفاء في المكان) ---
-    const performSearch = () => {
-        const query = searchInput.value.toLowerCase().trim();
-        
-        // فلترة الخريطة
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const href = (rect.getAttribute('data-href') || '').toLowerCase();
-            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
-            const isMatch = (query === "") || href.includes(query) || fullText.includes(query);
-            
-            rect.style.opacity = isMatch ? "1" : "0";
-            rect.style.pointerEvents = isMatch ? "auto" : "none";
-            
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            if (label) label.style.display = isMatch ? "" : "none";
-            if (bg) bg.style.display = isMatch ? "" : "none";
-        });
-
-        // فلترة قائمة الخشب
-        document.querySelectorAll('.wood-item-group').forEach(group => {
-            const key = group.getAttribute('data-search-key') || "";
-            const isMatch = (query === "") || key.includes(query);
-            group.style.opacity = isMatch ? "1" : "0";
-            group.style.pointerEvents = isMatch ? "auto" : "none";
-        });
-    };
-
-    // --- الدوال المساعدة المتقدمة (من ملفك القياسي) ---
+    // --- [2] الدوال المساعدة المتقدمة (من ملفك القياسي بدون أي اختصار) ---
     function getCumulativeTranslate(element) {
         let x = 0, y = 0, current = element;
         while (current && current.tagName !== 'svg') {
@@ -122,7 +94,33 @@ window.onload = function() {
         });
     }
 
-    // --- نظام الـ Zoom والتفاعل المطور ---
+    // --- [3] نظام البحث الموحد (إخفاء في المكان) ---
+    const performSearch = () => {
+        const query = searchInput.value.toLowerCase().trim();
+        
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = (query === "") || href.includes(query) || fullText.includes(query);
+            
+            rect.style.opacity = isMatch ? "1" : "0";
+            rect.style.pointerEvents = isMatch ? "auto" : "none";
+            
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            if (label) label.style.display = isMatch ? "" : "none";
+            if (bg) bg.style.display = isMatch ? "" : "none";
+        });
+
+        document.querySelectorAll('.wood-item-group').forEach(group => {
+            const key = group.getAttribute('data-search-key') || "";
+            const isMatch = (query === "") || key.includes(query);
+            group.style.opacity = isMatch ? "1" : "0";
+            group.style.pointerEvents = isMatch ? "auto" : "none";
+        });
+    };
+
+    // --- [4] نظام الـ Zoom والتفاعل (كامل من ملفك) ---
     function cleanupHover() {
         if (!activeState.rect) return;
         if (activeState.animationId) clearInterval(activeState.animationId);
@@ -221,7 +219,7 @@ window.onload = function() {
         }, 100);
     }
 
-    // --- إدارة واجهة الخشب وزر الرجوع ---
+    // --- [5] إدارة واجهة الخشب وزر الرجوع (بدون تعديلات مخلة) ---
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -274,7 +272,7 @@ window.onload = function() {
         performSearch();
     }
 
-    // --- معالجة العناصر الرسومية (Scan) ---
+    // --- [6] معالجة العناصر الرسومية (Scan & Process) ---
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
@@ -285,6 +283,7 @@ window.onload = function() {
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
 
+        // توليد الـ Labels تلقائياً كما في ملفك الأصلي
         if (name && name.trim() !== '' && !r.classList.contains('list-item')) {
             const fs = Math.max(8, Math.min(12, w * 0.11));
             const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -305,11 +304,12 @@ window.onload = function() {
         if (!isTouchDevice) { r.addEventListener('mouseover', startHover); r.addEventListener('mouseout', cleanupHover); }
         r.onclick = () => { if(r.style.opacity !== "0" && href !== "#") window.open(href, '_blank'); };
         
-        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0") startHover.call(this); });
+        r.addEventListener('touchstart', function() { if(this.style.opacity !== "0" && interactionEnabled) startHover.call(this); });
         r.addEventListener('touchend', cleanupHover);
         r.setAttribute('data-processed', 'true');
     }
 
+    // --- [7] جلب ملفات GitHub وبدء التشغيل ---
     async function loadAllPdfFromGithub() {
         try {
             const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
@@ -329,7 +329,6 @@ window.onload = function() {
         } catch (e) { console.error(e); }
     }
 
-    // --- بدء التشغيل والتحميل النهائي ---
     const images = mainSvg.querySelectorAll('image');
     mainSvg.setAttribute('viewBox', `0 0 ${images.length * 1024} 2454`);
     
@@ -359,11 +358,12 @@ window.onload = function() {
         i.src = url; img.setAttribute('href', url);
     });
 
+    // ربط الأحداث المتبقية
     searchInput.addEventListener('input', performSearch);
     searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
     moveToggle.onclick = () => {
-        if (toggleContainer.classList.contains('top')) toggleContainer.classList.replace('top', 'bottom');
-        else toggleContainer.classList.replace('bottom', 'top');
+        toggleContainer.classList.toggle('top');
+        toggleContainer.classList.toggle('bottom');
     };
     jsToggle.onchange = () => { interactionEnabled = jsToggle.checked; if(!interactionEnabled) cleanupHover(); };
     backButtonGroup.onclick = () => {
