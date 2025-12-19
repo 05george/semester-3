@@ -214,36 +214,58 @@ window.onload = function() {
         const items = [...Array.from(folders).map(f => ({ label: f, path: f, isFolder: true })), 
                        ...files.map(f => ({ label: f.text, path: f.href, isFolder: false }))];
 
+        items.forEach((index, item) => { // تأكد من ترتيب البراميترز (item, index)
+            // تصحيح الترتيب ليكون item أولاً ثم index
+        });
+
+        // هذا هو الكود الصحيح والمعدل بدقة:
         items.forEach((item, index) => {
-            const col = index % 2, row = Math.floor(index / 2);
-            const x = col === 0 ? 120 : 550, y = 250 + (row * 90);
+            const col = index % 2; 
+            const row = Math.floor(index / 2);
+            const x = col === 0 ? 120 : 550; 
+            const y = 250 + (row * 90);
+            
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             g.setAttribute("class", "wood-item-group");
             g.setAttribute("data-search-key", item.label.toLowerCase());
+            g.style.cursor = "pointer";
 
             const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+            r.setAttribute("x", x); r.setAttribute("y", y); 
+            r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
+            r.setAttribute("rx", "12");
             r.setAttribute("class", "list-item m");
             r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
             r.style.stroke = "#fff";
 
-            // إزالة .pdf من الاسم
-            let displayName = item.label.replace(/\.pdf$/i, ""); 
-
             const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); 
+            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
             t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-            t.textContent = (item.isFolder ? "📁 " : "📄 ") + (displayName.length > 22 ? displayName.substring(0, 19) + "..." : displayName);
+
+            // --- التعديل هنا ---
+            // 1. إزالة الامتداد أولاً
+            let cleanName = item.label.replace(/\.pdf$/i, ""); 
+            // 2. تقصير النص إذا كان طويلاً جداً
+            let shortName = cleanName.length > 22 ? cleanName.substring(0, 19) + "..." : cleanName;
+            // 3. إضافة الرمز التعبيري
+            t.textContent = (item.isFolder ? "📁 " : "📄 ") + shortName;
+            // ------------------
+
+            g.appendChild(r); 
+            g.appendChild(t);
             
-            g.appendChild(r); g.appendChild(t);
             g.onclick = (e) => {
                 e.stopPropagation();
-                if (item.isFolder) { currentFolder = currentFolder === "" ? item.path : currentFolder + "/" + item.path; updateWoodInterface(); }
+                if (item.isFolder) { 
+                    currentFolder = (currentFolder === "") ? item.path : currentFolder + "/" + item.path; 
+                    updateWoodInterface(); 
+                }
                 else { window.open(item.path, '_blank'); }
             };
             dynamicGroup.appendChild(g);
         });
-    }
+
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
