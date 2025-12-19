@@ -30,7 +30,7 @@ window.onload = function() {
 
     // --- وظيفة الفتح الذكي (تحديث شامل لجميع المتصفحات Chrome, Edge, Safari) ---
  
-    function smartOpen(url) {
+     function smartOpen(url) {
         if (!url || url === '#') return;
 
         // 1. كشف نوع الجهاز
@@ -39,22 +39,22 @@ window.onload = function() {
 
         let targetUrl = url;
 
-        // 2. معالجة روابط GitHub لتعمل مثل Google Drive
-        // سنستخدم خدمة 'jsDelivr' أو تحويل الرابط لفتح الملف في المتصفح مباشرة
+        // 2. معالجة روابط GitHub لتعمل مثل Google Drive (تجنب التحميل التلقائي في Chrome/Edge)
         if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
-            // تحويل رابط GitHub العادي إلى رابط Raw قابل للعرض المباشر
-            targetUrl = url.replace('github.com', 'raw.githubusercontent.com')
-                           .replace('/blob/', '/');
+            // تحويل الرابط إلى خدمة jsDelivr لضمان العرض المباشر في المتصفح
+            // التنسيق: https://cdn.jsdelivr.net/gh/user/repo@branch/file
+            targetUrl = url.replace('github.com', 'cdn.jsdelivr.net/gh')
+                           .replace('/blob/main/', '@main/') // استبدل main بفرعك إذا كان مختلفاً
+                           .replace('/blob/master/', '@master/');
         }
 
         // 3. منطق الفتح الموحد
         if (isMobile) {
-            // للهاتف: الفتح في نفس الصفحة (يعمل مع درايف وجيت هاب)
+            // للهاتف: الفتح في نفس الصفحة (كروم، سامسونج، إيدج)
             window.location.href = targetUrl;
         } else {
             // للكمبيوتر: فتح في نافذة جديدة
             const newWindow = window.open(targetUrl, '_blank');
-            // خطة احتياطية إذا منع المتصفح النافذة المنبثقة
             if (!newWindow || newWindow.closed) {
                 window.location.href = targetUrl;
             }
