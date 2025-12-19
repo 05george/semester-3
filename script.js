@@ -347,11 +347,11 @@ window.onload = function() {
         img.onload = img.onerror = () => {
             loadedCount++;
             const p = (loadedCount / urls.length) * 100;
-            if(p >= 100) document.getElementById('bulb-1')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
             if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(p === 25) {
-                document.getElementById('bulb-4')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            if(p === 100) {
+                document.getElementById('bulb-1')?.classList.add('on');
                 setTimeout(() => {
                     if(loadingOverlay) loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
