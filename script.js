@@ -35,20 +35,13 @@ window.onload = function() {
 
     // --- وظيفة الفتح الذكي المخصصة ---
 function smartOpen(item) {
+    if(!item || !item.path) return;
     const url = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
-    if (!url || url === '#') return;
-
-    const fileName = item.name.toLowerCase();
-
-    if (fileName.endsWith('.pdf')) {
+    if(url.endsWith('.pdf')) {
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
-
-        pdfViewer.src =
-          "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
-          encodeURIComponent(url);
-
-        overlay.classList.remove("hidden"); // ← السطر الحاسم
+        overlay.classList.remove("hidden");
+        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
     } else {
         window.open(url, '_blank');
     }
