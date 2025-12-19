@@ -45,12 +45,37 @@ window.onload = function() {
         goToWood(); 
     };
 
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            goToWood();
-        }
-    };
+    searchInput.addEventListener('input', debounce(function(e) {
+    const query = e.target.value.toLowerCase().trim();
+
+    /* 1️⃣ فلترة مستطيلات الخريطة */
+    mainSvg.querySelectorAll('rect.m').forEach(rect => {
+        const isMatch =
+          (rect.getAttribute('data-href') || '').toLowerCase().includes(query) ||
+          (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+
+        const label = rect.parentNode.querySelector(
+          `.rect-label[data-original-for='${rect.dataset.href}']`
+        );
+        const bg = rect.parentNode.querySelector(
+          `.label-bg[data-original-for='${rect.dataset.href}']`
+        );
+
+        const hide = query && !isMatch;
+        rect.style.display = hide ? 'none' : '';
+        if (label) label.style.display = rect.style.display;
+        if (bg) bg.style.display = rect.style.display;
+    });
+
+    /* 2️⃣ فلترة عناصر القائمة الجديدة */
+    const listGroups = document.querySelectorAll('#dynamic-links-group > g');
+
+    listGroups.forEach(g => {
+        const text = g.querySelector('text')?.textContent.toLowerCase() || '';
+        g.style.display = (query && !text.includes(query)) ? 'none' : '';
+    });
+
+}, 150));
 
     moveToggle.onclick = (e) => {
         e.preventDefault();
