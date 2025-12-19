@@ -37,14 +37,12 @@ window.onload = function() {
     searchIcon.onclick = (e) => {
         e.preventDefault();
         goToWood(); 
-        searchInput.focus();
     };
 
     // تفعيل زر Enter/Go في البحث
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             goToWood();
-            searchInput.blur();
         }
     };
     // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
