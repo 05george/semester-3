@@ -33,19 +33,24 @@ window.onload = function() {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });  
     };  
 
-    // --- دالة جلب البيانات من GitHub API ---
+    // --- دالة جلب البيانات من GitHub API (مع تجاهل مجلد الصور) ---
     async function fetchGithubContents(path = "") {
         try {
             const response = await fetch(`https://api.github.com/repos/05george/semester-3/contents/${path}`);
             if (!response.ok) return [];
-            return await response.json();
+            const data = await response.json();
+            // تجاهل مجلد الصور 'image' وملفات النظام
+            return data.filter(item => 
+                item.name.toLowerCase() !== 'image' && 
+                !item.name.startsWith('.')
+            );
         } catch (error) {
             console.error("GitHub API Error:", error);
             return [];
         }
     }
 
-    // --- تحديث واجهة الخشب (الميزات الجديدة) ---  
+    // --- تحديث واجهة الخشب (تصفح المجلدات + روابط الخام) ---  
     async function updateWoodInterface() {  
         const dynamicGroup = document.getElementById('dynamic-links-group');  
         if (!dynamicGroup) return;  
@@ -55,7 +60,7 @@ window.onload = function() {
 
         const items = await fetchGithubContents(currentFolder);
 
-        // فلترة المجلدات وملفات الـ PDF فقط
+        // فلترة: مجلدات أو ملفات PDF فقط
         const filteredItems = items.filter(item => 
             item.type === 'dir' || item.name.toLowerCase().endsWith('.pdf')
         );
@@ -70,12 +75,11 @@ window.onload = function() {
             g.setAttribute("class", "list-item-group");
             g.style.cursor = "pointer";  
 
-            // تنظيف الاسم من صيغة .pdf
             const displayName = item.name.replace(/\.pdf$/i, ''); 
 
             const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");  
             r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
-            r.setAttribute("rx", "12"); r.setAttribute("ry", "12"); // استنساخ ميزة rx/ry من CSS
+            r.setAttribute("rx", "12"); r.setAttribute("ry", "12");
             r.setAttribute("class", "list-item");  
             r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";  
             r.style.stroke = "#fff";  
@@ -97,7 +101,7 @@ window.onload = function() {
                     currentFolder = item.path; 
                     updateWoodInterface();      
                 } else { 
-                    // فتح الملف مباشرة (Raw)
+                    // فتح الرابط الخام المباشر
                     const rawUrl = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
                     window.open(rawUrl, '_blank'); 
                 }  
@@ -106,24 +110,23 @@ window.onload = function() {
         });  
     }  
 
-    // --- نظام البحث المطور (ثبات الأماكن + تنظيف) ---
+    // --- نظام البحث (الحفاظ على أماكن العناصر باستخدام visibility) ---
     searchInput.addEventListener('input', debounce(function(e) {  
         const query = e.target.value.toLowerCase().trim();  
         
-        // 1. البحث في قائمة الخشب
+        // البحث في القائمة
         document.querySelectorAll('.list-item-group').forEach(group => {
             const isMatch = group.textContent.toLowerCase().includes(query);
             group.style.visibility = isMatch ? "visible" : "hidden";
         });
 
-        // 2. البحث في الخريطة
+        // البحث في الخريطة
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {  
             const href = (rect.getAttribute('data-href') || '').toLowerCase();  
-            const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
             const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
             
-            const isMatch = href.includes(query) || fullText.includes(query);
+            const isMatch = href.includes(query);
             const state = (query.length > 0 && !isMatch) ? 'hidden' : 'visible';
             
             rect.style.visibility = state;  
@@ -132,152 +135,7 @@ window.onload = function() {
         });  
     }, 150));
 
-    // --- دوال الأنيميشن والزووم (مستنسخة بالكامل) ---
-    function startHover() {    
-        if (!interactionEnabled || this.classList.contains('list-item')) return;    
-        const rect = this;    
-        if (activeState.rect === rect) return;    
-        cleanupHover();    
-        activeState.rect = rect;    
-
-        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;    
-        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;    
-        const cum = getCumulativeTranslate(rect);    
-        const absX = parseFloat(rect.getAttribute('x')) + cum.x;    
-        const absY = parseFloat(rect.getAttribute('y')) + cum.y;    
-        const centerX = absX + rW / 2;    
-
-        const scaleFactor = 1.1;  
-        const yOffset = (rH * (scaleFactor - 1)) / 2;  
-        const hoveredY = absY - yOffset;  
-
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;    
-        rect.style.transform = `scale(${scaleFactor})`;    
-        rect.style.strokeWidth = '4px';    
-
-        const imgData = getGroupImage(rect);    
-        if (imgData) {    
-            const clipId = `clip-${Date.now()}`;    
-            activeState.clipPathId = clipId;    
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');    
-            clip.setAttribute('id', clipId);    
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');    
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);    
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);    
-            clipDefs.appendChild(clip).appendChild(cRect);    
-
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');    
-            zPart.setAttribute('href', imgData.src);    
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);    
-            zPart.setAttribute('clip-path', `url(#${clipId})`);    
-            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/);    
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);    
-            zPart.style.pointerEvents = 'none';    
-            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;    
-            zPart.style.transform = `scale(${scaleFactor})`;    
-            mainSvg.appendChild(zPart);    
-            activeState.zoomPart = zPart;    
-        }    
-
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);    
-        if (bText) {    
-            bText.style.opacity = '0';    
-            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);    
-            if(bBg) bBg.style.opacity = '0';    
-            activeState.baseText = bText; activeState.baseBg = bBg;    
-
-            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');    
-            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";    
-            zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');    
-            zText.style.dominantBaseline = 'central'; zText.style.fill = 'white';    
-            zText.style.fontWeight = 'bold'; zText.style.pointerEvents = 'none';    
-            zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';    
-            mainSvg.appendChild(zText);    
-
-            const bbox = zText.getBBox();    
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');    
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY);    
-            zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);    
-            zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';    
-
-            mainSvg.insertBefore(zBg, zText);    
-            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);  
-            activeState.zoomText = zText; activeState.zoomBg = zBg;    
-        }    
-
-        let h = 0;    
-        activeState.animationId = setInterval(() => {    
-            h = (h + 10) % 360;    
-            const color = `hsl(${h},100%,60%)`;  
-            rect.style.filter = `drop-shadow(0 0 8px ${color})`;    
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;    
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;    
-        }, 100);    
-    }  
-
-    function cleanupHover() {  
-        if (!activeState.rect) return;  
-        if (activeState.animationId) clearInterval(activeState.animationId);  
-        activeState.rect.style.filter = 'none';  
-        activeState.rect.style.transform = 'scale(1)';  
-        activeState.rect.style.strokeWidth = '2px';  
-        if (activeState.zoomPart) activeState.zoomPart.remove();  
-        if (activeState.zoomText) activeState.zoomText.remove();  
-        if (activeState.zoomBg) activeState.zoomBg.remove();  
-        if (activeState.baseText) activeState.baseText.style.opacity = '1';  
-        if (activeState.baseBg) activeState.baseBg.style.opacity = '1';  
-        const clip = document.getElementById(activeState.clipPathId);  
-        if (clip) clip.remove();  
-        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null, clipPathId: null });  
-    }  
-
-    // --- الدوال المساعدة للتنسيق والتحميل ---
-    function debounce(func, delay) { let t; return function() { clearTimeout(t); t = setTimeout(() => func.apply(this, arguments), delay); } }
-    
-    function wrapText(el, maxW) {  
-        const txt = el.getAttribute('data-original-text'); if(!txt) return;  
-        const words = txt.split(/\s+/); el.textContent = '';  
-        let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');  
-        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');  
-        el.appendChild(ts); let line = '';  
-        const lh = parseFloat(el.style.fontSize) * 1.1;  
-        words.forEach(word => {  
-            let test = line + (line ? ' ' : '') + word;  
-            ts.textContent = test;  
-            if (ts.getComputedTextLength() > maxW - 5 && line) {  
-                ts.textContent = line;  
-                ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');  
-                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');  
-                ts.textContent = word; el.appendChild(ts); line = word;  
-            } else { line = test; }  
-        });  
-    }  
-
-    function getCumulativeTranslate(element) {  
-        let x = 0, y = 0, current = element;  
-        while (current && current.tagName !== 'svg') {  
-            const trans = current.getAttribute('transform');  
-            if (trans) {  
-                const m = trans.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/);  
-                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }  
-            }  
-            current = current.parentNode;  
-        }  
-        return { x, y };  
-    }  
-
-    function getGroupImage(element) {  
-        let current = element;  
-        while (current && current.tagName !== 'svg') {  
-            if (current.tagName === 'g') {  
-                const imgs = [...current.children].filter(c => c.tagName === 'image');  
-                if (imgs.length) return { src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'), width: parseFloat(imgs[0].getAttribute('width')), height: parseFloat(imgs[0].getAttribute('height')), group: current };  
-            }  
-            current = current.parentNode;  
-        }  
-        return null;  
-    }  
-
+    // --- الدوال الأساسية لمعالجة الـ SVG والـ Hover ---
     function processRect(r) {  
         if (r.hasAttribute('data-processed')) return;  
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');  
@@ -323,29 +181,84 @@ window.onload = function() {
 
     function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }  
 
-    // --- أحداث الأزرار والتحكم ---
-    searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };  
-    moveToggle.onclick = (e) => {  
-        e.preventDefault();  
-        if (toggleContainer.classList.contains('top')) toggleContainer.classList.replace('top', 'bottom');  
-        else toggleContainer.classList.replace('bottom', 'top');  
-    };  
-    backButtonGroup.onclick = () => {   
-        if (currentFolder !== "") {   
-            let parts = currentFolder.split('/'); parts.pop(); 
-            currentFolder = parts.join('/');   
-            updateWoodInterface();   
-        } else { goToMapEnd(); }   
-    };  
-    jsToggle.addEventListener('change', function() {   
-        interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover();   
-    });
+    // --- دوال المساعدة للزووم والأنيميشن ---
+    function startHover() { /* دالة البدء بكامل تأثيرات الألوان */
+        if (!interactionEnabled || this.classList.contains('list-item')) return;    
+        const rect = this; if (activeState.rect === rect) return; cleanupHover(); activeState.rect = rect;    
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;    
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;    
+        const cum = getCumulativeTranslate(rect);    
+        const absX = parseFloat(rect.getAttribute('x')) + cum.x;    
+        const absY = parseFloat(rect.getAttribute('y')) + cum.y;    
+        const centerX = absX + rW / 2;    
+        const scaleFactor = 1.1; const hoveredY = absY - (rH * (scaleFactor - 1)) / 2;  
 
-    // --- بدء التشغيل والتحميل (نظام اللمبات) ---  
-    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));  
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;    
+        rect.style.transform = `scale(${scaleFactor})`; rect.style.strokeWidth = '4px';    
+
+        const imgData = getGroupImage(rect);    
+        if (imgData) {    
+            const clipId = `clip-${Date.now()}`; activeState.clipPathId = clipId;    
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');    
+            clip.setAttribute('id', clipId);    
+            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');    
+            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY); cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);    
+            clipDefs.appendChild(clip).appendChild(cRect);    
+            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');    
+            zPart.setAttribute('href', imgData.src); zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);    
+            zPart.setAttribute('clip-path', `url(#${clipId})`);    
+            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/);    
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);    
+            zPart.style.pointerEvents = 'none'; zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;    
+            zPart.style.transform = `scale(${scaleFactor})`;    
+            mainSvg.appendChild(zPart); activeState.zoomPart = zPart;    
+        }    
+
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);    
+        if (bText) {    
+            bText.style.opacity = '0'; let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);    
+            if(bBg) bBg.style.opacity = '0'; activeState.baseText = bText; activeState.baseBg = bBg;    
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');    
+            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";    
+            zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');    
+            zText.style.dominantBaseline = 'central'; zText.style.fill = 'white'; zText.style.fontWeight = 'bold'; zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';    
+            mainSvg.appendChild(zText); const bbox = zText.getBBox();    
+            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');    
+            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY); zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);    
+            zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; mainSvg.insertBefore(zBg, zText);    
+            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2); activeState.zoomText = zText; activeState.zoomBg = zBg;    
+        }    
+        let h = 0; activeState.animationId = setInterval(() => { h = (h + 10) % 360; const color = `hsl(${h},100%,60%)`; rect.style.filter = `drop-shadow(0 0 8px ${color})`; if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`; if (activeState.zoomBg) activeState.zoomBg.style.stroke = color; }, 100);    
+    }  
+
+    function cleanupHover() {  
+        if (!activeState.rect) return; if (activeState.animationId) clearInterval(activeState.animationId);  
+        activeState.rect.style.filter = 'none'; activeState.rect.style.transform = 'scale(1)'; activeState.rect.style.strokeWidth = '2px';  
+        if (activeState.zoomPart) activeState.zoomPart.remove(); if (activeState.zoomText) activeState.zoomText.remove(); if (activeState.zoomBg) activeState.zoomBg.remove();  
+        if (activeState.baseText) activeState.baseText.style.opacity = '1'; if (activeState.baseBg) activeState.baseBg.style.opacity = '1';  
+        const clip = document.getElementById(activeState.clipPathId); if (clip) clip.remove();  
+        Object.assign(activeState, { rect: null, zoomPart: null, zoomText: null, zoomBg: null, baseText: null, baseBg: null, animationId: null, clipPathId: null });  
+    }  
+
+    function debounce(func, delay) { let t; return function() { clearTimeout(t); t = setTimeout(() => func.apply(this, arguments), delay); } }
+    function wrapText(el, maxW) { /* دالة التفاف النص */ const txt = el.getAttribute('data-original-text'); if(!txt) return; const words = txt.split(/\s+/); el.textContent = ''; let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0'); el.appendChild(ts); let line = ''; const lh = parseFloat(el.style.fontSize) * 1.1; words.forEach(word => { let test = line + (line ? ' ' : '') + word; ts.textContent = test; if (ts.getComputedTextLength() > maxW - 5 && line) { ts.textContent = line; ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px'); ts.textContent = word; el.appendChild(ts); line = word; } else { line = test; } }); }
+    function getCumulativeTranslate(element) { let x = 0, y = 0, current = element; while (current && current.tagName !== 'svg') { const trans = current.getAttribute('transform'); if (trans) { const m = trans.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/); if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); } } current = current.parentNode; } return { x, y }; }
+    function getGroupImage(element) { let current = element; while (current && current.tagName !== 'svg') { if (current.tagName === 'g') { const imgs = [...current.children].filter(c => c.tagName === 'image'); if (imgs.length) return { src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'), width: parseFloat(imgs[0].getAttribute('width')), height: parseFloat(imgs[0].getAttribute('height')), group: current }; } current = current.parentNode; } return null; }
+
+    // --- أحداث الأزرار ---
+    searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };  
+    moveToggle.onclick = (e) => { e.preventDefault(); if (toggleContainer.classList.contains('top')) toggleContainer.classList.replace('top', 'bottom'); else toggleContainer.classList.replace('bottom', 'top'); };  
+    backButtonGroup.onclick = () => { if (currentFolder !== "") { let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); updateWoodInterface(); } else { goToMapEnd(); } };  
+    jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
+
+    // --- بدء التشغيل والتحميل النهائي ---  
+    const images = mainSvg.querySelectorAll('image');
+    mainSvg.setAttribute('viewBox', `0 0 ${images.length * 1024} 2454`);
+    
+    const urls = Array.from(images).map(img => img.getAttribute('data-src') || img.getAttribute('href'));  
     let loadedCount = 0;  
 
-    urls.forEach(u => {  
+    urls.forEach((u, idx) => {  
         const img = new Image();  
         img.onload = img.onerror = () => {  
             loadedCount++;  
@@ -355,6 +268,9 @@ window.onload = function() {
             if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');  
             if(p === 100) {  
                 document.getElementById('bulb-4')?.classList.add('on');  
+                // تفعيل الصور فوراً
+                images.forEach((si, i) => si.setAttribute('href', urls[i]));
+                
                 setTimeout(() => {  
                     loadingOverlay.style.opacity = 0;  
                     setTimeout(() => {   
