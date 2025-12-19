@@ -9,6 +9,27 @@ window.onload = function() {
     const searchIcon = document.getElementById('search-icon');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+// 1. إصلاح أيقونة البحث وجعلها قابلة للنقر فعلياً
+const searchIconBtn = document.getElementById('search-icon');
+searchIconBtn.style.cursor = 'pointer'; // تغيير شكل الماوس عند الوقوف عليها
+searchIconBtn.onclick = () => { 
+    goToWood(); 
+    searchInput.focus(); 
+};
+
+// 2. برمجة زر التحريك (من فوق لتحت والعكس)
+const moveToggle = document.getElementById('move-toggle');
+const toggleContainer = document.getElementById('js-toggle-container');
+
+moveToggle.onclick = () => {
+    if (toggleContainer.classList.contains('top')) {
+        toggleContainer.classList.remove('top');
+        toggleContainer.classList.add('bottom');
+    } else {
+        toggleContainer.classList.remove('bottom');
+        toggleContainer.classList.add('top');
+    }
+};
 
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
