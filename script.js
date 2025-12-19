@@ -32,43 +32,31 @@ window.onload = function() {
  
     function smartOpen(url) {
         if (!url || url === '#') return;
-        
-        // 1. تحديد ما إذا كان الرابط هو رابط Google Drive
-        const isGoogleDrive = url.includes('drive.google.com');
-        
-        // 2. تحويل الرابط لرابط مطلق (فقط إذا لم يكن رابط Drive)
-        const absoluteUrl = url.startsWith('http') ? url : window.location.origin + '/' + url;
-        
-        // 3. التحقق مما إذا كان الملف PDF (وليس من درايف)
-        const isPdf = !isGoogleDrive && url.toLowerCase().split(/[?#]/)[0].endsWith('.pdf');
-        
-        // 4. كشف الجهاز
+
+        // 1. كشف نوع الجهاز
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
                         || (navigator.maxTouchPoints > 0);
 
-        // المنطق الجديد للفتح:
-        if (isGoogleDrive) {
-            // إذا كان الرابط من جوجل درايف، نفتحه مباشرة كما هو دون تدخل
-            if (isMobile) {
-                window.location.href = url;
-            } else {
-                window.open(url, '_blank');
-            }
-        } else if (isPdf) {
-            // إذا كان ملف PDF عادي (GitHub أو محلي)، نستخدم العارض
-            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(absoluteUrl)}&embedded=true`;
-            if (isMobile) {
-                window.location.href = viewerUrl;
-            } else {
-                const newWindow = window.open(viewerUrl, '_blank');
-                if (!newWindow || newWindow.closed) window.location.href = viewerUrl;
-            }
+        // 2. معالجة روابط GitHub لضمان عرضها (وليس تحميلها)
+        // نقوم بتحويل رابط 'raw' أو الرابط المباشر إلى رابط GitHub Pages إذا أمكن، 
+        // أو فتحه مباشرة لأن المتصفحات الحديثة تعرض PDF تلقائياً.
+        let targetUrl = url;
+        
+        if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
+            // تحويل الرابط إلى تنسيق يسهل على المتصفح عرضه مباشرة
+            targetUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+        }
+
+        // 3. منطق الفتح
+        if (isMobile) {
+            // للهاتف: الفتح في نفس الصفحة
+            // ملاحظة: إذا كان المتصفح يدعم عرض PDF سيفتحه، وإذا لم يدعم سيقوم بتحميله (وهذا أفضل من شاشة الخطأ)
+            window.location.href = targetUrl;
         } else {
-            // أي روابط أخرى
-            if (isMobile) {
-                window.location.href = absoluteUrl;
-            } else {
-                window.open(absoluteUrl, '_blank');
+            // للكمبيوتر: فتح في نافذة جديدة
+            const newWindow = window.open(targetUrl, '_blank');
+            if (!newWindow || newWindow.closed) {
+                window.location.href = targetUrl;
             }
         }
     }
