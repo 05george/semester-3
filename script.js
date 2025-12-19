@@ -1,50 +1,45 @@
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
-    mainSvg.style.colorScheme = 'only light'; 
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
+    const moveToggle = document.getElementById('move-toggle');
+    const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
-// 1. إصلاح أيقونة البحث وجعلها قابلة للنقر فعلياً
-const searchIconBtn = document.getElementById('search-icon');
-searchIconBtn.style.cursor = 'pointer'; // تغيير شكل الماوس عند الوقوف عليها
-searchIconBtn.onclick = () => { 
-    goToWood(); 
-    searchInput.focus(); 
-};
-
-// 2. برمجة زر التحريك (من فوق لتحت والعكس)
-const moveToggle = document.getElementById('move-toggle');
-const toggleContainer = document.getElementById('js-toggle-container');
-
-moveToggle.onclick = () => {
-    if (toggleContainer.classList.contains('top')) {
-        toggleContainer.classList.remove('top');
-        toggleContainer.classList.add('bottom');
-    } else {
-        toggleContainer.classList.remove('bottom');
-        toggleContainer.classList.add('top');
-    }
-};
 
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
+    // [إصلاح] وظائف الحركة يجب أن تُعرف قبل استخدامها في الأحداث
+    const goToWood = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    const goToMapEnd = () => scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
+
+    // [إصلاح] أحداث النقر للأيقونات
+    searchIcon.onclick = () => { 
+        goToWood(); 
+        setTimeout(() => searchInput.focus(), 500); // تأخير بسيط لضمان انتهاء الحركة
+    };
+
+    moveToggle.onclick = () => {
+        if (toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+
+    // باقي الوظائف (activeState, debounce, updateDynamicSizes... إلخ كما هي في كودك)
     const activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
         initialScrollLeft: 0, touchStartTime: 0
     };
-
-    // وظائف الحركة
-    const goToWood = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    const goToMapEnd = () => scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
 
     function debounce(func, delay) {
         let timeoutId;
