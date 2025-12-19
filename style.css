@@ -217,28 +217,31 @@ html, body {
   font-size: 14px;
 }
 
+/* تنسيق موحد لأيقونة البحث وزر التحريك */
 #search-icon, #move-toggle {
     cursor: pointer;
-    pointer-events: auto !important; /* لضمان تخطي أي تداخل */
-    z-index: 10001; 
+    pointer-events: auto !important;
+    z-index: 10001; /* طبقة عالية جداً فوق كل شيء */
 }
 
 #search-icon {
-  z-index: 10;
-  cursor: pointer;
-  pointer-events: auto;
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  opacity: 0.6;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px; /* كبر الخط قليلاً لسهولة النقر */
+    opacity: 0.8;    /* زيادة الوضوح قليلاً */
 }
 
 #move-toggle {
-    cursor: pointer;
+    font-size: 20px;
     padding: 5px;
     user-select: none;
+    transition: transform 0.2s;
+}
+
+#move-toggle:active {
+    transform: scale(0.9); /* تأثير بصري عند الضغط */
 }
 
 .controls-row {
