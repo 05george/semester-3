@@ -1,3 +1,13 @@
+// دالة الـ Debounce لمنع تكرار التنفيذ بسرعة أثناء الكتابة
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
 window.onload = function() {
     // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
