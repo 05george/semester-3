@@ -1,8 +1,45 @@
+// زر الإغلاق (كما هو)
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
     pdfViewer.src = "";
     overlay.classList.add("hidden");
+};
+
+// زر التحميل
+document.getElementById("downloadBtn").onclick = () => {
+    const iframe = document.getElementById("pdfFrame");
+    let src = iframe.src;
+    if (!src) return;
+
+    // استخراج رابط الملف من viewer URL
+    const match = src.match(/file=(.+)$/);
+    if (match && match[1]) {
+        const fileUrl = decodeURIComponent(match[1]);
+        const a = document.createElement("a");
+        a.href = fileUrl;
+        a.download = fileUrl.split("/").pop(); // اسم الملف
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+};
+
+// زر المشاركة
+document.getElementById("shareBtn").onclick = () => {
+    const iframe = document.getElementById("pdfFrame");
+    let src = iframe.src;
+    if (!src) return;
+
+    const match = src.match(/file=(.+)$/);
+    if (match && match[1]) {
+        const fileUrl = decodeURIComponent(match[1]);
+
+        // نسخ الرابط إلى الحافظة
+        navigator.clipboard.writeText(fileUrl)
+            .then(() => alert("رابط الملف تم نسخه إلى الحافظة!"))
+            .catch(() => alert("فشل نسخ الرابط."));
+    }
 };
 window.onload = function() {
     // 1. تعريف العناصر الأساسية
