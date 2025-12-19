@@ -37,24 +37,24 @@ window.onload = function() {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
                         || (navigator.maxTouchPoints > 0);
 
-        // 2. معالجة روابط GitHub لضمان عرضها (وليس تحميلها)
-        // نقوم بتحويل رابط 'raw' أو الرابط المباشر إلى رابط GitHub Pages إذا أمكن، 
-        // أو فتحه مباشرة لأن المتصفحات الحديثة تعرض PDF تلقائياً.
         let targetUrl = url;
-        
+
+        // 2. معالجة روابط GitHub لتعمل مثل Google Drive
+        // سنستخدم خدمة 'jsDelivr' أو تحويل الرابط لفتح الملف في المتصفح مباشرة
         if (url.includes('github.com') && url.toLowerCase().endsWith('.pdf')) {
-            // تحويل الرابط إلى تنسيق يسهل على المتصفح عرضه مباشرة
-            targetUrl = url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+            // تحويل رابط GitHub العادي إلى رابط Raw قابل للعرض المباشر
+            targetUrl = url.replace('github.com', 'raw.githubusercontent.com')
+                           .replace('/blob/', '/');
         }
 
-        // 3. منطق الفتح
+        // 3. منطق الفتح الموحد
         if (isMobile) {
-            // للهاتف: الفتح في نفس الصفحة
-            // ملاحظة: إذا كان المتصفح يدعم عرض PDF سيفتحه، وإذا لم يدعم سيقوم بتحميله (وهذا أفضل من شاشة الخطأ)
+            // للهاتف: الفتح في نفس الصفحة (يعمل مع درايف وجيت هاب)
             window.location.href = targetUrl;
         } else {
             // للكمبيوتر: فتح في نافذة جديدة
             const newWindow = window.open(targetUrl, '_blank');
+            // خطة احتياطية إذا منع المتصفح النافذة المنبثقة
             if (!newWindow || newWindow.closed) {
                 window.location.href = targetUrl;
             }
