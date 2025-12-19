@@ -12,7 +12,6 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // --- تعريف activeState بشكل صحيح لمنع خطأ الكونسول ---
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -24,58 +23,47 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
-        scrollContainer.scrollTo({ 
-            left: -scrollContainer.scrollWidth, 
-            behavior: 'smooth' 
-        });
+        scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
     };
 
     const goToMapEnd = () => {
-        scrollContainer.scrollTo({ 
-            left: 0, 
-            behavior: 'smooth' 
-        });
+        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     };
 
     // --- ربط الأحداث ---
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        goToWood(); 
-    };
+    searchIcon.onclick = (e) => { e.preventDefault(); goToWood(); };
 
     searchInput.addEventListener('input', debounce(function(e) {
-    const query = e.target.value.toLowerCase().trim();
+        const query = e.target.value.toLowerCase().trim();
 
-    /* 1️⃣ فلترة مستطيلات الخريطة */
-    mainSvg.querySelectorAll('rect.m').forEach(rect => {
-        const isMatch =
-          (rect.getAttribute('data-href') || '').toLowerCase().includes(query) ||
-          (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+        /* 1️⃣ فلترة مستطيلات الخريطة */
+        mainSvg.querySelectorAll('rect.m').forEach(rect => {
+            const isMatch =
+                (rect.getAttribute('data-href') || '').toLowerCase().includes(query) ||
+                (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
 
-        const label = rect.parentNode.querySelector(
-          `.rect-label[data-original-for='${rect.dataset.href}']`
-        );
-        const bg = rect.parentNode.querySelector(
-          `.label-bg[data-original-for='${rect.dataset.href}']`
-        );
+            const label = rect.parentNode.querySelector(
+                `.rect-label[data-original-for='${rect.dataset.href}']`
+            );
+            const bg = rect.parentNode.querySelector(
+                `.label-bg[data-original-for='${rect.dataset.href}']`
+            );
 
-        const hide = query && !isMatch;
-        rect.style.display = hide ? 'none' : '';
-        if (label) label.style.display = rect.style.display;
-        if (bg) bg.style.display = rect.style.display;
-    });
+            const hide = query && !isMatch;
+            rect.style.display = hide ? 'none' : '';
+            if(label) label.style.display = rect.style.display;
+            if(bg) bg.style.display = rect.style.display;
+        });
 
-    /* 2️⃣ فلترة عناصر القائمة الجديدة */
-    const listGroups = document.querySelectorAll('#dynamic-links-group > g');
+        /* 2️⃣ فلترة عناصر القائمة الجديدة */
+        const listGroups = document.querySelectorAll('#dynamic-links-group > g');
+        listGroups.forEach(g => {
+            const text = g.querySelector('text')?.textContent.toLowerCase() || '';
+            g.style.display = (query && !text.includes(query)) ? 'none' : '';
+        });
 
-    listGroups.forEach(g => {
-        const text = g.querySelector('text')?.textContent.toLowerCase() || '';
-        g.style.display = (query && !text.includes(query)) ? 'none' : '';
-    });
-
-}, 150));
+    }, 150));
 
     moveToggle.onclick = (e) => {
         e.preventDefault();
@@ -95,11 +83,10 @@ window.onload = function() {
         } 
     };
 
-    // --- الدوال المساعدة ---
+    // --- دوال مساعدة ---
     function debounce(func, delay) {
         let timeoutId;
-        return function() {
-            const context = this; const args = arguments;
+        return function() { const context = this; const args = arguments;
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(context, args), delay);
         }
@@ -119,7 +106,7 @@ window.onload = function() {
         while (current && current.tagName !== 'svg') {
             const trans = current.getAttribute('transform');
             if (trans) {
-                const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+                const m = trans.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/);
                 if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
             }
             current = current.parentNode;
@@ -157,92 +144,91 @@ window.onload = function() {
         if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
         const clip = document.getElementById(activeState.clipPathId);
         if (clip) clip.remove();
-        Object.assign(activeState, {
-            rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-            baseText: null, baseBg: null, animationId: null, clipPathId: null
-        });
+        Object.assign(activeState, {rect:null,zoomPart:null,zoomText:null,zoomBg:null,baseText:null,baseBg:null,animationId:null,clipPathId:null});
     }
 
-    function startHover() {  
-        if (!interactionEnabled || this.classList.contains('list-item')) return;  
-        const rect = this;  
-        if (activeState.rect === rect) return;  
-        cleanupHover();  
-        activeState.rect = rect;  
+    function startHover() {
+        if (!interactionEnabled || this.classList.contains('list-item')) return;
+        const rect = this;
+        if (activeState.rect === rect) return;
+        cleanupHover();
+        activeState.rect = rect;
 
-        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
-        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
-        const cum = getCumulativeTranslate(rect);  
-        const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
-        const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
-        const centerX = absX + rW / 2;  
-
+        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;
+        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;
+        const cum = getCumulativeTranslate(rect);
+        const absX = parseFloat(rect.getAttribute('x')) + cum.x;
+        const absY = parseFloat(rect.getAttribute('y')) + cum.y;
+        const centerX = absX + rW/2;
         const scaleFactor = 1.1;
         const yOffset = (rH * (scaleFactor - 1)) / 2;
         const hoveredY = absY - yOffset;
 
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
-        rect.style.transform = `scale(${scaleFactor})`;  
-        rect.style.strokeWidth = '4px';  
+        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;
+        rect.style.transform = `scale(${scaleFactor})`;
+        rect.style.strokeWidth = '4px';
 
-        const imgData = getGroupImage(rect);  
-        if (imgData) {  
-            const clipId = `clip-${Date.now()}`;  
-            activeState.clipPathId = clipId;  
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
-            clip.setAttribute('id', clipId);  
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);  
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);  
-            clipDefs.appendChild(clip).appendChild(cRect);  
+        const imgData = getGroupImage(rect);
+        if (imgData) {
+            const clipId = `clip-${Date.now()}`;
+            activeState.clipPathId = clipId;
+            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clip.setAttribute('id', clipId);
+            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);
+            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);
+            clipDefs.appendChild(clip).appendChild(cRect);
 
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
-            zPart.setAttribute('href', imgData.src);  
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);  
-            zPart.setAttribute('clip-path', `url(#${clipId})`);  
-            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);  
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
-            zPart.style.pointerEvents = 'none';  
-            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;  
-            zPart.style.transform = `scale(${scaleFactor})`;  
-            mainSvg.appendChild(zPart);  
-            activeState.zoomPart = zPart;  
-        }  
+            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            zPart.setAttribute('href', imgData.src);
+            zPart.setAttribute('width', imgData.width);
+            zPart.setAttribute('height', imgData.height);
+            zPart.setAttribute('clip-path', `url(#${clipId})`);
+            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\s*([\d.-]+)[ ,]+([\d.-]+)\s*/);
+            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);
+            zPart.style.pointerEvents = 'none';
+            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;
+            zPart.style.transform = `scale(${scaleFactor})`;
+            mainSvg.appendChild(zPart);
+            activeState.zoomPart = zPart;
+        }
 
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-        if (bText) {  
-            bText.style.opacity = '0';  
-            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-            if(bBg) bBg.style.opacity = '0';  
-            activeState.baseText = bText; activeState.baseBg = bBg;  
+        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        if (bText) {
+            bText.style.opacity = '0';
+            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            if(bBg) bBg.style.opacity = '0';
+            activeState.baseText = bText; activeState.baseBg = bBg;
 
-            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
-            zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');  
-            zText.style.dominantBaseline = 'central'; zText.style.fill = 'white';  
-            zText.style.fontWeight = 'bold'; zText.style.pointerEvents = 'none';  
-            zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';  
-            mainSvg.appendChild(zText);  
+            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";
+            zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');
+            zText.style.dominantBaseline = 'central'; zText.style.fill = 'white';
+            zText.style.fontWeight = 'bold'; zText.style.pointerEvents = 'none';
+            zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';
+            mainSvg.appendChild(zText);
 
-            const bbox = zText.getBBox();  
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY);  
-            zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);  
-            zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';  
+            const bbox = zText.getBBox();
+            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            zBg.setAttribute('x', centerX - (bbox.width + 20)/2);
+            zBg.setAttribute('y', hoveredY);
+            zBg.setAttribute('width', bbox.width + 20);
+            zBg.setAttribute('height', bbox.height + 10);
+            zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';
 
-            mainSvg.insertBefore(zBg, zText);  
-            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);
-            activeState.zoomText = zText; activeState.zoomBg = zBg;  
-        }  
+            mainSvg.insertBefore(zBg, zText);
+            zText.setAttribute('y', hoveredY + (bbox.height + 10)/2);
+            activeState.zoomText = zText; activeState.zoomBg = zBg;
+        }
 
-        let h = 0;  
-        activeState.animationId = setInterval(() => {  
-            h = (h + 10) % 360;  
+        let h = 0;
+        activeState.animationId = setInterval(() => {
+            h = (h + 10) % 360;
             const color = `hsl(${h},100%,60%)`;
-            rect.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
-        }, 100);  
+            rect.style.filter = `drop-shadow(0 0 8px ${color})`;
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;
+            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;
+        }, 100);
     }
 
     function wrapText(el, maxW) {
@@ -351,116 +337,4 @@ window.onload = function() {
         r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
 
         r.addEventListener('touchstart', function(e) { if(!interactionEnabled) return; activeState.touchStartTime = Date.now(); activeState.initialScrollLeft = scrollContainer.scrollLeft; startHover.call(this); });
-        r.addEventListener('touchend', function(e) { 
-            if (!interactionEnabled) return;
-            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if (href && href !== '#') window.open(href, '_blank');
-            }
-            cleanupHover();
-        });
-        r.setAttribute('data-processed', 'true');
-    }
-
-    function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
-    
-    // --- بدء التشغيل والتحميل ---
-    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
-    let loadedCount = 0;
-    
-    urls.forEach(u => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
-            if(p === 100) {
-                document.getElementById('bulb-4')?.classList.add('on');
-                setTimeout(() => {
-                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
-                    setTimeout(() => { 
-                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                        mainSvg.style.opacity = 1; 
-                        scan(); // مسح العناصر وتفعيل الخصائص بعد التحميل
-                        updateWoodInterface(); 
-                        goToMapEnd(); 
-                    }, 300);
-                    mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
-                }, 500);
-            }
-        };
-        img.src = u;
-    });
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-    }, 150));
-
-    jsToggle.addEventListener('change', function() { 
-        interactionEnabled = this.checked; 
-        if(!interactionEnabled) cleanupHover(); 
-    });
-
-const GITHUB_OWNER = "05george";
-const GITHUB_REPO  = "semester-3";
-const BRANCH = "main";
-
-// مجلد وهمي نضيف فيه العناصر
-const dynamicVirtualGroup = document.createElementNS(
-  "http://www.w3.org/2000/svg",
-  "g"
-);
-dynamicVirtualGroup.setAttribute("id", "dynamic-github-pdfs");
-dynamicVirtualGroup.style.display = "none";
-document.getElementById("main-svg").appendChild(dynamicVirtualGroup);
-
-// قراءة كل الملفات باستخدام Git Tree API
-async function loadAllPdfFromGithub() {
-  try {
-    const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${BRANCH}?recursive=1`;
-    const res = await fetch(api);
-    const data = await res.json();
-
-    if (!data.tree) return;
-
-    data.tree.forEach(item => {
-      if (item.type === "blob" && item.path.toLowerCase().endsWith(".pdf")) {
-
-        // إنشاء rect وهمي بنفس منطق القديم
-        const r = document.createElementNS(
-          "http://www.w3.org/2000/svg",
-          "rect"
-        );
-
-        r.setAttribute("class", "m");
-        r.setAttribute("data-href", item.path);
-
-        const name = item.path.split("/").pop();
-        r.setAttribute("data-full-text", name);
-
-        dynamicVirtualGroup.appendChild(r);
-      }
-    });
-
-    // إعادة بناء القائمة بعد الإضافة
-    if (typeof updateWoodInterface === "function") {
-      updateWoodInterface();
-    }
-
-  } catch (e) {
-    console.error("GitHub PDF Loader Error:", e);
-  }
-}
-
-// تشغيل التحميل الديناميكي
-loadAllPdfFromGithub();
-};
+        r
