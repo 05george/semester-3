@@ -290,7 +290,7 @@ activeState.animationId = setInterval(() => {
         activeState.zoomBg.style.stroke = color;  
     }
 }, 100);
-
+}
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
