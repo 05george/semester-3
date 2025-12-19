@@ -132,43 +132,89 @@ window.onload = function() {
             dynamicGroup.appendChild(errorText);
         }
     }
+/* --- استبدل الدوال التالية في ملف script.js عندك --- */
 
-    function renderWoodItems(items) {
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        items.forEach((item, index) => {
-            const col = index % 2; 
-            const row = Math.floor(index / 2);
-            const x = col === 0 ? 120 : 550; 
-            const y = 250 + (row * 90);
+// 1. تحديث دالة بناء عناصر الخشب لتسهيل البحث
+function renderWoodItems(items) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
+    dynamicGroup.innerHTML = ''; 
 
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.style.cursor = "pointer";
+    items.forEach((item, index) => {
+        const col = index % 2; 
+        const row = Math.floor(index / 2);
+        const x = col === 0 ? 120 : 550; 
+        const y = 250 + (row * 90);
 
-            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-            r.setAttribute("class", "list-item");
-            r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
-            r.style.stroke = "#fff";
+        // إنشاء مجموعة (Group) لكل عنصر لضمان إخفاء المربع والنص معاً
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "wood-list-item-group"); // كلاس موحد للبحث
+        g.style.cursor = "pointer";
 
-            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-            t.textContent = (item.isFolder ? "📁 " : "📄 ") + (item.label.length > 25 ? item.label.substring(0, 22) + "..." : item.label);
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", x); r.setAttribute("y", y); 
+        r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
+        r.setAttribute("rx", "12");
+        r.setAttribute("class", "list-item");
+        r.style.fill = item.isFolder ? "#5d4037" : "rgba(0,0,0,0.8)";
+        r.style.stroke = "#fff";
 
-            g.appendChild(r); g.appendChild(t);
-            g.onclick = (e) => {
-                e.stopPropagation();
-                if (item.isFolder) { 
-                    currentFolder = item.path; 
-                    updateWoodInterface(); 
-                } else { 
-                    window.open(item.downloadUrl, '_blank'); 
-                }
-            };
-            dynamicGroup.appendChild(g);
-        });
-    }
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+        
+        // تنظيف الاسم للعرض والبحث
+        const cleanName = item.label;
+        t.textContent = (item.isFolder ? "📁 " : "📄 ") + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+        t.setAttribute("data-search-name", cleanName.toLowerCase()); // تخزين الاسم للبحث
+
+        g.appendChild(r); 
+        g.appendChild(t);
+        
+        g.onclick = (e) => {
+            e.stopPropagation();
+            if (item.isFolder) { 
+                currentFolder = item.path; 
+                updateWoodInterface(); 
+            } else { 
+                window.open(item.downloadUrl, '_blank'); 
+            }
+        };
+        dynamicGroup.appendChild(g);
+    });
+}
+
+// 2. تحديث دالة البحث الموحدة (Unified Search)
+searchInput.addEventListener('input', debounce(function(e) {
+    const query = e.target.value.toLowerCase().trim();
+
+    // أولاً: البحث في مستطيلات الخريطة (SVG Rects)
+    mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+        const href = (rect.getAttribute('data-href') || '').toLowerCase();
+        const fullText = (rect.getAttribute('data-full-text') || '').toLowerCase();
+        const isMatch = href.includes(query) || fullText.includes(query);
+        
+        const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+        
+        rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+        if(label) label.style.display = rect.style.display; 
+        if(bg) bg.style.display = rect.style.display;
+    });
+
+    // ثانياً: البحث في قائمة الخشب (GitHub API Items)
+    mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
+        const textNode = group.querySelector('text');
+        const searchName = textNode ? textNode.getAttribute('data-search-name') : "";
+        
+        if (query.length > 0 && !searchName.includes(query)) {
+            group.style.display = 'none';
+        } else {
+            group.style.display = '';
+        }
+    });
+}, 150));
 
     // --- وظائف التفاعل مع الخريطة ---
     function getCumulativeTranslate(element) {
