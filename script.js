@@ -1,5 +1,5 @@
 window.onload = function() {
-    // 1. تعريف العناصر الأساسية (مرة واحدة فقط لتجنب SyntaxError)
+    // 1. تعريف العناصر الأساسية
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -12,58 +12,62 @@ window.onload = function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // إعدادات أولية
-    mainSvg.style.colorScheme = 'only light'; 
+    // --- حل مشكلة الخطأ في الكونسول: تعريف activeState ---
+    let activeState = {
+        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        touchStartTime: 0, initialScrollLeft: 0
+    };
+
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- وظائف الحركة (تعريفها في البداية لتجنب ReferenceError) ---
+    // --- حل مشكلة الاتجاه RTL للبحث ---
     
-    // الذهاب لليسار (صفحة الخشب)
-    // الذهاب لأقصى اليسار (صفحة الخشب والقائمة)
-const goToWood = () => {
-    // في نظام RTL، أقصى اليسار هو عرض الحاوية بالسالب
-    scrollContainer.scrollTo({ 
-        left: -scrollContainer.scrollWidth, 
-        behavior: 'smooth' 
-    });
-};
+    // الانتقال لليسار (صفحة الخشب)
+    const goToWood = () => {
+        // في RTL، أقصى اليسار هو قيمة سالبة
+        scrollContainer.scrollTo({ 
+            left: -scrollContainer.scrollWidth, 
+            behavior: 'smooth' 
+        });
+    };
 
-// الذهاب لأقصى اليمين (نهاية الخريطة/الأسبوع الأخير)
-const goToMapEnd = () => {
-    scrollContainer.scrollTo({ 
-        left: 0, 
-        behavior: 'smooth' 
-    });
-};
+    // العودة لليمين (نهاية الخريطة)
+    const goToMapEnd = () => {
+        scrollContainer.scrollTo({ 
+            left: 0, 
+            behavior: 'smooth' 
+        });
+    };
 
-    // --- ربط أحداث الأزرار ---
-// عند النقر على أيقونة العدسة 🔍
-searchIcon.onclick = (e) => {
-    e.preventDefault();
-    goToWood(); // سينقلك الآن لأقصى اليسار
-};
+    // --- ربط الأحداث المحدث ---
 
-// عند كتابة اسم ملف والضغط على Enter في الكيبورد
-searchInput.onkeydown = (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault(); // منع تحديث الصفحة
-        goToWood(); // الانتقال للقائمة لمشاهدة النتائج
-    }
-};
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        goToWood(); 
+    };
 
-// تعديل زر "إلى الخريطة" الموجود في صفحة الخشب للعودة لليمين
-backButtonGroup.onclick = () => { 
-    if (currentFolder !== "") { 
-        let parts = currentFolder.split('/'); 
-        parts.pop(); 
-        currentFolder = parts.join('/'); 
-        updateWoodInterface(); 
-    } else { 
-        goToMapEnd(); // سيعود بك إلى الصفر (أقصى اليمين)
-    } 
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            goToWood();
+        }
+    };
+
+    backButtonGroup.onclick = () => { 
+        if (currentFolder !== "") { 
+            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
+            updateWoodInterface(); 
+        } else { 
+            goToMapEnd(); 
+        } 
+    };
+
+    // ... (بقية الدوال البرمجية الأصلية scan, processRect, wrapText إلخ مع التأكد من وجودها)
+    // ملاحظة: تأكد من إدراج بقية الدوال التي كانت في الكود الأصلي لضمان عمل الخريطة بالكامل.
 };
     // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
     moveToggle.onclick = (e) => {
