@@ -275,7 +275,7 @@ function smartOpen(item) {
             h = (h + 10) % 360;  
             const color = `hsl(${h},100%,60%)`;
             rect.style.filter = `drop-shadow(0 0 8px ${color})`;  
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 8px ${color})`;  
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 15px ${color})`;  
             if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
         }, 100);  
     }
@@ -319,7 +319,6 @@ const filteredData = data.filter(item => {
 
     const isFolder = item.type === 'dir' && name !== 'image';
     const isPdf = item.type === 'file' && name.endsWith('.pdf');
-    const isEmail = name.includes('@'); // لو عندك ملف باسم إيميل
 
     return (isFolder || isPdf) && !isEmail;
 });
