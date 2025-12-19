@@ -1,5 +1,5 @@
 window.onload = function() {
-    // 1. تعريف العناصر الأساسية (مرة واحدة فقط)
+    // 1. تعريف العناصر الأساسية (مرة واحدة فقط لتجنب SyntaxError)
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
@@ -19,43 +19,34 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    const activeState = {
-        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-        baseText: null, baseBg: null, animationId: null, clipPathId: null,
-        initialScrollLeft: 0, touchStartTime: 0
+    // --- وظائف الحركة (تعريفها في البداية لتجنب ReferenceError) ---
+    
+    // الذهاب لليسار (صفحة الخشب)
+    const goToWood = () => {
+        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     };
 
-    // --- وظائف الحركة --- //
-const goToWood = () => {
-    scrollContainer.scrollTo({ 
-        left: -scrollContainer.scrollWidth, // للقيمة السالبة في وضع RTL
-        behavior: 'smooth' 
-    });
-    if (scrollContainer.scrollLeft > 0) {
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-};
+    // الذهاب لليمين (نهاية الخريطة)
+    const goToMapEnd = () => {
+        scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
+    };
 
-searchIcon.onclick = () => {
-    goToWood();
-    searchInput.focus();
-};
+    // --- ربط أحداث الأزرار ---
 
-searchInput.onkeydown = (e) => {
-    if (e.key === "Enter") {
-        goToWood();
-        searchInput.blur();
-    }
-};
+    // تفعيل العدسة 🔍
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        goToWood(); 
+        searchInput.focus();
+    };
 
-    // 2. عند الضغط على Enter أو Go في الكيبورد
+    // تفعيل زر Enter/Go في البحث
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
-            goToWood(); // التحرك لأقصى اليسار
-            searchInput.blur(); // إغلاق لوحة المفاتيح
+            goToWood();
+            searchInput.blur();
         }
     };
-
     // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
     moveToggle.onclick = (e) => {
         e.preventDefault();
