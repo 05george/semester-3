@@ -153,10 +153,11 @@ window.onload = function() {
         });
     }
 
-    // --- نظام البحث الموحد (المصلح) ---
+    // --- نظام البحث الموحد (المصلح) --- //
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
-        // بحث الخريطة
+        
+        // 1. بحث الخريطة (يبقى كما هو)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
@@ -165,10 +166,20 @@ window.onload = function() {
             if(label) label.style.display = rect.style.display;
             if(bg) bg.style.display = rect.style.display;
         });
-        // بحث الخشب
+
+        // 2. بحث الخشب (المجلدات مستثناة من الإخفاء)
         mainSvg.querySelectorAll('.wood-list-item-group').forEach(group => {
-            const name = group.querySelector('text').getAttribute('data-search-name');
-            group.style.display = (query && !name.includes(query)) ? 'none' : '';
+            const textElement = group.querySelector('text');
+            const name = textElement.getAttribute('data-search-name');
+            const isFolder = textElement.textContent.includes("📁"); 
+
+            if (isFolder) {
+                // المجلد يظل ظاهراً دائماً بغض النظر عن البحث
+                group.style.display = '';
+            } else {
+                // الملفات تختفي إذا لم تطابق نص البحث (وتظهر دائماً إذا كان البحث فارغاً)
+                group.style.display = (query === "" || name.includes(query)) ? '' : 'none';
+            }
         });
     }, 150));
 
