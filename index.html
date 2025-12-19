@@ -7,6 +7,105 @@
   <title>Interactive Map</title>
   <link rel="stylesheet" href="style.css">
 <link rel="icon" type="image/webp" href="image/o.webp">
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+#toolbar {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+  display: flex;
+  gap: 10px;
+  background: rgba(0,0,0,.7);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+#toolbar button {
+  background: #222;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#toolbar button:hover {
+  background: #333;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- شريط الأدوات -->
+<div id="toolbar">
+  <button id="backBtn">⬅ رجوع</button>
+  <button id="downloadBtn">⬇ تحميل</button>
+  <button id="shareBtn">🔗 مشاركة</button>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const file = params.get("file");
+
+if (!file) {
+  document.body.innerHTML =
+    "<p style='color:white;text-align:center'>لا يوجد ملف</p>";
+  throw new Error("No PDF file");
+}
+
+// ===== iframe PDF.js =====
+const iframe = document.createElement("iframe");
+iframe.src =
+  "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+  encodeURIComponent(file);
+document.body.appendChild(iframe);
+
+// ===== زر الرجوع =====
+document.getElementById("backBtn").onclick = () => {
+  history.length > 1 ? history.back() : window.close();
+};
+
+// ===== زر التحميل =====
+document.getElementById("downloadBtn").onclick = () => {
+  const a = document.createElement("a");
+  a.href = file;
+  a.download = "";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
+
+// ===== زر المشاركة =====
+document.getElementById("shareBtn").onclick = async () => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "ملف PDF",
+        url: file
+      });
+    } catch {}
+  } else {
+    navigator.clipboard.writeText(file);
+    alert("تم نسخ رابط الملف");
+  }
+};
+</script>
 </head>
 <body>
 <div id="js-toggle-container" class="top">
