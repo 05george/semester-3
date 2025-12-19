@@ -311,7 +311,7 @@ activeState.animationId = setInterval(() => {
         });
     }
 
-    // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية إيميلي ---
+    // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية  ---
     async function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -325,15 +325,15 @@ activeState.animationId = setInterval(() => {
             if (!response.ok) throw new Error('API Error');
             const data = await response.json();
 
-            // تصفية: إخفاء مجلد image، إخفاء ملف إيميلي، إظهار (المجلدات + PDF) فقط
+// تصفية: إخفاء مجلد image، وإظهار (المجلدات + ملفات PDF) فقط
 const filteredData = data.filter(item => {
     const name = item.name.toLowerCase();
-
     const isFolder = item.type === 'dir' && name !== 'image';
     const isPdf = item.type === 'file' && name.endsWith('.pdf');
 
-    return (isFolder || isPdf) && !isEmail;
+    return (isFolder || isPdf);
 });
+
 
             filteredData.sort((a, b) => (a.type === 'dir' ? -1 : 1))
                 .forEach((item, index) => {
