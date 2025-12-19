@@ -27,6 +27,9 @@ window.onload = function() {
     };
 
     moveToggle.onclick = () => {
+    // سيقوم بتبديل الكلاسين مهما كانت الحالة الابتدائية
+    toggleContainer.classList.toggle('top');
+    toggleContainer.classList.toggle('bottom');
         if (toggleContainer.classList.contains('top')) {
             toggleContainer.classList.replace('top', 'bottom');
         } else {
