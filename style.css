@@ -67,6 +67,7 @@ html, body {
   transform-origin: center center;
   transition: filter .3s ease, stroke-width .3s ease;
   cursor: pointer;
+  -webkit-touch-callout: none;
 }
 
 /* ربط ألوان الخريطة */
