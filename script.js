@@ -260,6 +260,8 @@ window.onload = function() {
             const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
             t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
             t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+// إزالة .pdf من الاسم قبل العرض
+let displayName = item.label.replace(/\.pdf$/i, ""); 
             t.textContent = (item.isFolder ? "📁 " : "📄 ") + (item.label.length > 22 ? item.label.substring(0, 19) + "..." : item.label);
             g.appendChild(r); g.appendChild(t);
             g.onclick = (e) => {
