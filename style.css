@@ -81,6 +81,7 @@ html, body {
 
 /* تنسيق عارض PDF المنبثق */
 #pdf-overlay {
+  transition: transform .35s ease, opacity .35s ease;
     position: fixed;
     top: 0;
     left: 0;
