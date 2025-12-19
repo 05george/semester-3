@@ -268,31 +268,58 @@ window.onload = function() {
         }
     }
 
+    // --- 3. إدارة واجهة الخشب (تعديل الفلاتر والفتح الذكي) ---
+    async function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
+        backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
+
+        try {
+            const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('API Response Error');
+            const data = await response.json();
+
+            // الفلترة المطلوبة:
+            const items = data.filter(item => {
+                const name = item.name.toLowerCase();
+                // 1. استثناء مجلد الصور
+                if (name === 'image') return false; 
+                // 2. عرض المجلدات دائماً لتسهيل التنقل
+                if (item.type === 'dir') return true;
+                // 3. عرض ملفات PDF و SVG فقط
+                return name.endsWith('.pdf') || name.endsWith('.svg');
+            }).sort((a, b) => (a.type === 'dir' ? -1 : 1));
+
+            renderWoodItems(items);
+        } catch (e) { 
+            console.error("خطأ في جلب البيانات:", e);
+        }
+    }
+
     function renderWoodItems(items) {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         items.forEach((item, index) => {
             const x = (index % 2 === 0) ? 120 : 550;
             const y = 250 + (Math.floor(index / 2) * 90);
-
             const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             g.setAttribute("class", "wood-list-item-group");
             g.style.cursor = "pointer";
 
             const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); 
-            r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
             r.setAttribute("class", "list-item");
             r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
             r.style.stroke = "#fff";
 
-            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+            // تنظيف الاسم: إزالة .pdf أو .svg أو كلمة pdf
+            let cleanName = item.name.replace(/\.(pdf|svg)$/i, "").replace(/pdf/gi, "").trim();
             
-            const cleanName = item.name.replace(/\.[^/.]+$/, "");
-            t.textContent = (item.type === 'dir' ? "📁 " : "📄 ") + 
-                           (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+            t.textContent = (item.type === 'dir' ? "📁 " : "📄 ") + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
             t.setAttribute("data-search-name", cleanName.toLowerCase());
 
             g.appendChild(r); g.appendChild(t);
@@ -302,13 +329,16 @@ window.onload = function() {
                     currentFolder = item.path; 
                     updateWoodInterface(); 
                 } else { 
-                    window.open(item.download_url || item.html_url, '_blank'); 
+                    // الفتح الطبيعي في المتصفح (يعمل للـ PDF والـ SVG)
+                    const fileUrl = item.download_url || item.html_url;
+                    window.open(fileUrl, '_blank');
                 }
             };
             dynamicGroup.appendChild(g);
         });
         applyWoodSearchFilter();
     }
+
 
     // --- نظام البحث المدمج الجديد ---
     function applyWoodSearchFilter() {
@@ -385,11 +415,11 @@ window.onload = function() {
         img.onload = img.onerror = () => {
             loadedCount++;
             const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-1')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-2')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-3')?.classList.add('on');
+            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
             if(p === 100) {
-                document.getElementById('bulb-4')?.classList.add('on');
+                document.getElementById('bulb-1')?.classList.add('on');
                 setTimeout(() => {
                     if(loadingOverlay) loadingOverlay.style.opacity = 0;
                     setTimeout(() => { 
