@@ -1,49 +1,19 @@
 window.onload = function() {
+    // 1. تعريف العناصر الأساسية (مرة واحدة فقط)
     const mainSvg = document.getElementById('main-svg');
-    mainSvg.style.colorScheme = 'only light'; 
     const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
-const moveToggle = document.getElementById('move-toggle');
-const toggleContainer = document.getElementById('js-toggle-container');
-
-// وظيفة للتحرك لأقصى اليسار (بداية شريط التمرير)
-const scrollToStart = () => {
-    scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-};
-
-// 1. عند الضغط على أيقونة البحث 🔍
-searchIcon.onclick = () => {
-    scrollToStart(); // تحريك الموقع لليسار
-    searchInput.focus(); // فتح لوحة المفاتيح
-};
-
-// 2. عند الضغط على Enter (كمبيوتر) أو Go/Search (تليفون)
-searchInput.onkeydown = (e) => {
-    if (e.key === "Enter") {
-        scrollToStart(); // تحريك الموقع لليسار
-        searchInput.blur(); // إغلاق لوحة المفاتيح
-    }
-};
-
-// 3. تأكيد عمل زر التبديل ↕️ (لنقل القائمة للأعلى والأسفل)
-const moveToggle = document.getElementById('move-toggle');
-const toggleContainer = document.getElementById('js-toggle-container');
-
-moveToggle.onclick = (e) => {
-    e.preventDefault();
-    if (toggleContainer.classList.contains('top')) {
-        toggleContainer.classList.replace('top', 'bottom');
-    } else {
-        toggleContainer.classList.replace('bottom', 'top');
-    }
-};
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
+    const moveToggle = document.getElementById('move-toggle');
+    const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
+    // إعدادات أولية
+    mainSvg.style.colorScheme = 'only light'; 
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -55,9 +25,37 @@ moveToggle.onclick = (e) => {
         initialScrollLeft: 0, touchStartTime: 0
     };
 
-    // وظائف الحركة
+    // --- وظائف الحركة ---
     const goToWood = () => scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     const goToMapEnd = () => scrollContainer.scrollTo({ left: scrollContainer.scrollWidth, behavior: 'smooth' });
+
+    // --- أحداث أزرار الواجهة الجديدة ---
+
+    // 1. عند الضغط على أيقونة البحث 🔍
+    searchIcon.onclick = () => {
+        goToWood(); // التحرك لأقصى اليسار
+        searchInput.focus(); // فتح لوحة المفاتيح
+    };
+
+    // 2. عند الضغط على Enter أو Go في الكيبورد
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            goToWood(); // التحرك لأقصى اليسار
+            searchInput.blur(); // إغلاق لوحة المفاتيح
+        }
+    };
+
+    // 3. زر التبديل ↕️ (تبديل الكلاس بين top و bottom)
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+
+    // --- باقي الوظائف البرمجية الخاصة بالخريطة ---
 
     function debounce(func, delay) {
         let timeoutId;
@@ -148,7 +146,6 @@ moveToggle.onclick = (e) => {
         rect.style.transform = `scale(${scaleFactor})`;  
         rect.style.strokeWidth = '4px';  
 
-        // 1. Zoom Background Image (ClipPath)
         const imgData = getGroupImage(rect);  
         if (imgData) {  
             const clipId = `clip-${Date.now()}`;  
@@ -173,7 +170,6 @@ moveToggle.onclick = (e) => {
             activeState.zoomPart = zPart;  
         }  
 
-        // 2. Zoom Labels
         let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
         if (bText) {  
             bText.style.opacity = '0';  
@@ -229,7 +225,6 @@ moveToggle.onclick = (e) => {
         });
     }
 
-    // نظام المجلدات (صفين)
     function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
@@ -331,9 +326,12 @@ moveToggle.onclick = (e) => {
     scan();
 
     // أحداث البحث والرجوع
-    backButtonGroup.onclick = () => { if (currentFolder !== "") { let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); updateWoodInterface(); } else { goToMapEnd(); } };
-    searchIcon.onclick = () => { goToWood(); searchInput.focus(); };
-    searchInput.onkeydown = (e) => { if (e.key === "Enter") { goToWood(); searchInput.blur(); } };
+    backButtonGroup.onclick = () => { 
+        if (currentFolder !== "") { 
+            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
+            updateWoodInterface(); 
+        } else { goToMapEnd(); } 
+    };
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
@@ -361,7 +359,12 @@ moveToggle.onclick = (e) => {
                 document.getElementById('bulb-4')?.classList.add('on');
                 setTimeout(() => {
                     if(loadingOverlay) loadingOverlay.style.opacity = 0;
-                    setTimeout(() => { if(loadingOverlay) loadingOverlay.style.display = 'none'; mainSvg.style.opacity = 1; updateWoodInterface(); goToMapEnd(); }, 300);
+                    setTimeout(() => { 
+                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = 1; 
+                        updateWoodInterface(); 
+                        goToMapEnd(); 
+                    }, 300);
                     mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
                 }, 500);
             }
@@ -369,5 +372,8 @@ moveToggle.onclick = (e) => {
         img.src = u;
     });
 
-    jsToggle.addEventListener('change', function() { interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); });
+    jsToggle.addEventListener('change', function() { 
+        interactionEnabled = this.checked; 
+        if(!interactionEnabled) cleanupHover(); 
+    });
 };
