@@ -11,6 +11,38 @@ window.onload = function() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+const params = new URLSearchParams(location.search);
+const file = params.get("file");
+
+if(!file){
+  alert("لا يوجد ملف PDF");
+  throw new Error("No PDF");
+}
+
+document.getElementById("pdfFrame").src =
+  "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+  encodeURIComponent(file);
+
+// رجوع
+backBtn.onclick = () => history.back();
+
+// تحميل
+downloadBtn.onclick = () => {
+  const a = document.createElement("a");
+  a.href = file;
+  a.download = "";
+  a.click();
+};
+
+// مشاركة
+shareBtn.onclick = async () => {
+  if(navigator.share){
+    await navigator.share({ title:"PDF", url:file });
+  }else{
+    navigator.clipboard.writeText(file);
+    alert("تم نسخ رابط الملف");
+  }
+};
 
     const repoOwner = "05george";
     const repoName = "semester-3";
@@ -56,6 +88,12 @@ function applyWoodSearchFilter() {
     // --- 2. وظيفة الفتح الذكي للروابط ---
  function smartOpen(url) {
     if (!url || url === '#') return;
+
+// ⭐ جديد ⭐ فتح ملفات PDF داخل viewer.html
+if (url.toLowerCase().endsWith('.pdf')) {
+    location.href = `viewer.html?file=${encodeURIComponent(url)}`;
+    return;
+}
 
     let targetUrl = url;
 
