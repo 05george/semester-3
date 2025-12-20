@@ -324,28 +324,24 @@ activeState.animationId = setInterval(() => {
         });
     }
 
-    // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية  ---
+     // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية مع عداد الملفات ---
     async function updateWoodInterface() {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
         dynamicGroup.innerHTML = ''; 
-if (currentFolder === "") {
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    
-    // الإحداثيات الدقيقة التي استخرجتها أنت
-    banner.setAttribute("href", "image/logo-wood.webp"); 
-    banner.setAttribute("x", "186.86"); 
-    banner.setAttribute("y", "1517.43"); 
-    banner.setAttribute("width", "648.41"); 
-    banner.setAttribute("height", "276.04"); 
 
-    // إعدادات الاندماج مع الخشب
-    banner.style.mixBlendMode = "multiply"; 
-    banner.style.opacity = "0.9";
-    banner.style.pointerEvents = "none";
-
-    dynamicGroup.appendChild(banner);
-}
+        if (currentFolder === "") {
+            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            banner.setAttribute("href", "image/logo-wood.webp"); 
+            banner.setAttribute("x", "186.86"); 
+            banner.setAttribute("y", "1517.43"); 
+            banner.setAttribute("width", "648.41"); 
+            banner.setAttribute("height", "276.04"); 
+            banner.style.mixBlendMode = "multiply"; 
+            banner.style.opacity = "0.9";
+            banner.style.pointerEvents = "none";
+            dynamicGroup.appendChild(banner);
+        }
 
         backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
 
@@ -355,55 +351,72 @@ if (currentFolder === "") {
             if (!response.ok) throw new Error('API Error');
             const data = await response.json();
 
-// تصفية: إخفاء مجلد image، وإظهار (المجلدات + ملفات PDF) فقط
-const filteredData = data.filter(item => {
-    const name = item.name.toLowerCase();
-    const isFolder = item.type === 'dir' && name !== 'image';
-    const isPdf = item.type === 'file' && name.endsWith('.pdf');
+            const filteredData = data.filter(item => {
+                const name = item.name.toLowerCase();
+                const isFolder = item.type === 'dir' && name !== 'image';
+                const isPdf = item.type === 'file' && name.endsWith('.pdf');
+                return (isFolder || isPdf);
+            });
 
-    return (isFolder || isPdf);
-});
+            // دالة لجلب عدد ملفات PDF داخل مجلد معين
+            const getPdfCount = async (folderPath) => {
+                try {
+                    const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
+                    if (!res.ok) return 0;
+                    const items = await res.json();
+                    return items.filter(i => i.name.toLowerCase().endsWith('.pdf')).length;
+                } catch { return 0; }
+            };
 
+            // معالجة العناصر وعرضها
+            for (let [index, item] of filteredData.entries()) {
+                const x = (index % 2 === 0) ? 120 : 550;
+                const y = 250 + (Math.floor(index / 2) * 90);
 
-            filteredData.sort((a, b) => (a.type === 'dir' ? -1 : 1))
-                .forEach((item, index) => {
-                    const x = (index % 2 === 0) ? 120 : 550;
-                    const y = 250 + (Math.floor(index / 2) * 90);
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
+                g.style.cursor = "pointer";
 
-                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    // تمييز الكلاس لضمان عدم اختفاء المجلدات عند البحث
-                    g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-                    g.style.cursor = "pointer";
+                const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+                r.setAttribute("class", "list-item");
+                r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
+                r.style.stroke = "#fff";
 
-                    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                    r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-                    r.setAttribute("class", "list-item");
-                    r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-                    r.style.stroke = "#fff";
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+                t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+                t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 
-                    const cleanName = item.name.replace(/\.[^/.]+$/, "");
-                    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-                    t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-                    t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-                    t.textContent = (item.type === 'dir' ? "📁 " : "📄 ") + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-                    t.setAttribute("data-search-name", cleanName.toLowerCase());
+                const cleanName = item.name.replace(/\.[^/.]+$/, "");
+                let displayName = (item.type === 'dir' ? "📁 " : "📄 ") + (cleanName.length > 20 ? cleanName.substring(0, 18) + "..." : cleanName);
+                
+                t.textContent = displayName;
+                t.setAttribute("data-search-name", cleanName.toLowerCase());
 
-                    g.appendChild(r); g.appendChild(t);
-                    g.onclick = (e) => {
-                        e.stopPropagation();
-                        if (item.type === 'dir') { 
-                            currentFolder = item.path; 
-                            updateWoodInterface(); 
-                        } else { 
-                            smartOpen(item); 
-                        }
-                    };
-                    dynamicGroup.appendChild(g);
-                });
+                // إذا كان مجلد، قم بتحديث النص ليشمل عدد الملفات
+                if (item.type === 'dir') {
+                    getPdfCount(item.path).then(count => {
+                        t.textContent = `📁 (${count}) ` + (cleanName.length > 18 ? cleanName.substring(0, 15) + "..." : cleanName);
+                    });
+                }
+
+                g.appendChild(r); g.appendChild(t);
+                g.onclick = (e) => {
+                    e.stopPropagation();
+                    if (item.type === 'dir') { 
+                        currentFolder = item.path; 
+                        updateWoodInterface(); 
+                    } else { 
+                        smartOpen(item); 
+                    }
+                };
+                dynamicGroup.appendChild(g);
+            }
             applyWoodSearchFilter();
         } catch (err) { console.error("Fetch Error:", err); }
     }
+
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
