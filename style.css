@@ -204,6 +204,18 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
+#back-btn-text {
+    pointer-events: none;
+    user-select: none;
+    /* يضمن بقاء النص في طبقة واحدة واضحة */
+    paint-order: markers fill stroke;
+}
+
+/* تكبير المستطيل ليتناسب مع الأسماء الطويلة للمجلدات */
+#back-btn {
+    transition: width 0.3s ease;
+}
+
 .legend-item {
   display: flex;
   align-items: center;
