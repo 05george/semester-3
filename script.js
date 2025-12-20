@@ -329,6 +329,23 @@ activeState.animationId = setInterval(() => {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
         dynamicGroup.innerHTML = ''; 
+if (currentFolder === "") {
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    
+    // الإحداثيات الدقيقة التي استخرجتها أنت
+    banner.setAttribute("href", "image/logo-wood.webp"); 
+    banner.setAttribute("x", "186.86"); 
+    banner.setAttribute("y", "1517.43"); 
+    banner.setAttribute("width", "648.41"); 
+    banner.setAttribute("height", "276.04"); 
+
+    // إعدادات الاندماج مع الخشب
+    banner.style.mixBlendMode = "multiply"; 
+    banner.style.opacity = "0.9";
+    banner.style.pointerEvents = "none";
+
+    dynamicGroup.appendChild(banner);
+}
 
         backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
 
