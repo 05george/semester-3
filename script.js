@@ -462,34 +462,50 @@ const filteredData = data.filter(item => {
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
     
     // --- بدء التشغيل والتحميل ---
-    const urls = Array.from(mainSvg.querySelectorAll('image')).map(img => img.getAttribute('data-src') || img.getAttribute('href'));
-    let loadedCount = 0;
+ const urls = Array.from(mainSvg.querySelectorAll('image'))
+                  .map(img => img.getAttribute('data-src'))
+                  .filter(src => src !== null && src !== "");
+
     
-    urls.forEach(u => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            if(p === 100) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                setTimeout(() => {
-                    if(loadingOverlay) loadingOverlay.style.opacity = 0;
+    urls.forEach((u, index) => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+        loadedCount++;
+        const p = (loadedCount / urls.length) * 100;
+        
+        // تحديث اللمبات بناءً على النسبة الفعلية
+        if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+        if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+        if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+        
+        if(loadedCount === urls.length) {
+            document.getElementById('bulb-1')?.classList.add('on');
+            
+            // --- اللحظة الحاسمة ---
+            // نقل كل الروابط من data-src إلى href الفعلي لتظهر الصور فوراً
+            mainSvg.querySelectorAll('image').forEach(si => {
+                const actualSrc = si.getAttribute('data-src');
+                if(actualSrc) si.setAttribute('href', actualSrc);
+            });
+
+            // إخفاء شاشة التحميل وإظهار الخريطة
+            setTimeout(() => {
+                if(loadingOverlay) {
+                    loadingOverlay.style.opacity = '0';
                     setTimeout(() => { 
-                        if(loadingOverlay) loadingOverlay.style.display = 'none'; 
-                        mainSvg.style.opacity = 1; 
-                        scan();
+                        loadingOverlay.style.display = 'none'; 
+                        mainSvg.style.opacity = '1'; 
+                        scan(); // تشغيل فحص المستطيلات والأسماء
                         updateWoodInterface(); 
                         goToMapEnd(); 
-                    }, 300);
-                    mainSvg.querySelectorAll('image').forEach((si, idx) => si.setAttribute('href', urls[idx]));
-                }, 500);
-            }
-        };
-        img.src = u;
-    });
+                    }, 500);
+                }
+            }, 600);
+        }
+    };
+    img.src = u; // البدء الفعلي للتحميل في الخلفية
+});
+
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
