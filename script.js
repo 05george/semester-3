@@ -330,6 +330,16 @@ activeState.animationId = setInterval(() => {
         if (!dynamicGroup) return;
         dynamicGroup.innerHTML = ''; 
 
+        // --- تحديث نص زر الرجوع بناءً على المجلد الحالي ---
+        if (currentFolder === "") {
+            backBtnText.textContent = "إلى الخريطة ←";
+        } else {
+            // استخراج اسم آخر مجلد من المسار (مثلاً URI/Lecture تصبح Lecture)
+            const pathParts = currentFolder.split('/');
+            const folderName = pathParts[pathParts.length - 1];
+            backBtnText.textContent = `🔙 رجوع من: ${folderName}`;
+        }
+
         if (currentFolder === "") {
             const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
             banner.setAttribute("href", "image/logo-wood.webp"); 
@@ -342,8 +352,6 @@ activeState.animationId = setInterval(() => {
             banner.style.pointerEvents = "none";
             dynamicGroup.appendChild(banner);
         }
-
-        backBtnText.textContent = currentFolder === "" ? "إلى الخريطة ←" : "رجوع للخلف ↑";
 
         try {
             const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
@@ -358,7 +366,6 @@ activeState.animationId = setInterval(() => {
                 return (isFolder || isPdf);
             });
 
-            // دالة لجلب عدد ملفات PDF داخل مجلد معين
             const getPdfCount = async (folderPath) => {
                 try {
                     const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
@@ -368,7 +375,6 @@ activeState.animationId = setInterval(() => {
                 } catch { return 0; }
             };
 
-            // معالجة العناصر وعرضها
             for (let [index, item] of filteredData.entries()) {
                 const x = (index % 2 === 0) ? 120 : 550;
                 const y = 250 + (Math.floor(index / 2) * 90);
@@ -394,7 +400,6 @@ activeState.animationId = setInterval(() => {
                 t.textContent = displayName;
                 t.setAttribute("data-search-name", cleanName.toLowerCase());
 
-                // إذا كان مجلد، قم بتحديث النص ليشمل عدد الملفات
                 if (item.type === 'dir') {
                     getPdfCount(item.path).then(count => {
                         t.textContent = `📁 (${count}) ` + (cleanName.length > 18 ? cleanName.substring(0, 15) + "..." : cleanName);
