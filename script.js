@@ -1,12 +1,18 @@
-// 1. المتغيرات العالمية أولاً
+const REPO_NAME = "semester-3"; 
+const GITHUB_USER = "05george";
+
+// المتغيرات العالمية المبنية على اسم المستودع
+const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
+const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
+const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
+
 let globalFileTree = []; 
-const NEW_API_BASE = "https://api.github.com/repos/05george/semester-3/contents";
 
 // 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
     try {
-        const response = await fetch("https://api.github.com/repos/05george/semester-3/git/trees/main?recursive=1");
+        const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
         console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
@@ -29,7 +35,6 @@ document.getElementById("downloadBtn").onclick = () => {
     let src = iframe.src;
     if (!src) return;
 
-    // استخراج رابط الملف من viewer URL
     const match = src.match(/file=(.+)$/);
     if (match && match[1]) {
         const fileUrl = decodeURIComponent(match[1]);
@@ -52,12 +57,12 @@ document.getElementById("shareBtn").onclick = () => {
     if (match && match[1]) {
         const fileUrl = decodeURIComponent(match[1]);
 
-        // نسخ الرابط إلى الحافظة
         navigator.clipboard.writeText(fileUrl)
             .then(() => alert("رابط الملف تم نسخه إلى الحافظة!"))
             .catch(() => alert("فشل نسخ الرابط."));
     }
 };
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -74,26 +79,12 @@ window.onload = function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-const searchIcon = document.getElementById('search-icon');
-
-// استخدام touchend للموبايل و onclick للكمبيوتر لسرعة استجابة فائقة
-const handleGoToWood = (e) => {
-    e.preventDefault();
-    goToWood(); // الدالة التي تنقلك لقائمة الخشب
-};
-
-searchIcon.onclick = handleGoToWood;
-searchIcon.addEventListener('touchend', handleGoToWood);
-
+    const searchIcon = document.getElementById('search-icon');
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-    // إعدادات الـ API والقواعد الجديدة
-    const NEW_API_BASE = "https://api.github.com/repos/05george/semester-3/contents";
-
-    // --- تعريف activeState بشكل صحيح لمنع خطأ الكونسول ---
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -106,45 +97,44 @@ searchIcon.addEventListener('touchend', handleGoToWood);
     const TAP_THRESHOLD_MS = 300;
 
     // --- وظيفة الفتح الذكي المخصصة ---
-function smartOpen(item) {
-    if(!item || !item.path) return;
-    const url = `https://raw.githubusercontent.com/05george/semester-3/main/${item.path}`;
-    if(url.endsWith('.pdf')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        overlay.classList.remove("hidden");
-        
-        // إضافة #zoom=page-width في نهاية الرابط لضمان تناسق العرض
-        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width"; 
-    } else {
-        window.open(url, '_blank');
+    function smartOpen(item) {
+        if(!item || !item.path) return;
+        const url = `${RAW_CONTENT_BASE}${item.path}`;
+        if(url.endsWith('.pdf')) {
+            const overlay = document.getElementById("pdf-overlay");
+            const pdfViewer = document.getElementById("pdfFrame");
+            overlay.classList.remove("hidden");
+
+            pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                            encodeURIComponent(url) + "#zoom=page-width"; 
+        } else {
+            window.open(url, '_blank');
+        }
     }
-}
 
+    // --- وظائف الحركة بنظام RTL (إعادة للأصل) ---
+    const goToWood = () => {
+        scrollContainer.scrollTo({ 
+            left: -scrollContainer.scrollWidth, 
+            behavior: 'smooth' 
+        });
+    };
 
-
-    // --- وظائف الحركة بنظام RTL ---
- const goToWood = () => {
-    scrollContainer.scrollTo({ 
-        left: -100000, // قيمة ضخمة تضمن الوصول لأقصى اليسار مهما كان الزوم
-        behavior: 'smooth' 
-    });
-};
-
-const goToMapEnd = () => {
-    scrollContainer.scrollTo({ 
-        left: 100000, // قيمة ضخمة تضمن الوصول لأقصى اليمين في نظام RTL
-        behavior: 'smooth' 
-    });
-};
-
+    const goToMapEnd = () => {
+        scrollContainer.scrollTo({ 
+            left: 0, 
+            behavior: 'smooth' 
+        });
+    };
 
     // --- ربط الأحداث ---
-    searchIcon.onclick = (e) => {
+    const handleGoToWood = (e) => {
         e.preventDefault();
-        goToWood(); 
+        goToWood();
     };
+
+    searchIcon.onclick = handleGoToWood;
+    searchIcon.addEventListener('touchend', handleGoToWood);
 
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
@@ -171,7 +161,6 @@ const goToMapEnd = () => {
         } 
     };
 
-    // --- الدوال المساعدة ---
     function debounce(func, delay) {
         let timeoutId;
         return function() {
@@ -312,26 +301,17 @@ const goToMapEnd = () => {
         }  
 
         let h = 0;  
- let step = 0; // متغير للتحكم في سرعة النبض
-activeState.animationId = setInterval(() => {  
-    h = (h + 10) % 360;  // دوران الألوان (كما هو)
-    step += 0.2;         // سرعة النبض (كلما زاد الرقم زادت السرعة)
-
-    // حساب قوة التوهج لتتأرجح بين 5px و 15px
-    const glowPower = 10 + Math.sin(step) * 5; 
-    const color = `hsl(${h},100%,60%)`;
-
-    // تطبيق التوهج النابض
-    rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
-    
-    if (activeState.zoomPart) {
-        activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
+        let step = 0; 
+        activeState.animationId = setInterval(() => {  
+            h = (h + 10) % 360;  
+            step += 0.2;         
+            const glowPower = 10 + Math.sin(step) * 5; 
+            const color = `hsl(${h},100%,60%)`;
+            rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
+            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
+            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
+        }, 100);
     }
-    if (activeState.zoomBg) {
-        activeState.zoomBg.style.stroke = color;  
-    }
-}, 100);
-}
 
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
@@ -352,129 +332,106 @@ activeState.animationId = setInterval(() => {
         });
     }
 
-     // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية مع عداد الملفات ---
-// دالة لجلب شجرة الملفات بالكامل (نظام التخزين الموحد)
-async function updateWoodInterface() {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
+    async function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
+        await fetchGlobalTree();
 
-    dynamicGroup.innerHTML = ''; 
+        if (currentFolder === "") {
+            backBtnText.textContent = "إلى الخريطة ←";
+        } else {
+            const pathParts = currentFolder.split('/');
+            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+        }
 
-    // 1. جلب الشجرة كاملة (مرة واحدة فقط لضمان عدم حدوث 403)
-    await fetchGlobalTree();
+        if (currentFolder === "") {
+            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            banner.setAttribute("href", "image/logo-wood.webp"); 
+            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
+            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
+            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
+            banner.style.pointerEvents = "none";
+            dynamicGroup.appendChild(banner);
+        }
 
-    const backBtnText = document.getElementById('back-btn-text');
-    if (currentFolder === "") {
-        backBtnText.textContent = "إلى الخريطة ←";
-    } else {
-        const pathParts = currentFolder.split('/');
-        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-        backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
-    }
+        const folderPrefix = currentFolder ? currentFolder + '/' : '';
+        const itemsMap = new Map();
 
-    if (currentFolder === "") {
-        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        banner.setAttribute("href", "image/logo-wood.webp"); 
-        banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-        banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-        banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-        banner.style.pointerEvents = "none";
-        dynamicGroup.appendChild(banner);
-    }
+        globalFileTree.forEach(item => {
+            if (item.path.startsWith(folderPrefix)) {
+                const relativePath = item.path.substring(folderPrefix.length);
+                const pathParts = relativePath.split('/');
+                const name = pathParts[0];
 
-    // 2. معالجة البيانات من الذاكرة مباشرة (بدون fetch)
-    const folderPrefix = currentFolder ? currentFolder + '/' : '';
-    const itemsMap = new Map();
-    
-    globalFileTree.forEach(item => {
-        if (item.path.startsWith(folderPrefix)) {
-            const relativePath = item.path.substring(folderPrefix.length);
-            const pathParts = relativePath.split('/');
-            const name = pathParts[0];
-            
-            if (!itemsMap.has(name)) {
-                const isDir = pathParts.length > 1 || item.type === 'tree';
-                const isPdf = item.path.toLowerCase().endsWith('.pdf');
-                
-                if (isDir && name !== 'image') {
-                    itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
-                } else if (isPdf && pathParts.length === 1) {
-                    itemsMap.set(name, { name: name, type: 'file', path: item.path });
+                if (!itemsMap.has(name)) {
+                    const isDir = pathParts.length > 1 || item.type === 'tree';
+                    const isPdf = item.path.toLowerCase().endsWith('.pdf');
+
+                    if (isDir && name !== 'image') {
+                        itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
+                    } else if (isPdf && pathParts.length === 1) {
+                        itemsMap.set(name, { name: name, type: 'file', path: item.path });
+                    }
                 }
             }
+        });
+
+        const filteredData = Array.from(itemsMap.values());
+        for (let [index, item] of filteredData.entries()) {
+            const x = (index % 2 === 0) ? 120 : 550;
+            const y = 250 + (Math.floor(index / 2) * 90);
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
+            g.style.cursor = "pointer";
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+            r.setAttribute("class", "list-item");
+            r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
+            r.style.stroke = "#fff";
+            const cleanName = item.name.replace(/\.[^/.]+$/, "");
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+            t.setAttribute("data-search-name", cleanName.toLowerCase());
+            if (item.type === 'dir') {
+                const count = globalFileTree.filter(f => 
+                    f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
+                ).length;
+                t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+            } else {
+                t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            }
+            g.appendChild(r); g.appendChild(t);
+            g.onclick = (e) => {
+                e.stopPropagation();
+                if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
+                else { smartOpen(item); }
+            };
+            dynamicGroup.appendChild(g);
         }
-    });
-
-    const filteredData = Array.from(itemsMap.values());
-
-    // 3. رسم العناصر
-    for (let [index, item] of filteredData.entries()) {
-        const x = (index % 2 === 0) ? 120 : 550;
-        const y = 250 + (Math.floor(index / 2) * 90);
-
-        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-        g.style.cursor = "pointer";
-
-        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-        r.setAttribute("class", "list-item");
-        r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-        r.style.stroke = "#fff";
-
-        const cleanName = item.name.replace(/\.[^/.]+$/, "");
-        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-        t.setAttribute("data-search-name", cleanName.toLowerCase());
-
-        if (item.type === 'dir') {
-            const count = globalFileTree.filter(f => 
-                f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
-            ).length;
-            t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-        } else {
-            t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-        }
-
-        g.appendChild(r); g.appendChild(t);
-        g.onclick = (e) => {
-            e.stopPropagation();
-            if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
-            else { smartOpen(item); }
-        };
-        dynamicGroup.appendChild(g);
+        applyWoodSearchFilter();
     }
-    applyWoodSearchFilter();
-}
-
-
-
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
-        // الملفات فقط تتأثر بالبحث
         mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
             const name = group.querySelector('text').getAttribute('data-search-name') || "";
             group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
         });
-        // المجلدات تظل ظاهرة دائماً
-        mainSvg.querySelectorAll('.wood-folder-group').forEach(group => {
-            group.style.display = 'inline';
-        });
+        mainSvg.querySelectorAll('.wood-folder-group').forEach(group => { group.style.display = 'inline'; });
     }
 
     function processRect(r) {
         if (r.hasAttribute('data-processed')) return;
         if(r.classList.contains('w')) r.setAttribute('width', '113.5');
         if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
-
         const href = r.getAttribute('data-href') || '';
         const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
         const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
         const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
-
         if (name && name.trim() !== '') {
             const fs = Math.max(8, Math.min(12, w * 0.11));
             const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -483,7 +440,6 @@ async function updateWoodInterface() {
             txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
             txt.style.fontSize = fs + 'px'; txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
             r.parentNode.appendChild(txt); wrapText(txt, w);
-
             const bbox = txt.getBBox();
             const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
@@ -491,10 +447,8 @@ async function updateWoodInterface() {
             bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
             r.parentNode.insertBefore(bg, txt);
         }
-
         if (!isTouchDevice) { r.addEventListener('mouseover', startHover); r.addEventListener('mouseout', cleanupHover); }
         r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
-
         r.addEventListener('touchstart', function(e) { if(!interactionEnabled) return; activeState.touchStartTime = Date.now(); activeState.initialScrollLeft = scrollContainer.scrollLeft; startHover.call(this); });
         r.addEventListener('touchend', function(e) { 
             if (!interactionEnabled) return;
@@ -507,52 +461,39 @@ async function updateWoodInterface() {
     }
 
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
-    
-    // --- بدء التشغيل والتحميل ---
- const urls = Array.from(mainSvg.querySelectorAll('image'))
+
+    const urls = Array.from(mainSvg.querySelectorAll('image'))
                   .map(img => img.getAttribute('data-src'))
                   .filter(src => src !== null && src !== "");
 
-    
     urls.forEach((u, index) => {
-    const img = new Image();
-    img.onload = img.onerror = () => {
-        loadedCount++;
-        const p = (loadedCount / urls.length) * 100;
-        
-        // تحديث اللمبات بناءً على النسبة الفعلية
-        if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-        if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-        if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-        
-        if(loadedCount === urls.length) {
-            document.getElementById('bulb-1')?.classList.add('on');
-            
-            // --- اللحظة الحاسمة ---
-            // نقل كل الروابط من data-src إلى href الفعلي لتظهر الصور فوراً
-            mainSvg.querySelectorAll('image').forEach(si => {
-                const actualSrc = si.getAttribute('data-src');
-                if(actualSrc) si.setAttribute('href', actualSrc);
-            });
-
-            // إخفاء شاشة التحميل وإظهار الخريطة
-            setTimeout(() => {
-                if(loadingOverlay) {
-                    loadingOverlay.style.opacity = '0';
-                    setTimeout(() => { 
-                        loadingOverlay.style.display = 'none'; 
-                        mainSvg.style.opacity = '1'; 
-                        scan(); // تشغيل فحص المستطيلات والأسماء
-                        updateWoodInterface(); 
-                        goToMapEnd(); 
-                    }, 500);
-                }
-            }, 600);
-        }
-    };
-    img.src = u; // البدء الفعلي للتحميل في الخلفية
-});
-
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            const p = (loadedCount / urls.length) * 100;
+            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            if(loadedCount === urls.length) {
+                document.getElementById('bulb-1')?.classList.add('on');
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const actualSrc = si.getAttribute('data-src');
+                    if(actualSrc) si.setAttribute('href', actualSrc);
+                });
+                setTimeout(() => {
+                    if(loadingOverlay) {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => { 
+                            loadingOverlay.style.display = 'none'; 
+                            mainSvg.style.opacity = '1'; 
+                            scan(); updateWoodInterface(); goToMapEnd(); 
+                        }, 500);
+                    }
+                }, 600);
+            }
+        };
+        img.src = u;
+    });
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
@@ -568,7 +509,6 @@ async function updateWoodInterface() {
     }, 150));
 
     jsToggle.addEventListener('change', function() { 
-        interactionEnabled = this.checked; 
-        if(!interactionEnabled) cleanupHover(); 
+        interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
     });
 };
