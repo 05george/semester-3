@@ -1,7 +1,3 @@
-.label-bg { rx: 3; ry: 3; opacity: 0.9; }
-.rect-label { font-weight: bold; pointer-events: none; }
-
-
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "05george";
 
