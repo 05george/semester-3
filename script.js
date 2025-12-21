@@ -1,3 +1,4 @@
+let globalFileTree = []; // لتخزين قائمة الملفات كاملة مرة واحدة
 // زر الإغلاق (كما هو)
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
@@ -325,119 +326,109 @@ activeState.animationId = setInterval(() => {
     }
 
      // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية مع عداد الملفات ---
-    async function updateWoodInterface() {
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        if (!dynamicGroup) return;
-        
-        dynamicGroup.innerHTML = ''; 
-
-        // 1. تحديث نص زر الرجوع (المسار الكامل)
-        const backBtnText = document.getElementById('back-btn-text');
-        if (currentFolder === "") {
-            backBtnText.textContent = "إلى الخريطة ←";
-        } else {
-            const pathParts = currentFolder.split('/');
-            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
-        }
-
-        if (currentFolder === "") {
-            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
-            banner.setAttribute("x", "186.86"); 
-            banner.setAttribute("y", "1517.43"); 
-            banner.setAttribute("width", "648.41"); 
-            banner.setAttribute("height", "276.04"); 
-            banner.style.mixBlendMode = "multiply"; 
-            banner.style.opacity = "0.9";
-            banner.style.pointerEvents = "none";
-            dynamicGroup.appendChild(banner);
-        }
-
-        try {
-            const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
-            const response = await fetch(apiUrl);
-            
-            // في حالة حدوث خطأ 403 (تجاوز الحد)، سنظهر رسالة للمستخدم
-            if (response.status === 403) {
-                console.error("GitHub API Rate Limit Exceeded");
-                const errorText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                errorText.setAttribute("x", "512"); errorText.setAttribute("y", "400");
-                errorText.setAttribute("text-anchor", "middle"); errorText.setAttribute("fill", "yellow");
-                errorText.textContent = "عذراً، تم تجاوز حد الطلبات مؤقتاً. جرب بعد دقائق.";
-                dynamicGroup.appendChild(errorText);
-                return;
-            }
-
-            if (!response.ok) throw new Error('API Error');
-            const data = await response.json();
-
-            const filteredData = data.filter(item => {
-                const name = item.name.toLowerCase();
-                const isFolder = item.type === 'dir' && name !== 'image';
-                const isPdf = item.type === 'file' && name.endsWith('.pdf');
-                return (isFolder || isPdf);
-            });
-
-            // 2. دالة العد المحسنة (تعمل فقط عند الطلب لتقليل الضغط على API)
-            const getFullPdfCount = async (folderPath) => {
-                try {
-                    const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
-                    if (!res.ok) return 0;
-                    const items = await res.json();
-                    let count = items.filter(i => i.name.toLowerCase().endsWith('.pdf')).length;
-                    // تم إيقاف العد التكراري العميق مؤقتاً لمنع الحظر (403)
-                    return count;
-                } catch { return 0; }
-            };
-
-            // 3. رسم المجلدات (الإحداثيات الأصلية 100%)
-            for (let [index, item] of filteredData.entries()) {
-                const x = (index % 2 === 0) ? 120 : 550;
-                const y = 250 + (Math.floor(index / 2) * 90);
-
-                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-                g.style.cursor = "pointer";
-
-                const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-                r.setAttribute("class", "list-item");
-                r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-                r.style.stroke = "#fff";
-
-                const cleanName = item.name.replace(/\.[^/.]+$/, "");
-                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-                t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-                t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-                t.setAttribute("data-search-name", cleanName.toLowerCase());
-
-                if (item.type === 'dir') {
-                    // عرض الاسم فوراً ثم تحديث العدد لاحقاً
-                    t.textContent = "📁 " + (cleanName.length > 18 ? cleanName.substring(0, 15) + ".." : cleanName);
-                    getFullPdfCount(item.path).then(count => {
-                        t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-                    });
-                } else {
-                    t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-                }
-
-                g.appendChild(r); g.appendChild(t);
-                g.onclick = (e) => {
-                    e.stopPropagation();
-                    if (item.type === 'dir') { 
-                        currentFolder = item.path; 
-                        updateWoodInterface(); 
-                    } else { 
-                        smartOpen(item); 
-                    }
-                };
-                dynamicGroup.appendChild(g);
-            }
-            applyWoodSearchFilter();
-        } catch (err) { console.error("Fetch Error:", err); }
+// دالة لجلب شجرة الملفات بالكامل (نظام التخزين الموحد)
+async function fetchGlobalTree() {
+    if (globalFileTree.length > 0) return; // لا تحملها مرة أخرى إذا كانت موجودة
+    try {
+        const response = await fetch("https://api.github.com/repos/05george/semester-3/git/trees/main?recursive=1");
+        const data = await response.json();
+        globalFileTree = data.tree || [];
+    } catch (err) {
+        console.error("خطأ في جلب شجرة الملفات:", err);
     }
+}
+
+async function updateWoodInterface() {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
+
+    dynamicGroup.innerHTML = ''; 
+
+    // جلب الشجرة كاملة قبل البدء (لمرة واحدة فقط)
+    await fetchGlobalTree();
+
+    const backBtnText = document.getElementById('back-btn-text');
+    if (currentFolder === "") {
+        backBtnText.textContent = "إلى الخريطة ←";
+    } else {
+        const pathParts = currentFolder.split('/');
+        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+        backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+    }
+
+    if (currentFolder === "") {
+        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        banner.setAttribute("href", "image/logo-wood.webp"); 
+        banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
+        banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
+        banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
+        banner.style.pointerEvents = "none";
+        dynamicGroup.appendChild(banner);
+    }
+
+    try {
+        const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
+        const response = await fetch(apiUrl);
+
+        if (response.status === 403) {
+            const errorText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            errorText.setAttribute("x", "512"); errorText.setAttribute("y", "400");
+            errorText.setAttribute("text-anchor", "middle"); errorText.setAttribute("fill", "yellow");
+            errorText.textContent = "عذراً، تجاوزت حد الطلبات. جرب بعد دقائق.";
+            dynamicGroup.appendChild(errorText);
+            return;
+        }
+
+        const data = await response.json();
+        const filteredData = data.filter(item => {
+            const name = item.name.toLowerCase();
+            return (item.type === 'dir' && name !== 'image') || (item.type === 'file' && name.endsWith('.pdf'));
+        });
+
+        for (let [index, item] of filteredData.entries()) {
+            const x = (index % 2 === 0) ? 120 : 550;
+            const y = 250 + (Math.floor(index / 2) * 90);
+
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
+            g.style.cursor = "pointer";
+
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+            r.setAttribute("class", "list-item");
+            r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
+            r.style.stroke = "#fff";
+
+            const cleanName = item.name.replace(/\.[^/.]+$/, "");
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+            t.setAttribute("data-search-name", cleanName.toLowerCase());
+
+            if (item.type === 'dir') {
+                // البحث في الشجرة المخزنة عن كل ملفات PDF داخل هذا المجلد (مهما كان عمقها)
+                const count = globalFileTree.filter(f => 
+                    f.path.startsWith(item.path + '/') && 
+                    f.path.toLowerCase().endsWith('.pdf')
+                ).length;
+                
+                t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+            } else {
+                t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            }
+
+            g.appendChild(r); g.appendChild(t);
+            g.onclick = (e) => {
+                e.stopPropagation();
+                if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
+                else { smartOpen(item); }
+            };
+            dynamicGroup.appendChild(g);
+        }
+        applyWoodSearchFilter();
+    } catch (err) { console.error("Fetch Error:", err); }
+}
 
 
 
