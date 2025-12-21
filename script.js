@@ -125,19 +125,20 @@ function smartOpen(item) {
 
 
     // --- وظائف الحركة بنظام RTL ---
-    const goToWood = () => {
-        scrollContainer.scrollTo({ 
-            left: -scrollContainer.scrollWidth, 
-            behavior: 'smooth' 
-        });
-    };
+ const goToWood = () => {
+    scrollContainer.scrollTo({ 
+        left: -100000, // قيمة ضخمة تضمن الوصول لأقصى اليسار مهما كان الزوم
+        behavior: 'smooth' 
+    });
+};
 
-    const goToMapEnd = () => {
-        scrollContainer.scrollTo({ 
-            left: 0, 
-            behavior: 'smooth' 
-        });
-    };
+const goToMapEnd = () => {
+    scrollContainer.scrollTo({ 
+        left: 100000, // قيمة ضخمة تضمن الوصول لأقصى اليمين في نظام RTL
+        behavior: 'smooth' 
+    });
+};
+
 
     // --- ربط الأحداث ---
     searchIcon.onclick = (e) => {
