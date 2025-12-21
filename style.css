@@ -343,6 +343,12 @@ html, body {
     font-size: 12px;
   }
 }
+/* منع ظهور علامة التحديد الزرقاء ومنع القائمة في بعض المتصفحات */
+img, image, svg, rect {
+    -webkit-touch-callout: none; /* يمنع القائمة المنبثقة في iOS */
+    -webkit-user-select: none;   /* يمنع تحديد النص/الصور */
+    user-select: none;
+}
 
 /* ===== Switch Toggle ===== */
 .switch {
