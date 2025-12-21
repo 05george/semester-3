@@ -1,3 +1,16 @@
+// دالة جلب شجرة الملفات بالكامل (هذا الجزء هو المفقود في ملفك)
+async function fetchGlobalTree() {
+    if (globalFileTree.length > 0) return; // لا تحملها مرة أخرى إذا كانت موجودة
+    try {
+        const response = await fetch("https://api.github.com/repos/05george/semester-3/git/trees/main?recursive=1");
+        const data = await response.json();
+        globalFileTree = data.tree || [];
+        console.log("تم تحديث قاعدة بيانات الملفات: ", globalFileTree.length);
+    } catch (err) {
+        console.error("خطأ في جلب شجرة الملفات:", err);
+    }
+}
+
 let globalFileTree = []; // لتخزين قائمة الملفات كاملة مرة واحدة
 // زر الإغلاق (كما هو)
 document.getElementById("closePdfBtn").onclick = () => {
