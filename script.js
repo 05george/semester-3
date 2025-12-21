@@ -21,7 +21,7 @@ async function fetchGlobalTree() {
     }
 }
 
-// زر الإغلاق (كما هو)
+// زر الإغلاق
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -56,13 +56,13 @@ document.getElementById("shareBtn").onclick = () => {
     const match = src.match(/file=(.+)$/);
     if (match && match[1]) {
         const fileUrl = decodeURIComponent(match[1]);
-
         navigator.clipboard.writeText(fileUrl)
             .then(() => alert("رابط الملف تم نسخه إلى الحافظة!"))
             .catch(() => alert("فشل نسخ الرابط."));
     }
 };
 
+// تسجيل الـ Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -83,8 +83,7 @@ window.onload = function() {
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
-    const backBtnText = 
-document.getElementById('back-btn-text');
+    const backBtnText = document.getElementById('back-btn-text');
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -96,10 +95,11 @@ document.getElementById('back-btn-text');
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
-// منع القائمة عند الضغط المطول على أي صورة داخل الـ SVG
-document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-}, false);
+
+    // منع القائمة عند الضغط المطول
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
 
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
@@ -109,14 +109,12 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
             const overlay = document.getElementById("pdf-overlay");
             const pdfViewer = document.getElementById("pdfFrame");
             overlay.classList.remove("hidden");
-
             pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                             encodeURIComponent(url) + "#zoom=page-width"; 
         } else {
             window.open(url, '_blank');
         }
     }
-
     // --- وظائف الحركة بنظام RTL (إعادة للأصل) ---
     const goToWood = () => {
         scrollContainer.scrollTo({ 
@@ -247,7 +245,7 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
         const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
         const centerX = absX + rW / 2;  
 
-        const scaleFactor = 1.1;
+        const scaleFactor = 1.15; // قوة الزوم
         const yOffset = (rH * (scaleFactor - 1)) / 2;
         const hoveredY = absY - yOffset;
 
@@ -255,6 +253,7 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
         rect.style.transform = `scale(${scaleFactor})`;  
         rect.style.strokeWidth = '4px';  
 
+        // --- نظام الـ Clipping Path المتقدم ---
         const imgData = getGroupImage(rect);  
         if (imgData) {  
             const clipId = `clip-${Date.now()}`;  
@@ -296,12 +295,12 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
 
             const bbox = zText.getBBox();  
             const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY);  
+            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY - 60);  
             zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);  
             zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';  
 
             mainSvg.insertBefore(zBg, zText);  
-            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);
+            zText.setAttribute('y', (hoveredY - 60) + (bbox.height + 10) / 2);
             activeState.zoomText = zText; activeState.zoomBg = zBg;  
         }  
 
@@ -310,14 +309,13 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
         activeState.animationId = setInterval(() => {  
             h = (h + 10) % 360;  
             step += 0.2;         
-            const glowPower = 10 + Math.sin(step) * 5; 
+            const glowPower = 12 + Math.sin(step) * 6; 
             const color = `hsl(${h},100%,60%)`;
             rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
             if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
             if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
         }, 100);
     }
-
     function wrapText(el, maxW) {
         const txt = el.getAttribute('data-original-text'); if(!txt) return;
         const words = txt.split(/\s+/); el.textContent = '';
@@ -516,4 +514,4 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
     jsToggle.addEventListener('change', function() { 
         interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
     });
-};
+}; // نهاية window.onload
