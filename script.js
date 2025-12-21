@@ -325,108 +325,117 @@ activeState.animationId = setInterval(() => {
     }
 
      // --- واجهة الخشب المطورة: المجلدات + PDF فقط + تصفية مع عداد الملفات ---
-async function updateWoodInterface() {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-    
-    // مسح القائمة تماماً
-    dynamicGroup.innerHTML = ''; 
-
-    const backBtnText = document.getElementById('back-btn-text');
-    
-    // حل مشكلة التداخل: مسح النص القديم قبل وضع الجديد
-    backBtnText.textContent = ""; 
-
-    if (currentFolder === "") {
-        backBtnText.textContent = "إلى الخريطة ←";
-    } else {
-        // بناء المسار الكامل (الرئيسية > مجلد1 > مجلد2)
-        const pathParts = currentFolder.split('/');
-        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+    async function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
         
-        // تقصير النص إذا كان طويلاً جداً ليتناسب مع الزر
-        if (breadcrumb.length > 35) {
-            backBtnText.textContent = `🔙 ... > ${pathParts.slice(-1)}`;
+        // 1. تنظيف القائمة تماماً لمنع التداخل
+        dynamicGroup.innerHTML = ''; 
+
+        // 2. تحديث نص زر الرجوع (المسار الكامل)
+        const backBtnText = document.getElementById('back-btn-text');
+        if (currentFolder === "") {
+            backBtnText.textContent = "إلى الخريطة ←";
         } else {
-            backBtnText.textContent = `🔙 ${breadcrumb}`;
+            const pathParts = currentFolder.split('/');
+            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+            // إذا كان المسار طويلاً جداً نعرض آخر جزء منه فقط لضمان عدم خروج النص عن الزر
+            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
         }
-    }
 
-    if (currentFolder === "") {
-        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        banner.setAttribute("href", "image/logo-wood.webp"); 
-        banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-        banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-        banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-        banner.style.pointerEvents = "none";
-        dynamicGroup.appendChild(banner);
-    }
+        // 3. إضافة لوجو الخشب في الصفحة الرئيسية فقط
+        if (currentFolder === "") {
+            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            banner.setAttribute("href", "image/logo-wood.webp"); 
+            banner.setAttribute("x", "186.86"); 
+            banner.setAttribute("y", "1517.43"); 
+            banner.setAttribute("width", "648.41"); 
+            banner.setAttribute("height", "276.04"); 
+            banner.style.mixBlendMode = "multiply"; 
+            banner.style.opacity = "0.9";
+            banner.style.pointerEvents = "none";
+            dynamicGroup.appendChild(banner);
+        }
 
-    try {
-        const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+        try {
+            const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('API Error');
+            const data = await response.json();
 
-        const filteredData = data.filter(item => {
-            const name = item.name.toLowerCase();
-            return (item.type === 'dir' && name !== 'image') || (item.type === 'file' && name.endsWith('.pdf'));
-        });
+            // 4. التصفية (إظهار المجلدات وملفات الـ PDF فقط)
+            const filteredData = data.filter(item => {
+                const name = item.name.toLowerCase();
+                const isFolder = item.type === 'dir' && name !== 'image';
+                const isPdf = item.type === 'file' && name.endsWith('.pdf');
+                return (isFolder || isPdf);
+            });
 
-        // دالة العد الشامل (تبحث في كل المجلدات العميقة)
-        const getFullPdfCount = async (folderPath) => {
-            try {
-                const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
-                const items = await res.json();
-                let count = items.filter(i => i.name.toLowerCase().endsWith('.pdf')).length;
-                const subFolders = items.filter(i => i.type === 'dir');
-                for (const sub of subFolders) {
-                    count += await getFullPdfCount(sub.path);
-                }
-                return count;
-            } catch { return 0; }
-        };
-
-        for (let [index, item] of filteredData.entries()) {
-            const x = (index % 2 === 0) ? 120 : 550;
-            const y = 250 + (Math.floor(index / 2) * 90);
-
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.style.cursor = "pointer";
-
-            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-            r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-            r.style.stroke = "#fff";
-
-            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-
-            const cleanName = item.name.replace(/\.[^/.]+$/, "");
-            if (item.type === 'dir') {
-                t.textContent = "⏳.."; 
-                getFullPdfCount(item.path).then(count => {
-                    t.textContent = `📁 (${count}) ${cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName}`;
-                });
-            } else {
-                t.textContent = `📄 ${cleanName.length > 20 ? cleanName.substring(0, 18) + ".." : cleanName}`;
-            }
-
-            g.appendChild(r); g.appendChild(t);
-            g.onclick = (e) => {
-                e.stopPropagation();
-                if (item.type === 'dir') { 
-                    currentFolder = item.path; 
-                    updateWoodInterface(); 
-                } else { 
-                    smartOpen(item); 
-                }
+            // 5. دالة العد الشامل (Recursive) لجميع ملفات PDF داخل المجلدات الفرعية
+            const getFullPdfCount = async (folderPath) => {
+                try {
+                    const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
+                    if (!res.ok) return 0;
+                    const items = await res.json();
+                    let count = items.filter(i => i.name.toLowerCase().endsWith('.pdf')).length;
+                    const subFolders = items.filter(i => i.type === 'dir');
+                    for (const sub of subFolders) {
+                        count += await getFullPdfCount(sub.path);
+                    }
+                    return count;
+                } catch { return 0; }
             };
-            dynamicGroup.appendChild(g);
-        }
-    } catch (err) { console.error(err); }
-}
+
+            // 6. رسم المجلدات والملفات (بنفس إحداثيات الكود الأصلي)
+            for (let [index, item] of filteredData.entries()) {
+                const x = (index % 2 === 0) ? 120 : 550;
+                const y = 250 + (Math.floor(index / 2) * 90);
+
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                // الكلاسات دي ضرورية جداً عشان البحث يشتغل
+                g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
+                g.style.cursor = "pointer";
+
+                const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
+                r.setAttribute("class", "list-item");
+                r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
+                r.style.stroke = "#fff";
+
+                const cleanName = item.name.replace(/\.[^/.]+$/, "");
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+                t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+                t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+                t.setAttribute("data-search-name", cleanName.toLowerCase());
+
+                // وضع الأيقونة والاسم، وإذا كان مجلد يبدأ بالعد
+                if (item.type === 'dir') {
+                    t.textContent = "⏳.. " + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+                    getFullPdfCount(item.path).then(count => {
+                        t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+                    });
+                } else {
+                    t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+                }
+
+                g.appendChild(r); g.appendChild(t);
+                g.onclick = (e) => {
+                    e.stopPropagation();
+                    if (item.type === 'dir') { 
+                        currentFolder = item.path; 
+                        updateWoodInterface(); 
+                    } else { 
+                        smartOpen(item); 
+                    }
+                };
+                dynamicGroup.appendChild(g);
+            }
+            // 7. تشغيل فلتر البحث (هام جداً لرجوع الميزة كما كانت)
+            applyWoodSearchFilter();
+        } catch (err) { console.error("Fetch Error:", err); }
+    }
+
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
