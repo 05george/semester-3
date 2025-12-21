@@ -83,7 +83,8 @@ window.onload = function() {
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
-    const backBtnText = document.getElementById('back-btn-text');
+    const backBtnText = 
+document.getElementById('back-btn-text');
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -95,6 +96,10 @@ window.onload = function() {
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
+// منع القائمة عند الضغط المطول على أي صورة داخل الـ SVG
+document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+}, false);
 
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
