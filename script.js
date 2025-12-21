@@ -74,7 +74,17 @@ window.onload = function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
-    const searchIcon = document.getElementById('search-icon');
+const searchIcon = document.getElementById('search-icon');
+
+// استخدام touchend للموبايل و onclick للكمبيوتر لسرعة استجابة فائقة
+const handleGoToWood = (e) => {
+    e.preventDefault();
+    goToWood(); // الدالة التي تنقلك لقائمة الخشب
+};
+
+searchIcon.onclick = handleGoToWood;
+searchIcon.addEventListener('touchend', handleGoToWood);
+
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
