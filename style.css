@@ -393,3 +393,10 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .label-bg { rx: 3; ry: 3; opacity: 0.9; }
 .rect-label { font-weight: bold; pointer-events: none; }
+
+/* منع ظهور علامة التحديد الزرقاء ومنع القائمة في بعض المتصفحات */
+img, image, svg, rect {
+    -webkit-touch-callout: none; /* يمنع القائمة المنبثقة في iOS */
+    -webkit-user-select: none;   /* يمنع تحديد النص/الصور */
+    user-select: none;
+}
