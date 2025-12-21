@@ -329,21 +329,18 @@ activeState.animationId = setInterval(() => {
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
         
-        // 1. تنظيف القائمة تماماً لمنع التداخل
         dynamicGroup.innerHTML = ''; 
 
-        // 2. تحديث نص زر الرجوع (المسار الكامل)
+        // 1. تحديث نص زر الرجوع (المسار الكامل)
         const backBtnText = document.getElementById('back-btn-text');
         if (currentFolder === "") {
             backBtnText.textContent = "إلى الخريطة ←";
         } else {
             const pathParts = currentFolder.split('/');
             const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-            // إذا كان المسار طويلاً جداً نعرض آخر جزء منه فقط لضمان عدم خروج النص عن الزر
             backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
         }
 
-        // 3. إضافة لوجو الخشب في الصفحة الرئيسية فقط
         if (currentFolder === "") {
             const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
             banner.setAttribute("href", "image/logo-wood.webp"); 
@@ -360,10 +357,21 @@ activeState.animationId = setInterval(() => {
         try {
             const apiUrl = currentFolder ? `${NEW_API_BASE}/${currentFolder}` : NEW_API_BASE;
             const response = await fetch(apiUrl);
+            
+            // في حالة حدوث خطأ 403 (تجاوز الحد)، سنظهر رسالة للمستخدم
+            if (response.status === 403) {
+                console.error("GitHub API Rate Limit Exceeded");
+                const errorText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                errorText.setAttribute("x", "512"); errorText.setAttribute("y", "400");
+                errorText.setAttribute("text-anchor", "middle"); errorText.setAttribute("fill", "yellow");
+                errorText.textContent = "عذراً، تم تجاوز حد الطلبات مؤقتاً. جرب بعد دقائق.";
+                dynamicGroup.appendChild(errorText);
+                return;
+            }
+
             if (!response.ok) throw new Error('API Error');
             const data = await response.json();
 
-            // 4. التصفية (إظهار المجلدات وملفات الـ PDF فقط)
             const filteredData = data.filter(item => {
                 const name = item.name.toLowerCase();
                 const isFolder = item.type === 'dir' && name !== 'image';
@@ -371,28 +379,24 @@ activeState.animationId = setInterval(() => {
                 return (isFolder || isPdf);
             });
 
-            // 5. دالة العد الشامل (Recursive) لجميع ملفات PDF داخل المجلدات الفرعية
+            // 2. دالة العد المحسنة (تعمل فقط عند الطلب لتقليل الضغط على API)
             const getFullPdfCount = async (folderPath) => {
                 try {
                     const res = await fetch(`${NEW_API_BASE}/${folderPath}`);
                     if (!res.ok) return 0;
                     const items = await res.json();
                     let count = items.filter(i => i.name.toLowerCase().endsWith('.pdf')).length;
-                    const subFolders = items.filter(i => i.type === 'dir');
-                    for (const sub of subFolders) {
-                        count += await getFullPdfCount(sub.path);
-                    }
+                    // تم إيقاف العد التكراري العميق مؤقتاً لمنع الحظر (403)
                     return count;
                 } catch { return 0; }
             };
 
-            // 6. رسم المجلدات والملفات (بنفس إحداثيات الكود الأصلي)
+            // 3. رسم المجلدات (الإحداثيات الأصلية 100%)
             for (let [index, item] of filteredData.entries()) {
                 const x = (index % 2 === 0) ? 120 : 550;
                 const y = 250 + (Math.floor(index / 2) * 90);
 
                 const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                // الكلاسات دي ضرورية جداً عشان البحث يشتغل
                 g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
                 g.style.cursor = "pointer";
 
@@ -409,9 +413,9 @@ activeState.animationId = setInterval(() => {
                 t.style.fontWeight = "bold"; t.style.fontSize = "17px";
                 t.setAttribute("data-search-name", cleanName.toLowerCase());
 
-                // وضع الأيقونة والاسم، وإذا كان مجلد يبدأ بالعد
                 if (item.type === 'dir') {
-                    t.textContent = "⏳.. " + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+                    // عرض الاسم فوراً ثم تحديث العدد لاحقاً
+                    t.textContent = "📁 " + (cleanName.length > 18 ? cleanName.substring(0, 15) + ".." : cleanName);
                     getFullPdfCount(item.path).then(count => {
                         t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
                     });
@@ -431,10 +435,10 @@ activeState.animationId = setInterval(() => {
                 };
                 dynamicGroup.appendChild(g);
             }
-            // 7. تشغيل فلتر البحث (هام جداً لرجوع الميزة كما كانت)
             applyWoodSearchFilter();
         } catch (err) { console.error("Fetch Error:", err); }
     }
+
 
 
     function applyWoodSearchFilter() {
