@@ -380,3 +380,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   50% { box-shadow: 0 0 40px rgba(255, 204, 0, 0.6); transform: scale(1.03); }
   100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
 }
+
+.label-bg { rx: 3; ry: 3; opacity: 0.9; }
+.rect-label { font-weight: bold; pointer-events: none; }
