@@ -511,4 +511,9 @@ window.onload = function() {
     jsToggle.addEventListener('change', function() { 
         interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
     });
+// منع القائمة عند الضغط المطول على أي صورة داخل الـ SVG
+document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+}, false);
+
 };
