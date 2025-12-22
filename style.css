@@ -393,3 +393,35 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 .label-bg { rx: 3; ry: 3; opacity: 0.9; }
 .rect-label { font-weight: bold; pointer-events: none; }
+
+/* منع ظهور علامة التحديد الزرقاء ومنع القائمة في بعض المتصفحات */
+img, image, svg, rect {
+    -webkit-touch-callout: none; /* يمنع القائمة المنبثقة في iOS */
+    -webkit-user-select: none;   /* يمنع تحديد النص/الصور */
+    user-select: none;
+/* --- حل مشكلة الوضع الداكن في متصفح سامسونج وكروم --- */
+
+/* 1. منع المتصفح من عكس ألوان العناصر الرسومية */
+img, image, svg, rect {
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+/* 2. إجبار الـ Iframe الخاص بالـ PDF على عرض الألوان الأصلية للملف (خلفية بيضاء) */
+#pdfFrame {
+    color-scheme: light !important;
+    background-color: white !important;
+}
+
+/* 3. تأكيد أن الحاوية الأساسية للموقع تلتزم باللون الأسود اللي إنت اخترته */
+html, body {
+    background-color: black !important;
+    color-scheme: dark !important; /* بيعرف المتصفح إن الموقع مظبوط يدوياً */
+}
+
+/* 4. استهداف خاص لمتصفحات أندرويد اللي بتجبر الألوان */
+@media (prefers-color-scheme: dark) {
+    #main-svg {
+        filter: none !important;
+    }
+}
