@@ -164,7 +164,6 @@ function setupGroupControls() {
     if (localStorage.getItem("selectedGroup")) {
         groupSelector.style.display = 'none';
     }
-}
 
 /* --- 5. تهيئة الخدمة (Service Worker) للأوفلاين --- */
 
