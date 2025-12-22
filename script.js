@@ -503,6 +503,15 @@ async function updateWoodInterface() {
     applyWoodSearchFilter();  
 }
 
+function applyWoodSearchFilter() {  
+    const query = searchInput.value.toLowerCase().trim();  
+    mainSvg.querySelectorAll('.wood-file-group').forEach(group => {  
+        const name = group.querySelector('text').getAttribute('data-search-name') || "";  
+        group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';  
+    });  
+    mainSvg.querySelectorAll('.wood-folder-group').forEach(group => { group.style.display = 'inline'; });  
+}
+
 
 /* ===== البحث داخل الـ SVG + تطبيق الفلتر على الملفات ===== */
 /* الكود المصحح */
