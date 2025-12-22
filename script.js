@@ -176,52 +176,72 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+/* --- البديل المنظم لجزء window.onload والتعريفات --- */
+
+let loadedCount = 0;
+// تعريف العناصر الأساسية
+const mainSvg = document.getElementById('main-svg');
+const scrollContainer = document.getElementById('scroll-container');
+const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
+const loadingOverlay = document.getElementById('loading-overlay');
+const jsToggle = document.getElementById('js-toggle');
+const searchInput = document.getElementById('search-input');
+const searchIcon = document.getElementById('search-icon');
+const moveToggle = document.getElementById('move-toggle');
+const toggleContainer = document.getElementById('js-toggle-container');
+const backButtonGroup = document.getElementById('back-button-group');
+const backBtnText = document.getElementById('back-btn-text');
+
+const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300;
+
 window.onload = async function() {
+    // 1. إعداد واجهة اختيار الجروب
     setupGroupControls();
-    if (localStorage.getItem("selectedGroup")) {
-        await loadGroupSVG();
-        await fetchGlobalTree();
-        updateWoodInterface();
-        scan(); 
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-            setTimeout(() => {
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => loadingOverlay.style.display = 'none', 500);
-            }, 800);
+
+    const selectedGroup = localStorage.getItem("selectedGroup");
+
+    // 2. التحقق من وجود جروب مختار للبدء في تحميل الخريطة
+    if (selectedGroup) {
+        // تحديث شعار شاشة التحميل فوراً ليناسب الجروب المختار
+        const splashImage = document.getElementById('splash-image');
+        if (splashImage) splashImage.src = `image/logo-${selectedGroup}.webp`;
+
+        try {
+            // تحميل الـ SVG وشجرة الملفات بالتوازي لتوفير الوقت
+            await Promise.all([
+                loadGroupSVG(),
+                fetchGlobalTree()
+            ]);
+
+            // تهيئة الواجهة والوظائف التفاعلية
+            updateWoodInterface();
+            scan();
+
+            // 3. إنهاء شاشة التحميل بعد جاهزية كل شيء
+            if (loadingOverlay) {
+                setTimeout(() => {
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        // التمرير للبداية (نظام RTL يضع 0 في أقصى اليمين)
+                        if (scrollContainer) {
+                            scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
+                        }
+                    }, 500);
+                }, 800);
+            }
+        } catch (error) {
+            console.error("حدث خطأ أثناء تحميل البيانات:", error);
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
         }
-        const scrollContainer = document.getElementById('scroll-container');
-        scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
+    } else {
+        // إذا لم يتم اختيار جروب، نخفي شاشة التحميل لإظهار قائمة الاختيار
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        const groupSelector = document.getElementById('group-selector');
+        if (groupSelector) groupSelector.style.display = 'flex';
     }
-    setupGroupControls();
-    await loadGroupSVG();
-    await fetchGlobalTree();
-    updateWoodInterface();
-    scan(); 
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => loadingOverlay.style.display = 'none', 500);
-    }
-    const scrollContainer = document.getElementById('scroll-container');
-    scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
 };
-
-    let loadedCount = 0;
-    const mainSvg = document.getElementById('main-svg');
-    const scrollContainer = document.getElementById('scroll-container');
-    const clipDefs = mainSvg.querySelector('defs');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const jsToggle = document.getElementById('js-toggle');
-    const searchInput = document.getElementById('search-input');
-    const searchIcon = document.getElementById('search-icon');
-    const moveToggle = document.getElementById('move-toggle');
-    const toggleContainer = document.getElementById('js-toggle-container');
-    const backButtonGroup = document.getElementById('back-button-group');
-    const backBtnText = document.getElementById('back-btn-text');
-
-    const isTouchDevice = window.matchMedia('(hover: none)').matches;
-    const TAP_THRESHOLD_MS = 300;
 
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
