@@ -1,5 +1,5 @@
 /* --- 1. الإعدادات والمتغيرات العالمية --- */
-const GITHUB_USER = "05george";
+const GITHUB_USER = "MUE24Med";
 const REPO_NAME = "semester-3";
 const SELECTED_GROUP = localStorage.getItem("selectedGroup") || "B"; 
 
