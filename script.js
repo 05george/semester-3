@@ -1,27 +1,95 @@
-const REPO_NAME = "semester-3"; 
-const GITHUB_USER = "MUE24Med";
+let SELECTED_GROUP = null;
 
-// المتغيرات العالمية المبنية على اسم المستودع
+const GROUP_CONFIG = {
+    A: { svg: "groups/group-A.svg", logo: "image/logo-A.webp" },
+    B: { svg: "groups/group-B.svg", logo: "image/logo-B.webp" },
+    C: { svg: "groups/group-C.svg", logo: "image/logo-C.webp" },
+    D: { svg: "groups/group-D.svg", logo: "image/logo-D.webp" }
+};
+
+async function loadGroupSVG(groupKey) {
+    const cfg = GROUP_CONFIG[groupKey];
+    if (!cfg) return;
+
+    const splashImg = document.getElementById("splash-image");
+    if (splashImg) splashImg.src = cfg.logo;
+
+    const res = await fetch(cfg.svg);
+    const svgText = await res.text();
+
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+
+    const mainSvg = document.getElementById("main-svg");
+    const defs = mainSvg.querySelector("defs")?.outerHTML || "<defs></defs>";
+
+    mainSvg.innerHTML = `${defs}${svgDoc.documentElement.innerHTML}`;
+}
+
+function initGroupSelector() {
+    const selector = document.getElementById("group-selector");
+    if (!selector) return;
+
+    selector.querySelectorAll("button[data-group]").forEach(btn => {
+        btn.onclick = async () => {
+            SELECTED_GROUP = btn.dataset.group;
+            localStorage.setItem("selectedGroup", SELECTED_GROUP);
+            selector.remove();
+            await loadGroupSVG(SELECTED_GROUP);
+            window.dispatchEvent(new Event("load"));
+        };
+    });
+}
+
+async function autoLoadGroup() {
+    const saved = localStorage.getItem("selectedGroup");
+    if (!saved || !GROUP_CONFIG[saved]) return false;
+    const selector = document.getElementById("group-selector");
+    if (selector) selector.remove();
+    SELECTED_GROUP = saved;
+    await loadGroupSVG(saved);
+    return true;
+}
+
+function addChangeGroupButton() {
+    const btn = document.createElement("button");
+    btn.textContent = "Change Group";
+    btn.style.cssText = `
+        position:fixed;bottom:20px;right:20px;z-index:99999;
+        padding:10px 16px;border-radius:10px;
+        border:none;font-weight:bold;
+        background:#222;color:#fff;cursor:pointer;
+    `;
+    btn.onclick = () => {
+        localStorage.removeItem("selectedGroup");
+        location.reload();
+    };
+    document.body.appendChild(btn);
+}
+
+
+const REPO_NAME = "semester-3";
+const GITHUB_USER = "05george";
+
 const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-let globalFileTree = []; 
+let globalFileTree = [];
 
-// 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
 async function fetchGlobalTree() {
-    if (globalFileTree.length > 0) return; 
+    if (globalFileTree.length > 0) return;
     try {
         const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
-        console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
     } catch (err) {
-        console.error("خطأ في الاتصال بـ GitHub:", err);
+        console.error("GitHub Error:", err);
     }
 }
 
-// زر الإغلاق (كما هو)
+/* PDF BUTTONS */
+
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -29,49 +97,42 @@ document.getElementById("closePdfBtn").onclick = () => {
     overlay.classList.add("hidden");
 };
 
-// زر التحميل
 document.getElementById("downloadBtn").onclick = () => {
     const iframe = document.getElementById("pdfFrame");
-    let src = iframe.src;
-    if (!src) return;
-
-    const match = src.match(/file=(.+)$/);
-    if (match && match[1]) {
-        const fileUrl = decodeURIComponent(match[1]);
-        const a = document.createElement("a");
-        a.href = fileUrl;
-        a.download = fileUrl.split("/").pop(); // اسم الملف
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    }
+    const match = iframe.src.match(/file=(.+)$/);
+    if (!match) return;
+    const url = decodeURIComponent(match[1]);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = url.split("/").pop();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 };
 
-// زر المشاركة
 document.getElementById("shareBtn").onclick = () => {
     const iframe = document.getElementById("pdfFrame");
-    let src = iframe.src;
-    if (!src) return;
-
-    const match = src.match(/file=(.+)$/);
-    if (match && match[1]) {
-        const fileUrl = decodeURIComponent(match[1]);
-
-        navigator.clipboard.writeText(fileUrl)
-            .then(() => alert("رابط الملف تم نسخه إلى الحافظة!"))
-            .catch(() => alert("فشل نسخ الرابط."));
-    }
+    const match = iframe.src.match(/file=(.+)$/);
+    if (!match) return;
+    navigator.clipboard.writeText(decodeURIComponent(match[1]))
+        .then(() => alert("تم نسخ الرابط"))
+        .catch(() => alert("فشل النسخ"));
 };
 
+/* SERVICE WORKER */
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker Registered'))
-      .catch(err => console.log('Service Worker Failed', err));
-  });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+    });
 }
 
-window.onload = function() {
+window.onload = async function () {
+
+    const loaded = await autoLoadGroup();
+    if (!loaded) initGroupSelector();
+    addChangeGroupButton();
+
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
