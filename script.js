@@ -8,6 +8,32 @@ const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REP
 
 let globalFileTree = []; 
 
+async function loadGroupMap(groupLetter) {
+    // 1. إخفاء شاشة الاختيار وإظهار الـ Loading
+    document.getElementById('group-selector').style.display = 'none';
+    document.getElementById('loading-overlay').style.display = 'flex';
+    document.getElementById('loading-overlay').style.opacity = '1';
+
+    try {
+        // 2. سحب ملف الـ SVG الخاص بالجروب (لازم تعمل ملفات بالأسم ده)
+        const response = await fetch(`maps/group-${groupLetter}.svg`);
+        const svgText = await response.text();
+        
+        // 3. حقن الـ SVG جوه الحاوية
+        document.getElementById('map-wrapper').innerHTML = svgText;
+
+        // 4. إعادة تشغيل الـ Scan والوظائف الأساسية
+        const mainSvg = document.querySelector('#map-wrapper svg');
+        mainSvg.id = "main-svg"; // تثبيت الـ ID عشان الـ CSS والـ Script يشتغلوا
+        
+        // استدعاء وظائف الموقع اللي إنت كاتبها أصلاً
+        setupSiteFunctions(); 
+    } catch (err) {
+        alert("خطأ في تحميل خريطة الجروب، تأكد من وجود الملفات.");
+        console.error(err);
+    }
+}
+
 // 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
