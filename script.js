@@ -539,14 +539,8 @@ jsToggle.addEventListener('change', function() {
     interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
 });
 
-/* ===== منع القائمة عند الضغط المطول على أي صورة داخل SVG ===== */
-document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-}, false);
-    // إغلاق وظيفة fetchGlobalTree إذا لم تكن مغلقة
-} 
+/* == منع القائمة عند الضغط المطول على أي صورة داخل SVG =*/ document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
 
-// إضافة إغلاق للدالة window.onload التي بدأت في الجزء الثاني
 }; 
-
-/* تأكد من إضافة هذه الأقواس في آخر سطر في الملف */
