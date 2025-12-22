@@ -88,49 +88,49 @@ if ("serviceWorker" in navigator) {
 ===================================================== */
 
 window.onload = function() {
-    // جلب العناصر
-// داخل window.onload = function() { ... }
-
 const groupSelector = document.getElementById('group-selector');
 const groupButtons = document.querySelectorAll('.group-buttons button');
+const mapContainer = document.getElementById('map-content-container');
 
 groupButtons.forEach(button => {
-    button.onclick = function() {
-        const selectedGroup = this.getAttribute('data-group');
-        console.log("Selected Group:", selectedGroup);
+    button.onclick = async function() {
+        const groupLetter = this.getAttribute('data-group'); // A, B, C, or D
+        const fileName = `groups/group-${groupLetter}.svg`;
 
-        // 1. إخفاء قائمة اختيار الجروب
+        // 1. إظهار شاشة التحميل وإخفاء قائمة الاختيار
         groupSelector.style.display = 'none';
+        document.getElementById('loading-overlay').style.display = 'flex';
+        document.getElementById('loading-overlay').style.opacity = '1';
 
-        // 2. إظهار شاشة التحميل (تأكد أنها ليست مخفية بـ CSS)
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'flex';
-            loadingOverlay.style.opacity = '1';
-        }
+        try {
+            // 2. جلب محتوى ملف الـ SVG المختار
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error("لم يتم العثور على ملف الجروب");
+            
+            const svgText = await response.text();
 
-        // 3. هنا يمكنك إضافة منطق لتغيير ملف الـ SVG أو البيانات بناءً على الجروب
-        // مثال بسيط: إذا أردت إعادة تشغيل عملية المسح والفلاتر
-        setTimeout(() => {
-            // كود افتراضي لمحاكاة انتهاء التحميل إذا لم يكن هناك تحميل صور جديد
-            if (loadingOverlay) {
-                loadingOverlay.style.opacity = '0';
+            // 3. حقن المحتوى داخل الحاوية المخصصة في index.html
+            mapContainer.innerHTML = svgText;
+
+            // 4. إعادة تشغيل وظيفة المسح (scan) ليتعرف الكود على المربعات الجديدة
+            setTimeout(() => {
+                scan(); // تشغيل الوظيفة التي تعالج المربعات وتضيف النصوص
+                
+                // إخفاء شاشة التحميل بعد المعالجة
+                document.getElementById('loading-overlay').style.opacity = '0';
                 setTimeout(() => { 
-                    loadingOverlay.style.display = 'none';
-                    mainSvg.style.opacity = '1';
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    document.getElementById('main-svg').style.opacity = '1';
                 }, 500);
-            }
-        }, 1500); 
+            }, 500);
+
+        } catch (error) {
+            console.error("خطأ أثناء تحميل الجروب:", error);
+            alert("فشل تحميل بيانات الجروب المختار.");
+            groupSelector.style.display = 'flex';
+        }
     };
 });
-
-// لجعل زر "تغيير الجروب" داخل الخريطة يعمل أيضاً:
-const changeGroupBtn = document.getElementById('change-group-btn');
-if (changeGroupBtn) {
-    changeGroupBtn.onclick = () => {
-        groupSelector.style.display = 'flex';
-        mainSvg.style.opacity = '0';
-    };
-}
 
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
