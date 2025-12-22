@@ -199,7 +199,7 @@ window.onload = function() {
         while (current && current.tagName !== 'svg') {
             const trans = current.getAttribute('transform');
             if (trans) {
-                const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
+       const m = trans.match(/translate\(([\d.-]+)[ ,]+([\d.-]+)\)/);
                 if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
             }
             current = current.parentNode;
