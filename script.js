@@ -482,4 +482,8 @@ window.onload = function() {
     mainSvg.addEventListener('contextmenu', e => e.preventDefault(), false);
     
     updateDynamicSizes();
+window.onerror = function(message, source, lineno, colno, error) {
+    alert("خطأ برمجي: " + message + " في السطر: " + lineno);
+};
+
 }; // نهاية window.onload
