@@ -8,6 +8,7 @@ let globalFileTree = [];
 let currentFolder = ""; 
 let interactionEnabled = true;
 
+// حالة الـ Hover النشطة لتخزين العناصر المؤقتة
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
     baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -19,7 +20,6 @@ const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
 // --- 2. نظام تحميل الخرائط (الجروبات) ---
 async function loadGroupMap(groupLetter) {
-    // إظهار شاشة التحميل
     document.getElementById('group-selector').style.display = 'none';
     const loadingOverlay = document.getElementById('loading-overlay');
     loadingOverlay.style.display = 'flex';
@@ -30,18 +30,17 @@ async function loadGroupMap(groupLetter) {
         if (!response.ok) throw new Error('File not found');
         const svgText = await response.text();
 
-        // حقن الـ SVG
         const wrapper = document.getElementById('map-wrapper');
         wrapper.innerHTML = svgText;
 
         const mainSvg = wrapper.querySelector('svg');
         mainSvg.id = "main-svg"; 
 
-        // إعادة تشغيل المحرك بالكامل
+        // إعادة تشغيل المحرك
         setupSiteFunctions(); 
-        
+
     } catch (err) {
-        alert("خطأ في تحميل الخريطة: تأكد من مسار الملف.");
+        alert("خطأ في تحميل الخريطة: تأكد من مسار الملف في مجلد maps.");
         document.getElementById('group-selector').style.display = 'flex';
         loadingOverlay.style.display = 'none';
     }
@@ -52,17 +51,24 @@ function setupSiteFunctions() {
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const loadingOverlay = document.getElementById('loading-overlay');
-    const clipDefs = mainSvg.querySelector('defs') || createDefs(mainSvg);
     
+    if (!mainSvg) return;
+
+    // إنشاء defs إذا لم يكن موجوداً لعمليات الـ ClipPath
+    let clipDefs = mainSvg.querySelector('defs');
+    if (!clipDefs) {
+        clipDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        mainSvg.insertBefore(clipDefs, mainSvg.firstChild);
+    }
+
     let loadedCount = 0;
     const images = mainSvg.querySelectorAll('image');
 
-    // ضبط الـ ViewBox بناءً على عدد الصور (المنطق القياسي)
+    // توحيد الـ ViewBox بناءً على عدد الصور
     const imgW = 1024;
     const imgH = 2454;
     mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
 
-    // تحميل الصور تدريجياً مع اللمبات
     images.forEach(si => {
         const actualSrc = si.getAttribute('data-src');
         if (actualSrc) {
@@ -86,25 +92,26 @@ function setupSiteFunctions() {
             setTimeout(() => { 
                 loadingOverlay.style.display = 'none'; 
                 mainSvg.style.opacity = '1'; 
-                scan(); // تشغيل الـ Scanner الأصلي
+                scan(); // تشغيل الماسح الضوئي للعناصر
                 updateWoodInterface(); 
-                // العودة لليمين (نظام الـ RTL)
-                scrollContainer.scrollTo({ left: 0 }); 
+                // أقصى اليمين (بداية الخريطة في RTL)
+                scrollContainer.scrollLeft = 0;
             }, 500);
         }, 600);
     }
 }
 
-// --- 4. وظائف الـ Scanner والـ Rects (النسخة القياسية المفصلة) ---
+// --- 4. وظائف الـ Scanner والـ Rects ---
 function scan() {
     const mainSvg = document.getElementById('main-svg');
+    if (!mainSvg) return;
     mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r));
 }
 
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
 
-    // توحيد القياسات للحالات الخاصة
+    // ضبط العرض الافتراضي للمربعات (اختياري حسب تصميمك)
     if(r.classList.contains('w')) r.setAttribute('width', '113.5');
     if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
@@ -121,7 +128,7 @@ function processRect(r) {
         txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
         txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
         txt.style.fontSize = fs + 'px'; txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
-        
+
         r.parentNode.appendChild(txt);
         wrapText(txt, w);
 
@@ -130,11 +137,10 @@ function processRect(r) {
         bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
         bg.setAttribute('class', 'label-bg'); bg.setAttribute('data-original-for', href);
         bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
-        
+
         r.parentNode.insertBefore(bg, txt);
     }
 
-    // ربط الأحداث (Desktop + Mobile)
     if (!isTouchDevice) {
         r.addEventListener('mouseover', startHover);
         r.addEventListener('mouseout', cleanupHover);
@@ -161,7 +167,7 @@ function processRect(r) {
     r.setAttribute('data-processed', 'true');
 }
 
-// --- 5. منطق الـ Hover والـ Zoom والحركة (بكل سطر وأرقام دقيقة) ---
+// --- 5. منطق الـ Hover والـ Zoom والحركة ---
 function startHover() {  
     if (!interactionEnabled || this.classList.contains('list-item')) return;  
     const rect = this;  
@@ -264,7 +270,7 @@ function cleanupHover() {
     });
 }
 
-// --- 6. نظام الـ Wood (المكتبة) والـ GitHub API ---
+// --- 6. نظام الـ Wood (المكتبة) ---
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
@@ -274,7 +280,6 @@ async function updateWoodInterface() {
     const backBtnText = document.getElementById('back-btn-text');
     if (currentFolder === "") {
         backBtnText.textContent = "➡️ إلى الخريطة ";
-        // إضافة الشعار في الصفحة الرئيسية للخشب
         const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
         banner.setAttribute("href", "image/logo-wood.webp"); 
         banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
@@ -324,7 +329,7 @@ async function updateWoodInterface() {
         t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
         t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
         t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-        
+
         if (item.type === 'dir') {
             const count = globalFileTree.filter(f => f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')).length;
             t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
@@ -343,6 +348,7 @@ async function updateWoodInterface() {
 }
 
 // --- 7. وظائف عامة (Utilities) ---
+
 function getCumulativeTranslate(el) {
     let x = 0, y = 0, curr = el;
     while (curr && curr.tagName !== 'svg') {
@@ -402,19 +408,13 @@ function updateLoadingProgress(loaded, total) {
     if(p === 100) document.getElementById('bulb-1')?.classList.add('on');
 }
 
-function createDefs(svg) {
-    const d = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    svg.insertBefore(d, svg.firstChild);
-    return d;
-}
-
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
     try {
         const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
-    } catch (err) { console.error("GitHub Error", err); }
+    } catch (err) { console.error("GitHub Tree Fetch Error", err); }
 }
 
 function smartOpen(item) {
@@ -428,75 +428,117 @@ function smartOpen(item) {
     }
 }
 
-// --- 8. الأحداث النهائية وأزرار الـ PDF (المزايا الجديدة) ---
+// --- 8. الأحداث النهائية عند تحميل الصفحة ---
 window.onload = function() {
-    fetchGlobalTree(); // سحب الداتا في الخلفية
+    fetchGlobalTree();
 
-    // أزرار التحكم في الـ PDF
-    document.getElementById("closePdfBtn").onclick = () => {
-        document.getElementById("pdf-overlay").classList.add("hidden");
-        document.getElementById("pdfFrame").src = "";
-    };
+    // أزرار مشغل الـ PDF
+    const closeBtn = document.getElementById("closePdfBtn");
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            document.getElementById("pdf-overlay").classList.add("hidden");
+            document.getElementById("pdfFrame").src = "";
+        };
+    }
 
-    document.getElementById("downloadBtn").onclick = () => {
-        const src = document.getElementById("pdfFrame").src;
-        const match = src.match(/file=(.+)$/);
-        if (match) {
-            const a = document.createElement("a");
-            a.href = decodeURIComponent(match[1]);
-            a.download = a.href.split("/").pop();
-            a.click();
-        }
-    };
+    const downloadBtn = document.getElementById("downloadBtn");
+    if (downloadBtn) {
+        downloadBtn.onclick = () => {
+            const src = document.getElementById("pdfFrame").src;
+            const match = src.match(/file=(.+)$/);
+            if (match) {
+                const a = document.createElement("a");
+                a.href = decodeURIComponent(match[1]);
+                a.download = a.href.split("/").pop();
+                a.click();
+            }
+        };
+    }
 
-    document.getElementById("shareBtn").onclick = () => {
-        const src = document.getElementById("pdfFrame").src;
-        const match = src.match(/file=(.+)$/);
-        if (match) {
-            navigator.clipboard.writeText(decodeURIComponent(match[1]))
-                .then(() => alert("تم نسخ رابط الملف بنجاح!"))
-                .catch(() => alert("عذراً، لم يتم النسخ."));
-        }
-    };
+    const shareBtn = document.getElementById("shareBtn");
+    if (shareBtn) {
+        shareBtn.onclick = () => {
+            const src = document.getElementById("pdfFrame").src;
+            const match = src.match(/file=(.+)$/);
+            if (match) {
+                navigator.clipboard.writeText(decodeURIComponent(match[1]))
+                    .then(() => alert("تم نسخ رابط الملف بنجاح!"))
+                    .catch(() => alert("عذراً، لم يتم النسخ."));
+            }
+        };
+    }
 
-    // التحكم في التوجيه والبحث
-    document.getElementById('move-toggle').onclick = () => {
-        const c = document.getElementById('js-toggle-container');
-        c.classList.toggle('top'); c.classList.toggle('bottom');
-    };
+    // زر تبديل مكان واجهة البحث (أعلى/أسفل)
+    const moveBtn = document.getElementById('move-toggle');
+    if (moveBtn) {
+        moveBtn.onclick = () => {
+            const c = document.getElementById('js-toggle-container');
+            c.classList.toggle('top'); c.classList.toggle('bottom');
+        };
+    }
 
-    document.getElementById('js-toggle').onchange = (e) => {
-        interactionEnabled = e.target.checked;
-        if(!interactionEnabled) cleanupHover();
-    };
+    // زر تفعيل التفاعل (Interaction Switch)
+    const jsToggle = document.getElementById('js-toggle');
+    if (jsToggle) {
+        jsToggle.onchange = (e) => {
+            interactionEnabled = e.target.checked;
+            if(!interactionEnabled) cleanupHover();
+        };
+    }
 
-    document.getElementById('back-button-group').onclick = () => {
-        if (currentFolder !== "") {
-            let parts = currentFolder.split('/'); parts.pop();
-            currentFolder = parts.join('/');
-            updateWoodInterface();
-        } else {
-            document.getElementById('scroll-container').scrollTo({left: 0, behavior: 'smooth'});
-        }
-    };
+    // --- إصلاحات زر الرجوع والتمرير (Crucial Fixes) ---
 
-    // منطق البحث الأصلي
-    document.getElementById('search-input').oninput = (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        document.querySelectorAll('rect.m').forEach(r => {
-            const h = (r.getAttribute('data-href')||"").toLowerCase();
-            const t = (r.getAttribute('data-full-text')||"").toLowerCase();
-            const match = h.includes(query) || t.includes(query);
-            r.style.display = (query !== "" && !match) ? "none" : "block";
-            const lbl = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);
-            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);
-            if(lbl) lbl.style.display = r.style.display;
-            if(bg) bg.style.display = r.style.display;
-        });
-    };
+    // 1. زر الرجوع في الخشب
+    const woodBackBtn = document.getElementById('back-button-group');
+    if (woodBackBtn) {
+        woodBackBtn.onclick = (e) => {
+            e.preventDefault();
+            if (currentFolder !== "") {
+                let parts = currentFolder.split('/');
+                parts.pop();
+                currentFolder = parts.join('/');
+                updateWoodInterface();
+            } else {
+                // العودة لبداية الخريطة (أقصى اليمين في RTL)
+                const container = document.getElementById('scroll-container');
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        };
+    }
 
-    // حماية الخريطة
+    // 2. سهم الرجوع في شريط البحث (يذهب لأقصى اليسار)
+    const searchBackIcon = document.getElementById('search-icon');
+    if (searchBackIcon) {
+        searchBackIcon.onclick = () => {
+            const container = document.getElementById('scroll-container');
+            // في نظام RTL، أقصى اليسار يكون قيمة سالبة تساوي عرض المحتوى
+            container.scrollTo({ left: -container.scrollWidth, behavior: 'smooth' });
+        };
+    }
+
+    // 3. منطق البحث وتصفية العناصر
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.oninput = (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('rect.m').forEach(r => {
+                const h = (r.getAttribute('data-href')||"").toLowerCase();
+                const t = (r.getAttribute('data-full-text')||"").toLowerCase();
+                const match = h.includes(query) || t.includes(query);
+                
+                r.style.display = (query !== "" && !match) ? "none" : "block";
+                const lbl = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);
+                const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);
+                if(lbl) lbl.style.display = r.style.display;
+                if(bg) bg.style.display = r.style.display;
+            });
+        };
+    }
+
+    // حماية الخريطة من الضغط المطول والقائمة المنبثقة
     document.addEventListener('contextmenu', e => {
-        if (e.target.closest('#main-svg')) e.preventDefault();
+        if (e.target.closest('#main-svg') || e.target.closest('image')) {
+            e.preventDefault();
+        }
     }, false);
 };
