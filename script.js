@@ -72,16 +72,11 @@ if ('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
-// --- داخل window.onload ---
-
 const groupSelector = document.getElementById('group-selector');
-const groupButtons = document.querySelectorAll('.group-btn'); 
-// متغير عالمي لحفظ مسار لوجو الخشب الخاص بالجروب
+const groupButtons = document.querySelectorAll('.group-btn');
 window.currentGroupWoodLogo = "image/logo-wood.webp"; 
-
 groupButtons.forEach(button => {
     button.onclick = function() {
-        // 1. استخراج المتغيرات من الزر (هذا هو طلبك الأساسي)
         const splashPath = this.getAttribute('data-splash');
         const woodLogoPath = this.getAttribute('data-wood-logo');
         const svgPath = this.getAttribute('data-svg-file');
@@ -401,11 +396,11 @@ async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
 
-    // تنظيف المحتوى القديم أولاً
+    // 1. تنظيف المحتوى القديم وتصفير شجرة الملفات إذا لزم الأمر
     dynamicGroup.innerHTML = ''; 
     await fetchGlobalTree();
 
-    // 1. تحديث نص زر الرجوع والمسار (Breadcrumb)
+    // 2. تحديث نص زر الرجوع والمسار (Breadcrumb)
     if (currentFolder === "") {
         backBtnText.textContent = "إلى الخريطة ←";
     } else {
@@ -414,12 +409,12 @@ async function updateWoodInterface() {
         backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
     }
 
-    // 2. إظهار لوجو الجروب المختار فوق الخشب (فقط في الشاشة الرئيسية للخشب)
+    // 3. عرض لوجو الجروب المختار (يظهر فقط في القائمة الرئيسية للخشب)
     if (currentFolder === "") {
         const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        // التأكد من وجود لوجو أو استخدام لوجو افتراضي
+        // استخدام اللوجو المخزن في window أو اللوجو الافتراضي
         const logoSrc = window.currentGroupWoodLogo || "image/logo-wood.webp";
-        
+
         banner.setAttribute("href", logoSrc);   
         banner.setAttribute("x", "186.86"); 
         banner.setAttribute("y", "1517.43");   
@@ -431,7 +426,7 @@ async function updateWoodInterface() {
         dynamicGroup.appendChild(banner);  
     }
 
-    // 3. منطق عرض الملفات والمجلدات
+    // 4. فلترة الملفات والمجلدات بناءً على المسار الحالي
     const folderPrefix = currentFolder ? currentFolder + '/' : '';
     const itemsMap = new Map();
 
@@ -455,29 +450,43 @@ async function updateWoodInterface() {
     });
 
     const filteredData = Array.from(itemsMap.values());
-    for (let [index, item] of filteredData.entries()) {
+    
+    // 5. رسم العناصر (المجلدات والملفات)
+    filteredData.forEach((item, index) => {
         const x = (index % 2 === 0) ? 120 : 550;
         const y = 250 + (Math.floor(index / 2) * 90);
-        
+
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
         g.style.cursor = "pointer";
 
+        // المستطيل الخلفي
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", x); r.setAttribute("y", y); 
-        r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
+        r.setAttribute("x", x); 
+        r.setAttribute("y", y); 
+        r.setAttribute("width", "350"); 
+        r.setAttribute("height", "70"); 
         r.setAttribute("rx", "12");
         r.setAttribute("class", "list-item");
+        
+        // ربط البيانات لمحرك البحث والـ PDF
+        r.setAttribute("data-href", item.path); 
+        r.setAttribute("data-full-text", item.name.replace(/\.[^/.]+$/, ""));
+
         r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
         r.style.stroke = "#fff";
+        r.style.strokeWidth = "1.5px";
 
+        // النص (العنوان)
         const cleanName = item.name.replace(/\.[^/.]+$/, "");
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+        t.setAttribute("x", x + 175); 
+        t.setAttribute("y", y + 42);
         t.setAttribute("text-anchor", "middle"); 
         t.setAttribute("fill", "white");
         t.style.fontWeight = "bold"; 
         t.style.fontSize = "17px";
+        t.style.pointerEvents = "none";
         t.setAttribute("data-search-name", cleanName.toLowerCase());
 
         if (item.type === 'dir') {
@@ -491,19 +500,27 @@ async function updateWoodInterface() {
 
         g.appendChild(r); 
         g.appendChild(t);
+
+        // أحداث الضغط
         g.onclick = (e) => {
             e.stopPropagation();
             if (item.type === 'dir') { 
                 currentFolder = item.path; 
                 updateWoodInterface(); 
+                // تصفير البحث عند الدخول لمجلد جديد
+                if(searchInput) searchInput.value = "";
             } else { 
                 smartOpen(item); 
             }
         };
+
         dynamicGroup.appendChild(g);
-    }
+    });
+
+    // 6. تطبيق الفلترة إذا كان هناك نص في خانة البحث
     applyWoodSearchFilter();
 }
+
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
