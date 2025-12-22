@@ -517,33 +517,42 @@ window.onload = function() {
 
     // --- إصلاحات زر الرجوع والتمرير (Crucial Fixes) ---
 
-    // 1. زر الرجوع في الخشب
-    const woodBackBtn = document.getElementById('back-button-group');
-    if (woodBackBtn) {
-        woodBackBtn.onclick = (e) => {
-            e.preventDefault();
-            if (currentFolder !== "") {
-                let parts = currentFolder.split('/');
-                parts.pop();
-                currentFolder = parts.join('/');
-                updateWoodInterface();
-            } else {
-                // العودة لبداية الخريطة (أقصى اليمين في RTL)
-                const container = document.getElementById('scroll-container');
-                container.scrollTo({ left: 0, behavior: 'smooth' });
-            }
-        };
-    }
-
-    // 2. سهم الرجوع في شريط البحث (يذهب لأقصى اليسار)
-    const searchBackIcon = document.getElementById('search-icon');
-    if (searchBackIcon) {
-        searchBackIcon.onclick = () => {
+// 1. زر الرجوع اللي في واجهة الخشب (Wood Interface)
+const woodBackBtn = document.getElementById('back-button-group'); // تأكد إن ده الـ ID في الـ SVG بتاع الخشب
+if (woodBackBtn) {
+    woodBackBtn.onclick = (e) => {
+        e.preventDefault();
+        if (currentFolder !== "") {
+            // لو جوه مجلد، ارجع خطوة لورا
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/');
+            updateWoodInterface();
+        } else {
+            // لو في الرئيسية، سكرول لأول الخريطة (اليمين)
             const container = document.getElementById('scroll-container');
-            // في نظام RTL، أقصى اليسار يكون قيمة سالبة تساوي عرض المحتوى
-            container.scrollTo({ left: -container.scrollWidth, behavior: 'smooth' });
-        };
-    }
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    };
+}
+
+// 2. سهم الرجوع 🔙 اللي جوه مربع البحث
+const searchBackIcon = document.getElementById('search-icon');
+if (searchBackIcon) {
+    searchBackIcon.onclick = () => {
+        const container = document.getElementById('scroll-container');
+        // في نظام RTL، "البداية" هي 0 (أقصى اليمين)
+        // لو عايز تروح لأقصى اليسار (نهاية الخريطة) استخدم القيمة السالبة لـ scrollWidth
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+        
+        // مسح نص البحث عند الرجوع
+        const input = document.getElementById('search-input');
+        if(input) {
+            input.value = "";
+            input.dispatchEvent(new Event('input')); // لتحديث الخريطة وإظهار العناصر المخفية
+        }
+    };
+}
 
     // 3. منطق البحث وتصفية العناصر
     const searchInput = document.getElementById('search-input');
