@@ -428,8 +428,9 @@ searchInput.addEventListener('input', debounce(function(e) {
                         (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
         
         // التصحيح هنا: استخدام الـ Backticks ` `
-        const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-        const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
         
         rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
         if(label) label.style.display = rect.style.display;
