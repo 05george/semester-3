@@ -33,70 +33,43 @@
 
 </head>
 <body>
-
-<div id="js-toggle-container" class="top">
-  <div id="search-container">
-    <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
-  <span id="search-icon" class="clickable-area">🔙</span>
-</div>
-  <div class="controls-row">
-    <span id="move-toggle" style="cursor:pointer; font-size: 18px;">↕️</span>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 12px; opacity: 0.8;">Interaction</span>
-      <label class="switch">
-        <input type="checkbox" id="js-toggle" checked>
-        <span class="slider round"></span>
-      </label>
-    </div>
-  </div>
-</div>
-
-<div id="loading-overlay">
-  <div id="loading-content">
-    <img id="splash-image" src="image/o.webp" />
-    <h1>Interactive College Map</h1>
-    <div id="loader-lights">
-      <div class="light-bulb" id="bulb-1"></div>
-      <div class="light-bulb" id="bulb-2"></div>
-      <div class="light-bulb" id="bulb-3"></div>
-      <div class="light-bulb" id="bulb-4"></div>
-    </div>
-    <div id="legend">
-      <div class="legend-item red">أسئلة</div>
-      <div class="legend-item yellow">محاضرات</div>
-      <div class="legend-item white">مواد أخرى</div>
-      <div class="legend-item purple">إجابات</div>
-      <div class="legend-item green">سكاشن العملي</div>
-      <div class="legend-item blue">فيديو شرح</div>
-    </div>
-  </div>
-</div>
-
-<div id="pdf-overlay" class="hidden">
-  <div id="toolbar">
-    <button id="closePdfBtn" class="toolbar-btn">❌ إغلاق</button>
-    <button id="downloadBtn" class="toolbar-btn">⬇ تحميل</button>
-    <button id="shareBtn" class="toolbar-btn">🔗 مشاركة</button>
-  </div>
-  <iframe id="pdfFrame" src="" loading="lazy"></iframe>
-</div>
-
-<div id="group-selector" class="selector-overlay">
-  <div class="selector-content">
-    <img src="image/0.png" width="50vw">
+<div id="group-overlay" style="position:fixed; inset:0; background:black; z-index:30000; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white;">
+    <img src="image/o.webp" width="150" style="margin-bottom:20px;">
     <h2>اختر مجموعتك الدراسية</h2>
-    <div class="groups-grid">
-      <button onclick="loadGroupMap('B')">Group B</button>
-      <button onclick="loadGroupMap('A')">Group A</button>
-      <button onclick="loadGroupMap('D')">Group D</button>
-      <button onclick="loadGroupMap('C')">Group C</button>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
+        <button class="toolbar-btn" style="padding:20px 40px;" onclick="initApp('a')">Group A</button>
+        <button class="toolbar-btn" style="padding:20px 40px;" onclick="initApp('b')">Group B</button>
+        <button class="toolbar-btn" style="padding:20px 40px;" onclick="initApp('c')">Group C</button>
+        <button class="toolbar-btn" style="padding:20px 40px;" onclick="initApp('d')">Group D</button>
     </div>
-  </div>
 </div>
 
-<div id="scroll-container">
-  <div id="map-wrapper"></div> 
+<div id="app-content" style="display:none;">
+    <div id="js-toggle-container" class="top">
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="ابحث باسم الملف...">
+            <span id="search-icon" class="clickable-area">🔙</span>
+        </div>
+        <div class="controls-row">
+            <span id="move-toggle" style="cursor:pointer; font-size: 18px;">↕️</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; opacity: 0.8;">Interaction</span>
+                <label class="switch">
+                    <input type="checkbox" id="js-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="scroll-container">
+        <div id="map-wrapper">
+             </div>
+    </div>
 </div>
+
+<div id="loading-overlay" style="display:none;"> ... </div>
+<div id="pdf-overlay" class="hidden"> ... </div>
 
 <script src="script.js"></script>
 </body>
