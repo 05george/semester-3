@@ -187,11 +187,6 @@ window.onload = async function() {
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
 
-        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-        baseText: null, baseBg: null, animationId: null, clipPathId: null,
-        touchStartTime: 0, initialScrollLeft: 0
-    };
-
     let currentFolder = ""; 
     let interactionEnabled = jsToggle.checked;
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
