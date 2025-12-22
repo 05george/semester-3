@@ -86,8 +86,8 @@ if ("serviceWorker" in navigator) {
    الجزء (2/4)
    تهيئة الصفحة + فتح ذكي للملفات + الحركة + البحث
 ===================================================== */
-// داخل window.onload = function() {
 
+window.onload = function() {
 const groupSelector = document.getElementById('group-selector');
 const groupButtons = document.querySelectorAll('.group-buttons button');
 
@@ -128,6 +128,7 @@ if (changeGroupBtn) {
         mainSvg.style.opacity = '0';
     };
 }
+
     // جلب العناصر
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
