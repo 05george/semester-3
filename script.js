@@ -420,11 +420,21 @@ urls.forEach((u, index) => {
     img.onload = img.onerror = () => {
         loadedCount++;
         const p = (loadedCount / urls.length) * 100;
-        if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-        if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-        if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+        
+        // استخدام الاختصار الفعال للتحقق من الوجود (Optional Chaining)
+        const b1 = document.getElementById('bulb-1');
+        const b2 = document.getElementById('bulb-2');
+        const b3 = document.getElementById('bulb-3');
+        const b4 = document.getElementById('bulb-4');
+
+        if(p >= 25 && b4) b4.classList.add('on');
+        if(p >= 50 && b3) b3.classList.add('on');
+        if(p >= 75 && b2) b2.classList.add('on');
+        
         if(loadedCount === urls.length) {
-            document.getElementById('bulb-1')?.classList.add('on');
+            if(b1) b1.classList.add('on');
+            // ... بقية الكود الخاص بإخفاء الـ Overlay
+
             mainSvg.querySelectorAll('image').forEach(si => {
                 const actualSrc = si.getAttribute('data-src');
                 if(actualSrc) si.setAttribute('href', actualSrc);
