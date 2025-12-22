@@ -175,10 +175,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* --- البديل المنظم لجزء window.onload والتعريفات --- */
-
+/* --- الإعدادات والمتغيرات العامة --- */
 let loadedCount = 0;
-// تعريف العناصر الأساسية
+const isTouchDevice = window.matchMedia('(hover: none)').matches;
+const TAP_THRESHOLD_MS = 300;
+
+// تعريف عناصر واجهة المستخدم الأساسية لضمان وصول جميع الدوال إليها
 const mainSvg = document.getElementById('main-svg');
 const scrollContainer = document.getElementById('scroll-container');
 const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
@@ -191,39 +193,37 @@ const toggleContainer = document.getElementById('js-toggle-container');
 const backButtonGroup = document.getElementById('back-button-group');
 const backBtnText = document.getElementById('back-btn-text');
 
-const isTouchDevice = window.matchMedia('(hover: none)').matches;
-const TAP_THRESHOLD_MS = 300;
-
+// دالة التشغيل الرئيسية عند تحميل النافذة
 window.onload = async function() {
-    // 1. إعداد واجهة اختيار الجروب
+    // 1. تهيئة نظام اختيار الجروبات
     setupGroupControls();
 
     const selectedGroup = localStorage.getItem("selectedGroup");
 
-    // 2. التحقق من وجود جروب مختار للبدء في تحميل الخريطة
+    // 2. التحقق من وجود جروب مختار للبدء في التحميل
     if (selectedGroup) {
-        // تحديث شعار شاشة التحميل فوراً ليناسب الجروب المختار
+        // تحديث شعار شاشة التحميل فوراً
         const splashImage = document.getElementById('splash-image');
         if (splashImage) splashImage.src = `image/logo-${selectedGroup}.webp`;
 
         try {
-            // تحميل الـ SVG وشجرة الملفات بالتوازي لتوفير الوقت
+            // تحميل البيانات بالتوازي
             await Promise.all([
                 loadGroupSVG(),
                 fetchGlobalTree()
             ]);
 
-            // تهيئة الواجهة والوظائف التفاعلية
+            // تهيئة الخريطة والواجهة الخشبية
             updateWoodInterface();
             scan();
 
-            // 3. إنهاء شاشة التحميل بعد جاهزية كل شيء
+            // 3. إخفاء شاشة التحميل بعد الجاهزية
             if (loadingOverlay) {
                 setTimeout(() => {
                     loadingOverlay.style.opacity = '0';
                     setTimeout(() => {
                         loadingOverlay.style.display = 'none';
-                        // التمرير للبداية (نظام RTL يضع 0 في أقصى اليمين)
+                        // التمرير لوضع البداية
                         if (scrollContainer) {
                             scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
                         }
@@ -231,16 +231,40 @@ window.onload = async function() {
                 }, 800);
             }
         } catch (error) {
-            console.error("حدث خطأ أثناء تحميل البيانات:", error);
+            console.error("خطأ في تحميل المكونات:", error);
             if (loadingOverlay) loadingOverlay.style.display = 'none';
         }
     } else {
-        // إذا لم يتم اختيار جروب، نخفي شاشة التحميل لإظهار قائمة الاختيار
+        // إذا لم يتم الاختيار، نظهر واجهة الاختيار مباشرة
         if (loadingOverlay) loadingOverlay.style.display = 'none';
         const groupSelector = document.getElementById('group-selector');
         if (groupSelector) groupSelector.style.display = 'flex';
     }
 };
+
+/* --- دالة إعداد عناصر التحكم بالجروبات --- */
+function setupGroupControls() {
+    const groupSelector = document.getElementById('group-selector');
+    // تعريف groupButtons محلياً هنا للوصول إلى الأزرار داخل الدالة
+    const groupButtons = document.querySelectorAll('.group-buttons button');
+    const splashImage = document.getElementById('splash-image');
+
+    if (!localStorage.getItem("selectedGroup")) {
+        if (groupSelector) groupSelector.style.display = 'flex';
+    } else {
+        if (groupSelector) groupSelector.style.display = 'none';
+        if (splashImage) splashImage.src = `image/logo-${SELECTED_GROUP}.webp`;
+    }
+
+    // إضافة مستمعي الأحداث للأزرار
+    groupButtons.forEach(btn => {
+        btn.onclick = () => {
+            const g = btn.getAttribute('data-group');
+            localStorage.setItem("selectedGroup", g);
+            location.reload(); 
+        };
+    });
+}
 
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
