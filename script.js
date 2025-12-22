@@ -1,14 +1,21 @@
 // --- 1. الإعدادات والثوابت العالمية ---
 const REPO_NAME = "semester-3"; 
-const GITHUB_USER = "MUE24Med";
+const GITHUB_USER = "05george";
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 
 let globalFileTree = []; 
-let currentGroup = ""; // تخزين المجموعة المختارة
+let currentGroup = ""; // تخزين المجموعة المختارة (A, B, C, D)
 
-// --- 2. دالة تحميل خريطة المجموعة (الجديدة) ---
-// هذه الدالة ستقوم بجلب محتوى ملف الـ SVG الخاص بالمجموعة من المجلد المخصص لها
+// خريطة اللوجوهات بناءً على المجموعة
+const groupLogos = {
+    'A': 'image/logo-a.webp',
+    'B': 'image/logo-b.webp',
+    'C': 'image/logo-c.webp',
+    'D': 'image/logo-d.webp'
+};
+
+// --- 2. دالة تحميل خريطة المجموعة ---
 async function loadGroupMap(groupLetter) {
     currentGroup = groupLetter;
     const selector = document.getElementById('group-selector');
@@ -21,23 +28,24 @@ async function loadGroupMap(groupLetter) {
     loadingOverlay.style.opacity = '1';
 
     try {
-        // نفترض أن ملفات الـ SVG موجودة في مسار مثل: maps/group-a.svg
+        // تحميل ملف الـ SVG الخاص بالمجموعة
         const response = await fetch(`./maps/group-${groupLetter.toLowerCase()}.svg`);
         if (!response.ok) throw new Error("لم يتم العثور على خريطة هذه المجموعة");
         
         const svgContent = await response.text();
         wrapper.innerHTML = svgContent;
 
-        // بعد حقن الـ SVG، نقوم بتشغيل المحرك الرئيسي
+        // بعد حقن الـ SVG، نبدأ تشغيل المحرك الرئيسي
         initializeMapEngine();
     } catch (err) {
-        alert("خطأ في تحميل الخريطة: " + err.message);
+        console.error(err);
+        alert("خطأ في تحميل الخريطة: تأكد من وجود المجلد maps وملف الـ svg بداخله.");
         selector.style.display = 'flex';
         loadingOverlay.style.display = 'none';
     }
 }
 
-// --- 3. دالة جلب البيانات من GitHub (للأوفلاين والـ Wood Interface) ---
+// --- 3. دالة جلب البيانات من GitHub ---
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
     try {
@@ -92,8 +100,7 @@ function initializeMapEngine() {
     const mainSvg = document.querySelector('#map-wrapper svg');
     if (!mainSvg) return;
 
-    // إضافة معرف أساسي إذا لم يوجد
-    mainSvg.id = "main-svg";
+    mainSvg.id = "main-svg"; // توحيد الـ ID للتعامل معه
     
     let loadedCount = 0;
     const scrollContainer = document.getElementById('scroll-container');
@@ -104,6 +111,8 @@ function initializeMapEngine() {
     const searchIcon = document.getElementById('search-icon');
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
+    
+    // الوصول للعناصر داخل الـ SVG المحقون
     const backButtonGroup = mainSvg.getElementById('back-button-group');
     const backBtnText = mainSvg.getElementById('back-btn-text');
 
@@ -118,7 +127,7 @@ function initializeMapEngine() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- وظيفة الفتح الذكي (Smart Open) ---
+    // وظيفة الفتح الذكي
     function smartOpen(item) {
         if(!item || !item.path) return;
         const url = item.path.startsWith('http') ? item.path : `${RAW_CONTENT_BASE}${item.path}`;
@@ -135,7 +144,6 @@ function initializeMapEngine() {
         }
     }
 
-    // --- وظائف الحركة بنظام RTL ---
     const goToWood = () => {
         scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth, behavior: 'smooth' });
     };
@@ -144,7 +152,6 @@ function initializeMapEngine() {
         scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
     };
 
-    // --- ربط أحداث البحث والتحكم ---
     searchIcon.onclick = goToWood;
     searchInput.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); goToWood(); } };
 
@@ -339,9 +346,12 @@ function initializeMapEngine() {
         await fetchGlobalTree();
 
         if (currentFolder === "") {
-            if (backBtnText) backBtnText.textContent = "إلى الخريطة ←";
+            if (backBtnText) backBtnText.textContent = `خريطة ${currentGroup} ←`;
+            
+            // إضافة اللوجو المتغير بناءً على المجموعة المختارة
             const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
+            const logoPath = groupLogos[currentGroup] || "image/logo-wood.webp";
+            banner.setAttribute("href", logoPath); 
             banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
             banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
             banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
@@ -449,13 +459,10 @@ function initializeMapEngine() {
 
     function scan() { mainSvg.querySelectorAll('rect.m').forEach(r => processRect(r)); }
 
-    // تحميل الصور والـ Progress
     const images = Array.from(mainSvg.querySelectorAll('image'));
     const urls = images.map(img => img.getAttribute('data-src')).filter(s => s);
 
-    if (urls.length === 0) {
-        finishLoading();
-    } else {
+    if (urls.length === 0) { finishLoading(); } else {
         urls.forEach((u) => {
             const img = new Image();
             img.onload = img.onerror = () => {
@@ -489,7 +496,6 @@ function initializeMapEngine() {
         }, 600);
     }
 
-    // البحث
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
@@ -502,7 +508,6 @@ function initializeMapEngine() {
             if(label) label.style.display = rect.style.display; 
             if(bg) bg.style.display = rect.style.display;
         });
-        // تصفية الـ Wood
         mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
             const name = group.querySelector('text').getAttribute('data-search-name') || "";
             group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
@@ -513,11 +518,10 @@ function initializeMapEngine() {
         interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
     });
 
-    // منع القائمة السياقية
     mainSvg.addEventListener('contextmenu', e => e.preventDefault());
 }
 
-// تشغيل عند تحميل الصفحة لأول مرة (Service Worker فقط)
+// Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
