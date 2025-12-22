@@ -609,5 +609,4 @@ window.onload = async function() {
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
 }, false);
-
-};
+;
