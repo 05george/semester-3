@@ -130,11 +130,12 @@ if ('serviceWorker' in navigator) {
 }
 
 window.onload = async function () {
-
+    // 1. إدارة المجموعات (Groups)
     const loaded = await autoLoadGroup();
     if (!loaded) initGroupSelector();
-    addChangeGroupButton();
+    addChangeGroupButton(); // الزر العائم الصغير (اختياري)
 
+    // 2. تعريف العناصر الأساسية
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
@@ -143,10 +144,122 @@ window.onload = async function () {
     const jsToggle = document.getElementById('js-toggle');
     const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
-    const moveToggle = document.getElementById('move-toggle');
-    const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+    const changeGroupTrigger = document.getElementById('change-group-trigger');
+
+    // 3. تعريف وظائف الحركة (Scroll)
+    const goToWood = () => {
+        scrollContainer.scrollTo({ left: -20000, behavior: 'smooth' });
+    };
+    const goToMapEnd = () => {
+        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+    };
+
+    // 4. وظيفة زر الرجوع الذكي (العودة للمجلد أو التمرير للخريطة)
+    if (backButtonGroup) {
+        backButtonGroup.onclick = (e) => {
+            e.preventDefault();
+            if (currentFolder !== "") {
+                // إذا كنا داخل مجلد: نرجع خطوة للمسار السابق
+                let parts = currentFolder.split('/');
+                parts.pop();
+                currentFolder = parts.join('/');
+                updateWoodInterface(); // تحديث القائمة فوراً
+            } else {
+                // إذا كنا في القائمة الرئيسية: نذهب للخريطة
+                goToMapEnd();
+            }
+        };
+    }
+
+    // 5. وظيفة زر تغيير الجروب العلوي
+    if (changeGroupTrigger) {
+        changeGroupTrigger.onclick = () => {
+            localStorage.removeItem("selectedGroup");
+            location.reload();
+        };
+    }
+
+    // 6. ربط أيقونة البحث (السهم) للتمرير لصفحة الخشب
+    if (searchIcon) {
+        searchIcon.onclick = (e) => {
+            e.preventDefault();
+            goToWood();
+        };
+    }
+
+    // 7. معالجة الصور وبدء تحميل الـ SVG
+    const images = mainSvg.querySelectorAll('image');
+    const urls = Array.from(images)
+        .map(img => img.getAttribute('data-src'))
+        .filter(src => src);
+
+    if (urls.length === 0) {
+        // إذا لم توجد صور (في حال فشل تحميل الجروب)
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+    }
+
+    urls.forEach((u) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            const p = (loadedCount / urls.length) * 100;
+            
+            // تحديث لمبات التحميل
+            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+
+            if (loadedCount === urls.length) {
+                document.getElementById('bulb-1')?.classList.add('on');
+                
+                // تفعيل الصور الحقيقية داخل الـ SVG
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const actualSrc = si.getAttribute('data-src');
+                    if(actualSrc) si.setAttribute('href', actualSrc);
+                });
+
+                // إخفاء شاشة التحميل والبدء
+                setTimeout(() => {
+                    if (loadingOverlay) {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingOverlay.style.display = 'none';
+                            mainSvg.style.opacity = '1';
+                            updateDynamicSizes();
+                            scan(); 
+                            updateWoodInterface();
+                            goToMapEnd(); // البداية دائماً من الخريطة
+                        }, 500);
+                    }
+                }, 600);
+            }
+        };
+        img.src = u;
+    });
+
+    // 8. إدارة البحث (Search)
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        // بحث في الخريطة
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const href = (rect.getAttribute('data-href') || '').toLowerCase();
+            const text = (rect.getAttribute('data-full-text') || '').toLowerCase();
+            const isMatch = href.includes(query) || text.includes(query);
+            
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display;
+            if(bg) bg.style.display = rect.style.display;
+        });
+        // بحث في قائمة الخشب
+        applyWoodSearchFilter();
+    }, 150));
+};
+
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -174,64 +287,6 @@ window.onload = async function () {
             window.open(url, '_blank');
         }
     }
-
-    // --- وظائف الحركة بنظام RTL (إعادة للأصل) ---
-    const goToWood = () => {
-        scrollContainer.scrollTo({ 
-            left: -scrollContainer.scrollWidth, 
-            behavior: 'smooth' 
-        });
-    };
-
-const goToMapEnd = () => {
-    // في نظام RTL، أقصى اليمين هو scrollLeft = 0 أو القيمة الموجبة القصوى حسب المتصفح
-    scrollContainer.scrollTo({ 
-        left: 10000, // قيمة كبيرة لضمان الوصول للطرف
-        behavior: 'smooth' 
-    });
-};
-
-
-    // --- ربط الأحداث ---
-    const handleGoToWood = (e) => {
-        e.preventDefault();
-        goToWood();
-    };
-
-    searchIcon.onclick = handleGoToWood;
-    searchIcon.addEventListener('touchend', handleGoToWood);
-
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            goToWood();
-        }
-    };
-
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
-
-// دالة موحدة للتحكم في زر الرجوع/التمرير
-backButtonGroup.onclick = (e) => {
-    e.preventDefault();
-    if (currentFolder !== "") { 
-        // إذا كنت داخل مجلد: ارجع للمجلد السابق
-        let parts = currentFolder.split('/'); 
-        parts.pop(); 
-        currentFolder = parts.join('/'); 
-        updateWoodInterface(); 
-    } else { 
-        // إذا كنت في القائمة الرئيسية للخشب: مرر إلى الخريطة
-        goToMapEnd(); 
-    } 
-};
-
 
     function debounce(func, delay) {
         let timeoutId;
@@ -537,48 +592,6 @@ backButtonGroup.onclick = (e) => {
     const urls = Array.from(mainSvg.querySelectorAll('image'))
                   .map(img => img.getAttribute('data-src'))
                   .filter(src => src !== null && src !== "");
-
-    urls.forEach((u, index) => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            if(loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-                setTimeout(() => {
-                    if(loadingOverlay) {
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => { 
-                            loadingOverlay.style.display = 'none'; 
-                            mainSvg.style.opacity = '1'; 
-                            scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 500);
-                    }
-                }, 600);
-            }
-        };
-        img.src = u;
-    });
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-        applyWoodSearchFilter();
-    }, 150));
 
     jsToggle.addEventListener('change', function() { 
         interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
