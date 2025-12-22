@@ -1,10 +1,10 @@
 let SELECTED_GROUP = null;
 
 const GROUP_CONFIG = {
-    A: { svg: "groups/group-A.svg", logo: "image/logo-A.webp" },
     B: { svg: "groups/group-B.svg", logo: "image/logo-B.webp" },
-    C: { svg: "groups/group-C.svg", logo: "image/logo-C.webp" },
-    D: { svg: "groups/group-D.svg", logo: "image/logo-D.webp" }
+    A: { svg: "groups/group-A.svg", logo: "image/logo-A.webp" },
+    D: { svg: "groups/group-D.svg", logo: "image/logo-D.webp" },
+    C: { svg: "groups/group-C.svg", logo: "image/logo-C.webp" }
 };
 
 async function loadGroupSVG(groupKey) {
@@ -217,14 +217,21 @@ const goToMapEnd = () => {
         }
     };
 
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
-            updateWoodInterface(); 
-        } else { 
-            goToMapEnd(); 
-        } 
-    };
+// دالة موحدة للتحكم في زر الرجوع/التمرير
+backButtonGroup.onclick = (e) => {
+    e.preventDefault();
+    if (currentFolder !== "") { 
+        // إذا كنت داخل مجلد: ارجع للمجلد السابق
+        let parts = currentFolder.split('/'); 
+        parts.pop(); 
+        currentFolder = parts.join('/'); 
+        updateWoodInterface(); 
+    } else { 
+        // إذا كنت في القائمة الرئيسية للخشب: مرر إلى الخريطة
+        goToMapEnd(); 
+    } 
+};
+
 
     function debounce(func, delay) {
         let timeoutId;
