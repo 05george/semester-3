@@ -21,40 +21,6 @@ async function fetchGlobalTree() {
     }
 }
 
-document.querySelectorAll('.group-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        // 1. استخراج المتغيرات من الزر المكتوب في الـ HTML
-        const splashPath = this.dataset.splash;
-        const woodLogoPath = this.dataset.woodLogo;
-        const svgFilePath = this.dataset.svgPath;
-
-        // 2. تطبيق التغييرات على الـ Splash Image
-        const splashImg = document.getElementById('splash-image');
-        if (splashImg) splashImg.src = splashPath;
-
-        // 3. تطبيق التغيير على صورة الخشب (اللوجو الذي يظهر فوقها)
-        // يبحث عن أول صورة داخل مجموعة الروابط الديناميكية
-        const woodLogoImg = document.querySelector('#dynamic-links-group image');
-        if (woodLogoImg) woodLogoImg.setAttribute('href', woodLogoPath);
-
-        // 4. تحميل ملف الـ SVG الخاص بالجروب (استبدال محتوى الـ SVG الحالي)
-        fetch(svgFilePath)
-            .then(response => response.text())
-            .then(svgData => {
-                // هنا نقوم بتبديل محتوى الـ SVG أو أجزاء منه بناءً على ملف الجروب
-                // ملاحظة: يمكنك توجيه المستخدم لصفحة الجروب مباشرة إذا كان ملف الـ SVG صفحة كاملة
-                // window.location.href = svgFilePath; 
-            });
-
-        // 5. إخفاء القائمة وبدء التحميل
-        const selector = document.getElementById('group-selector');
-        selector.style.opacity = '0';
-        setTimeout(() => selector.style.display = 'none', 500);
-        
-        console.log("تم تحميل متغيرات:", splashPath, woodLogoPath, svgFilePath);
-    });
-});
-
 // زر الإغلاق (كما هو)
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
