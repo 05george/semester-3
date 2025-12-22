@@ -1,572 +1,200 @@
-/* --- 1. الإعدادات والمتغيرات العالمية --- */
+/* ================== الإعدادات العامة ================== */
 const GITHUB_USER = "MUE24Med";
 const REPO_NAME = "semester-3";
 
-// جلب الجروب المختار من المتصفح أو تعيين B كافتراضي
-let SELECTED_GROUP = localStorage.getItem("selectedGroup") || "B"; 
+const TREE_API_URL =
+  `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
+const RAW_CONTENT_BASE =
+  `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-// الموارد المتغيرة بناءً على الجروب
-const GROUP_RESOURCES = {
-    // تأكد أن الصور في مجلد image بهذا الاسم بالضبط
-    splashLogo: `image/logo-${SELECTED_GROUP}.webp`, 
-    svgPath: `groups/group-${SELECTED_GROUP}.svg` 
-};
-
-// روابط GitHub API
-const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
-const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
-
-let globalFileTree = []; 
-let currentFolder = ""; 
+let SELECTED_GROUP = null;
+let globalFileTree = [];
+let currentFolder = "";
 let interactionEnabled = true;
 
-// حالة الهافر والزووم
-let activeState = {
-    rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-    baseText: null, baseBg: null, animationId: null, clipPathId: null,
-    touchStartTime: 0, initialScrollLeft: 0
-};
+/* ================== عناصر الواجهة ================== */
+const loadingOverlay = document.getElementById("loading-overlay");
+const groupSelector = document.getElementById("group-selector");
+const splashImage = document.getElementById("splash-image");
+const scrollContainer = document.getElementById("scroll-container");
+const mainSvg = document.getElementById("main-svg");
+const clipDefs = mainSvg.querySelector("defs");
+const backButtonGroup = document.getElementById("back-button-group");
+const backBtnText = document.getElementById("back-btn-text");
+const searchInput = document.getElementById("search-input");
+const searchIcon = document.getElementById("search-icon");
+const jsToggle = document.getElementById("js-toggle");
 
-/* --- 2. وظائف الجلب والتحميل (Fetch & Load) --- */
-
-// جلب شجرة ملفات المستودع بالكامل
+/* ================== تحميل شجرة الملفات ================== */
 async function fetchGlobalTree() {
-    if (globalFileTree.length > 0) return; 
-    try {
-        const response = await fetch(TREE_API_URL);
-        const data = await response.json();
-        globalFileTree = data.tree || [];
-        console.log("تم تحميل شجرة الملفات:", globalFileTree.length);
-    } catch (err) {
-        console.error("خطأ في الاتصال بـ GitHub:", err);
-    }
+  if (globalFileTree.length) return;
+  const res = await fetch(TREE_API_URL);
+  const data = await res.json();
+  globalFileTree = data.tree || [];
 }
 
-// تحميل ملف الـ SVG الخاص بالجروب المختار وحقنه في الحاوية
+/* ================== تحميل SVG الجروب ================== */
 async function loadGroupSVG() {
-    const svgContainer = document.getElementById('map-content-container');
-    if (!svgContainer) return;
-    try {
-        const response = await fetch(GROUP_RESOURCES.svgPath);
-        if (!response.ok) throw new Error("SVG file not found");
-        const svgText = await response.text();
-        
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(svgText, "image/svg+xml");
-        const importedSvg = doc.querySelector('svg');
-        
-        if (importedSvg) {
-            svgContainer.innerHTML = ''; // تنظيف أي محتوى سابق
-            while (importedSvg.firstChild) {
-                svgContainer.appendChild(importedSvg.firstChild);
-            }
-            console.log(`تم حقن خريطة الجروب (${SELECTED_GROUP})`);
-        }
-    } catch (err) {
-        console.error("خطأ في تحميل ملف الخريطة:", err);
-    }
+  const container = document.getElementById("map-content-container");
+  if (!container) return;
+
+  const res = await fetch(`groups/group-${SELECTED_GROUP}.svg`);
+  if (!res.ok) throw new Error("Group SVG not found");
+
+  container.innerHTML = await res.text();
 }
 
-/* --- 3. وظائف التحكم في ملفات PDF والمشاركة --- */
+/* ================== اختيار الجروب ================== */
+function setupGroupSelector() {
+  const buttons = document.querySelectorAll(".group-buttons button");
 
-// فتح الملفات (Smart Open)
-function smartOpen(item) {
-    if(!item || !item.path) return;
-    const url = `${RAW_CONTENT_BASE}${item.path}`;
-    if(url.toLowerCase().endsWith('.pdf')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        overlay.classList.remove("hidden");
-        // استخدام viewer.html الخاص بـ pdf.js لضمان أفضل تجربة
-        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width"; 
-    } else {
-        window.open(url, '_blank');
-    }
-}
+  if (!localStorage.getItem("selectedGroup")) {
+    groupSelector.style.display = "flex";
+    loadingOverlay.style.display = "none";
+    return;
+  }
 
-// زر إغلاق الـ PDF
-document.getElementById("closePdfBtn").onclick = () => {
-    const overlay = document.getElementById("pdf-overlay");
-    const pdfViewer = document.getElementById("pdfFrame");
-    pdfViewer.src = "";
-    overlay.classList.add("hidden");
-};
+  groupSelector.style.display = "none";
 
-// زر تحميل الـ PDF
-document.getElementById("downloadBtn").onclick = () => {
-    const iframe = document.getElementById("pdfFrame");
-    let src = iframe.src;
-    if (!src) return;
-    const match = src.match(/file=(.+)$/);
-    if (match && match[1]) {
-        const fileUrl = decodeURIComponent(match[1].split('#')[0]);
-        const a = document.createElement("a");
-        a.href = fileUrl;
-        a.download = fileUrl.split("/").pop();
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    }
-};
-
-// زر المشاركة
-document.getElementById("shareBtn").onclick = () => {
-    const iframe = document.getElementById("pdfFrame");
-    let src = iframe.src;
-    if (!src) return;
-    const match = src.match(/file=(.+)$/);
-    if (match && match[1]) {
-        const fileUrl = decodeURIComponent(match[1].split('#')[0]);
-        navigator.clipboard.writeText(fileUrl)
-            .then(() => alert("تم نسخ رابط الملف!"))
-            .catch(() => alert("فشل النسخ."));
-    }
-};
-
-/* --- 4. إدارة اختيار الجروبات --- */
-
-function setupGroupControls() {
-    const groupSelector = document.getElementById('group-selector');
-    const groupButtons = document.querySelectorAll('.group-buttons button');
-    const splashImage = document.getElementById('splash-image');
-
-    // إذا لم يكن هناك جروب مخزن، أظهر واجهة الاختيار واحبس المستخدم فيها
-    if (!localStorage.getItem("selectedGroup")) {
-        groupSelector.style.display = 'flex';
-        if (loadingOverlay) loadingOverlay.style.display = 'none'; // إخفاء التحميل مؤقتاً لتظهر الأزرار
-    } else {
-        groupSelector.style.display = 'none';
-        // تحديث شعار شاشة التحميل بناءً على الجروب المختار
-        if (splashImage) {
-            splashImage.src = `image/logo-${SELECTED_GROUP}.webp`;
-        }
-    }
-
-    groupButtons.forEach(btn => {
-        btn.onclick = () => {
-            const g = btn.getAttribute('data-group');
-            localStorage.setItem("selectedGroup", g);
-            location.reload(); 
-        };
-    });
-}
-
-/* --- 5. تهيئة الخدمة (Service Worker) للأوفلاين --- */
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker Active'))
-      .catch(err => console.log('Service Worker Failed', err));
+  buttons.forEach(btn => {
+    btn.onclick = () => {
+      localStorage.setItem("selectedGroup", btn.dataset.group);
+      location.reload();
+    };
   });
 }
 
-/* --- الإعدادات والمتغيرات العامة --- */
-let loadedCount = 0;
-const isTouchDevice = window.matchMedia('(hover: none)').matches;
-const TAP_THRESHOLD_MS = 300;
+/* ================== فتح الملفات ================== */
+function smartOpen(item) {
+  if (!item?.path) return;
+  const url = RAW_CONTENT_BASE + item.path;
 
-// تعريف عناصر واجهة المستخدم الأساسية لضمان وصول جميع الدوال إليها
-const mainSvg = document.getElementById('main-svg');
-const scrollContainer = document.getElementById('scroll-container');
-const clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
-const loadingOverlay = document.getElementById('loading-overlay');
-const jsToggle = document.getElementById('js-toggle');
-const searchInput = document.getElementById('search-input');
-const searchIcon = document.getElementById('search-icon');
-const moveToggle = document.getElementById('move-toggle');
-const toggleContainer = document.getElementById('js-toggle-container');
-const backButtonGroup = document.getElementById('back-button-group');
-const backBtnText = document.getElementById('back-btn-text');
-
-// دالة التشغيل الرئيسية عند تحميل النافذة
-window.onload = async function() {
-    // 1. تهيئة نظام اختيار الجروبات
-    setupGroupControls();
-
-    const selectedGroup = localStorage.getItem("selectedGroup");
-
-    // 2. التحقق من وجود جروب مختار للبدء في التحميل
-    if (selectedGroup) {
-        // تحديث شعار شاشة التحميل فوراً
-        const splashImage = document.getElementById('splash-image');
-        if (splashImage) splashImage.src = `image/logo-${selectedGroup}.webp`;
-
-        try {
-            // تحميل البيانات بالتوازي
-            await Promise.all([
-                loadGroupSVG(),
-                fetchGlobalTree()
-            ]);
-
-            // تهيئة الخريطة والواجهة الخشبية
-            updateWoodInterface();
-            scan();
-
-            // 3. إخفاء شاشة التحميل بعد الجاهزية
-            if (loadingOverlay) {
-                setTimeout(() => {
-                    loadingOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingOverlay.style.display = 'none';
-                        // التمرير لوضع البداية
-                        if (scrollContainer) {
-                            scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
-                        }
-                    }, 500);
-                }, 800);
-            }
-        } catch (error) {
-            console.error("خطأ في تحميل المكونات:", error);
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
-        }
-    } else {
-        // إذا لم يتم الاختيار، نظهر واجهة الاختيار مباشرة
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
-        const groupSelector = document.getElementById('group-selector');
-        if (groupSelector) groupSelector.style.display = 'flex';
-    }
-};
-
-/* --- دالة إعداد عناصر التحكم بالجروبات --- */
-function setupGroupControls() {
-    const groupSelector = document.getElementById('group-selector');
-    // تعريف groupButtons محلياً هنا للوصول إلى الأزرار داخل الدالة
-    const groupButtons = document.querySelectorAll('.group-buttons button');
-    const splashImage = document.getElementById('splash-image');
-
-    if (!localStorage.getItem("selectedGroup")) {
-        if (groupSelector) groupSelector.style.display = 'flex';
-    } else {
-        if (groupSelector) groupSelector.style.display = 'none';
-        if (splashImage) splashImage.src = `image/logo-${SELECTED_GROUP}.webp`;
-    }
-
-    // إضافة مستمعي الأحداث للأزرار
-    groupButtons.forEach(btn => {
-        btn.onclick = () => {
-            const g = btn.getAttribute('data-group');
-            localStorage.setItem("selectedGroup", g);
-            location.reload(); 
-        };
-    });
+  if (url.endsWith(".pdf")) {
+    const overlay = document.getElementById("pdf-overlay");
+    const frame = document.getElementById("pdfFrame");
+    overlay.classList.remove("hidden");
+    frame.src =
+      "https://mozilla.github.io/pdf.js/web/viewer.html?file=" +
+      encodeURIComponent(url);
+  } else {
+    window.open(url, "_blank");
+  }
 }
 
-    // --- وظيفة الفتح الذكي المخصصة ---
-    function smartOpen(item) {
-        if(!item || !item.path) return;
-        const url = `${RAW_CONTENT_BASE}${item.path}`;
-        if(url.endsWith('.pdf')) {
-            const overlay = document.getElementById("pdf-overlay");
-            const pdfViewer = document.getElementById("pdfFrame");
-            overlay.classList.remove("hidden");
+/* ================== الخشب ================== */
+async function updateWoodInterface() {
+  const dynamicGroup = document.getElementById("dynamic-links-group");
+  if (!dynamicGroup) return;
 
-            pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                            encodeURIComponent(url) + "#zoom=page-width"; 
-        } else {
-            window.open(url, '_blank');
-        }
-    }
+  dynamicGroup.innerHTML = "";
+  await fetchGlobalTree();
 
-    // --- وظائف الحركة بنظام RTL (إعادة للأصل) ---
-    const goToWood = () => {
-        scrollContainer.scrollTo({ 
-            left: -scrollContainer.scrollWidth, 
-            behavior: 'smooth' 
-        });
-    };
+  backBtnText.textContent =
+    currentFolder === "" ? "➡️ إلى الخريطة" : "🔙 رجوع";
 
-    const goToMapEnd = () => {
-        scrollContainer.scrollTo({ 
-            left: 0, 
-            behavior: 'smooth' 
-        });
-    };
+  const prefix = currentFolder ? currentFolder + "/" : "";
+  const items = new Map();
 
-    // --- ربط الأحداث ---
-    const handleGoToWood = (e) => {
-        e.preventDefault();
-        goToWood();
-    };
+  globalFileTree.forEach(item => {
+    if (!item.path.startsWith(prefix)) return;
+    const rel = item.path.slice(prefix.length);
+    const parts = rel.split("/");
+    const name = parts[0];
 
-    searchIcon.onclick = handleGoToWood;
-    searchIcon.addEventListener('touchend', handleGoToWood);
+    if (items.has(name)) return;
 
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            goToWood();
-        }
-    };
+    if (parts.length > 1 || item.type === "tree") {
+      items.set(name, { type: "dir", path: prefix + name });
+    } else if (item.path.endsWith(".pdf")) {
+      items.set(name, { type: "file", path: item.path });
+    }
+  });
 
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
+  let i = 0;
+  for (const item of items.values()) {
+    const x = i % 2 === 0 ? 120 : 550;
+    const y = 250 + Math.floor(i / 2) * 90;
+    i++;
 
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
-            updateWoodInterface(); 
-        } else { 
-            goToMapEnd(); 
-        } 
-    };
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.style.cursor = "pointer";
 
-    function debounce(func, delay) {
-        let timeoutId;
-        return function() {
-            const context = this; const args = arguments;
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(context, args), delay);
-        }
-    }
+    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    r.setAttribute("x", x);
+    r.setAttribute("y", y);
+    r.setAttribute("width", 350);
+    r.setAttribute("height", 70);
+    r.setAttribute("rx", 12);
+    r.style.fill = item.type === "dir" ? "#5d4037" : "#000";
+    r.style.opacity = "0.85";
 
-    function updateDynamicSizes() {
-        const images = mainSvg.querySelectorAll('image');
-        if (!images.length) return;
-        const imgW = 1024;
-        const imgH = 2454;
-        mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
-    }
-    updateDynamicSizes();
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", x + 175);
+    t.setAttribute("y", y + 45);
+    t.setAttribute("text-anchor", "middle");
+    t.style.fill = "#fff";
+    t.style.fontWeight = "bold";
+    t.textContent =
+      (item.type === "dir" ? "📁 " : "📄 ") +
+      item.path.split("/").pop().replace(".pdf", "");
 
-    function getCumulativeTranslate(element) {
-        let x = 0, y = 0, current = element;
-        while (current && current.tagName !== 'svg') {
-            const trans = current.getAttribute('transform');
-            if (trans) {
-                const m = trans.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);
-                if (m) { x += parseFloat(m[1]); y += parseFloat(m[2]); }
-            }
-            current = current.parentNode;
-        }
-        return { x, y };
-    }
+    g.append(r, t);
+    g.onclick = () => {
+      if (item.type === "dir") {
+        currentFolder = item.path;
+        updateWoodInterface();
+      } else {
+        smartOpen(item);
+      }
+    };
 
-    function getGroupImage(element) {
-        let current = element;
-        while (current && current.tagName !== 'svg') {
-            if (current.tagName === 'g') {
-                const imgs = [...current.children].filter(c => c.tagName === 'image');
-                if (imgs.length) return {
-                    src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'),
-                    width: parseFloat(imgs[0].getAttribute('width')),
-                    height: parseFloat(imgs[0].getAttribute('height')),
-                    group: current
-                };
-            }
-            current = current.parentNode;
-        }
-        return null;
-    }
+    dynamicGroup.appendChild(g);
+  }
+}
 
-    function cleanupHover() {
-        if (!activeState.rect) return;
-        if (activeState.animationId) clearInterval(activeState.animationId);
-        activeState.rect.style.filter = 'none';
-        activeState.rect.style.transform = 'scale(1)';
-        activeState.rect.style.strokeWidth = '2px';
-        if (activeState.zoomPart) activeState.zoomPart.remove();
-        if (activeState.zoomText) activeState.zoomText.remove();
-        if (activeState.zoomBg) activeState.zoomBg.remove();
-        if (activeState.baseText) activeState.baseText.style.opacity = '1';
-        if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
-        const clip = document.getElementById(activeState.clipPathId);
-        if (clip) clip.remove();
-        Object.assign(activeState, {
-            rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-            baseText: null, baseBg: null, animationId: null, clipPathId: null
-        });
-    }
+/* ================== التشغيل الرئيسي ================== */
+window.onload = async () => {
+  setupGroupSelector();
 
-    function startHover() {  
-        if (!interactionEnabled || this.classList.contains('list-item')) return;  
-        const rect = this;  
-        if (activeState.rect === rect) return;  
-        cleanupHover();  
-        activeState.rect = rect;  
+  const saved = localStorage.getItem("selectedGroup");
+  if (!saved) return;
 
-        const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
-        const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
-        const cum = getCumulativeTranslate(rect);  
-        const absX = parseFloat(rect.getAttribute('x')) + cum.x;  
-        const absY = parseFloat(rect.getAttribute('y')) + cum.y;  
-        const centerX = absX + rW / 2;  
+  SELECTED_GROUP = saved;
+  splashImage.src = `image/logo-${SELECTED_GROUP}.webp`;
 
-        const scaleFactor = 1.1;
-        const yOffset = (rH * (scaleFactor - 1)) / 2;
-        const hoveredY = absY - yOffset;
+  try {
+    await Promise.all([loadGroupSVG(), fetchGlobalTree()]);
+    updateWoodInterface();
 
-        rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
-        rect.style.transform = `scale(${scaleFactor})`;  
-        rect.style.strokeWidth = '4px';  
+    setTimeout(() => {
+      loadingOverlay.style.opacity = "0";
+      setTimeout(() => {
+        loadingOverlay.style.display = "none";
+        scrollContainer.scrollTo({ left: 0 });
+      }, 400);
+    }, 700);
+  } catch (e) {
+    console.error(e);
+    loadingOverlay.style.display = "none";
+  }
+};
 
-        const imgData = getGroupImage(rect);  
-        if (imgData) {  
-            const clipId = `clip-${Date.now()}`;  
-            activeState.clipPathId = clipId;  
-            const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
-            clip.setAttribute('id', clipId);  
-            const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);  
-            cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);  
-            clipDefs.appendChild(clip).appendChild(cRect);  
+/* ================== أزرار ================== */
+backButtonGroup.onclick = () => {
+  if (currentFolder) {
+    currentFolder = "";
+    updateWoodInterface();
+  } else {
+    scrollContainer.scrollTo({ left: 0, behavior: "smooth" });
+  }
+};
 
-            const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
-            zPart.setAttribute('href', imgData.src);  
-            zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);  
-            zPart.setAttribute('clip-path', `url(#${clipId})`);  
-            const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);  
-            zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
-            zPart.style.pointerEvents = 'none';  
-            zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;  
-            zPart.style.transform = `scale(${scaleFactor})`;  
-            mainSvg.appendChild(zPart);  
-            activeState.zoomPart = zPart;  
-        }  
+searchIcon.onclick = () =>
+  scrollContainer.scrollTo({ left: -scrollContainer.scrollWidth });
 
-        let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
-        if (bText) {  
-            bText.style.opacity = '0';  
-            let bBg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);  
-            if(bBg) bBg.style.opacity = '0';  
-            activeState.baseText = bText; activeState.baseBg = bBg;  
-
-            const zText = document.createElementNS('http://www.w3.org/2000/svg', 'text');  
-            zText.textContent = rect.getAttribute('data-full-text') || bText.getAttribute('data-original-text') || "";  
-            zText.setAttribute('x', centerX); zText.setAttribute('text-anchor', 'middle');  
-            zText.style.dominantBaseline = 'central'; zText.style.fill = 'white';  
-            zText.style.fontWeight = 'bold'; zText.style.pointerEvents = 'none';  
-            zText.style.fontSize = (parseFloat(bText.style.fontSize || 10) * 2) + 'px';  
-            mainSvg.appendChild(zText);  
-
-            const bbox = zText.getBBox();  
-            const zBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
-            zBg.setAttribute('x', centerX - (bbox.width + 20) / 2); zBg.setAttribute('y', hoveredY);  
-            zBg.setAttribute('width', bbox.width + 20); zBg.setAttribute('height', bbox.height + 10);  
-            zBg.setAttribute('rx', '5'); zBg.style.fill = 'black'; zBg.style.pointerEvents = 'none';  
-
-            mainSvg.insertBefore(zBg, zText);  
-            zText.setAttribute('y', hoveredY + (bbox.height + 10) / 2);
-            activeState.zoomText = zText; activeState.zoomBg = zBg;  
-        }  
-
-        let h = 0;  
-        let step = 0; 
-        activeState.animationId = setInterval(() => {  
-            h = (h + 10) % 360;  
-            step += 0.2;         
-            const glowPower = 10 + Math.sin(step) * 5; 
-            const color = `hsl(${h},100%,60%)`;
-            rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
-            if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
-            if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
-        }, 100);
-    }
-
-    function wrapText(el, maxW) {
-        const txt = el.getAttribute('data-original-text'); if(!txt) return;
-        const words = txt.split(/\s+/); el.textContent = '';
-        let ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-        ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', '0');
-        el.appendChild(ts); let line = '';
-        const lh = parseFloat(el.style.fontSize) * 1.1;
-        words.forEach(word => {
-            let test = line + (line ? ' ' : '') + word;
-            ts.textContent = test;
-            if (ts.getComputedTextLength() > maxW - 5 && line) {
-                ts.textContent = line;
-                ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                ts.setAttribute('x', el.getAttribute('x')); ts.setAttribute('dy', lh + 'px');
-                ts.textContent = word; el.appendChild(ts); line = word;
-            } else { line = test; }
-        });
-    }
-
-    async function updateWoodInterface() {
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        if (!dynamicGroup) return;
-        dynamicGroup.innerHTML = ''; 
-        await fetchGlobalTree();
-
-        if (currentFolder === "") {
-            backBtnText.textContent = "إلى الخريطة ←";
-        } else {
-            const pathParts = currentFolder.split('/');
-            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
-        }
-
-        if (currentFolder === "") {
-            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
-            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-            banner.style.pointerEvents = "none";
-            dynamicGroup.appendChild(banner);
-        }
-
-        const folderPrefix = currentFolder ? currentFolder + '/' : '';
-        const itemsMap = new Map();
-
-        globalFileTree.forEach(item => {
-            if (item.path.startsWith(folderPrefix)) {
-                const relativePath = item.path.substring(folderPrefix.length);
-                const pathParts = relativePath.split('/');
-                const name = pathParts[0];
-
-                if (!itemsMap.has(name)) {
-                    const isDir = pathParts.length > 1 || item.type === 'tree';
-                    const isPdf = item.path.toLowerCase().endsWith('.pdf');
-
-                    if (isDir && name !== 'image') {
-                        itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
-                    } else if (isPdf && pathParts.length === 1) {
-                        itemsMap.set(name, { name: name, type: 'file', path: item.path });
-                    }
-                }
-            }
-        });
-
-        const filteredData = Array.from(itemsMap.values());
-        for (let [index, item] of filteredData.entries()) {
-            const x = (index % 2 === 0) ? 120 : 550;
-            const y = 250 + (Math.floor(index / 2) * 90);
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-            g.style.cursor = "pointer";
-            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-            r.setAttribute("class", "list-item");
-            r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-            r.style.stroke = "#fff";
-            const cleanName = item.name.replace(/\.[^/.]+$/, "");
-            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-            t.setAttribute("data-search-name", cleanName.toLowerCase());
-            if (item.type === 'dir') {
-                const count = globalFileTree.filter(f => 
-                    f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
-                ).length;
-                t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-            } else {
-                t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-            }
-            g.appendChild(r); g.appendChild(t);
-            g.onclick = (e) => {
-                e.stopPropagation();
-                if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
-                else { smartOpen(item); }
-            };
+jsToggle.onchange = e => {
+  interactionEnabled = e.target.checked;
+};
             dynamicGroup.appendChild(g);
         }
         applyWoodSearchFilter();
