@@ -1,3 +1,7 @@
+#group-selector {
+    transition: opacity 0.5s ease; /* تأكد من وجود الانتقال لجعل العودة ناعمة */
+}
+
 .group-buttons button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
