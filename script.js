@@ -397,100 +397,113 @@ if (changeGroupBtn) {
         });
     }
 
-    async function updateWoodInterface() {
-if (currentFolder === "") {
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    
-    banner.setAttribute("href", window.currentGroupWoodLogo);   
-    
-    banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43");   
-    banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04");   
-    banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";  
-    banner.style.pointerEvents = "none";  
-    dynamicGroup.appendChild(banner);  
-}
+async function updateWoodInterface() {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
 
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        if (!dynamicGroup) return;
-        dynamicGroup.innerHTML = ''; 
-        await fetchGlobalTree();
+    // تنظيف المحتوى القديم أولاً
+    dynamicGroup.innerHTML = ''; 
+    await fetchGlobalTree();
 
-        if (currentFolder === "") {
-            backBtnText.textContent = "إلى الخريطة ←";
-        } else {
-            const pathParts = currentFolder.split('/');
-            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
-        }
+    // 1. تحديث نص زر الرجوع والمسار (Breadcrumb)
+    if (currentFolder === "") {
+        backBtnText.textContent = "إلى الخريطة ←";
+    } else {
+        const pathParts = currentFolder.split('/');
+        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+        backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+    }
 
-        if (currentFolder === "") {
-            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
-            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-            banner.style.pointerEvents = "none";
-            dynamicGroup.appendChild(banner);
-        }
+    // 2. إظهار لوجو الجروب المختار فوق الخشب (فقط في الشاشة الرئيسية للخشب)
+    if (currentFolder === "") {
+        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        // التأكد من وجود لوجو أو استخدام لوجو افتراضي
+        const logoSrc = window.currentGroupWoodLogo || "image/logo-wood.webp";
+        
+        banner.setAttribute("href", logoSrc);   
+        banner.setAttribute("x", "186.86"); 
+        banner.setAttribute("y", "1517.43");   
+        banner.setAttribute("width", "648.41"); 
+        banner.setAttribute("height", "276.04");   
+        banner.style.mixBlendMode = "multiply"; 
+        banner.style.opacity = "0.9";  
+        banner.style.pointerEvents = "none";  
+        dynamicGroup.appendChild(banner);  
+    }
 
-        const folderPrefix = currentFolder ? currentFolder + '/' : '';
-        const itemsMap = new Map();
+    // 3. منطق عرض الملفات والمجلدات
+    const folderPrefix = currentFolder ? currentFolder + '/' : '';
+    const itemsMap = new Map();
 
-        globalFileTree.forEach(item => {
-            if (item.path.startsWith(folderPrefix)) {
-                const relativePath = item.path.substring(folderPrefix.length);
-                const pathParts = relativePath.split('/');
-                const name = pathParts[0];
+    globalFileTree.forEach(item => {
+        if (item.path.startsWith(folderPrefix)) {
+            const relativePath = item.path.substring(folderPrefix.length);
+            const pathParts = relativePath.split('/');
+            const name = pathParts[0];
 
-                if (!itemsMap.has(name)) {
-                    const isDir = pathParts.length > 1 || item.type === 'tree';
-                    const isPdf = item.path.toLowerCase().endsWith('.pdf');
+            if (!itemsMap.has(name)) {
+                const isDir = pathParts.length > 1 || item.type === 'tree';
+                const isPdf = item.path.toLowerCase().endsWith('.pdf');
 
-                    if (isDir && name !== 'image') {
-                        itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
-                    } else if (isPdf && pathParts.length === 1) {
-                        itemsMap.set(name, { name: name, type: 'file', path: item.path });
-                    }
+                if (isDir && name !== 'image') {
+                    itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
+                } else if (isPdf && pathParts.length === 1) {
+                    itemsMap.set(name, { name: name, type: 'file', path: item.path });
                 }
             }
-        });
-
-        const filteredData = Array.from(itemsMap.values());
-        for (let [index, item] of filteredData.entries()) {
-            const x = (index % 2 === 0) ? 120 : 550;
-            const y = 250 + (Math.floor(index / 2) * 90);
-            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-            g.style.cursor = "pointer";
-            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
-            r.setAttribute("class", "list-item");
-            r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
-            r.style.stroke = "#fff";
-            const cleanName = item.name.replace(/\.[^/.]+$/, "");
-            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
-            t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-            t.style.fontWeight = "bold"; t.style.fontSize = "17px";
-            t.setAttribute("data-search-name", cleanName.toLowerCase());
-            if (item.type === 'dir') {
-                const count = globalFileTree.filter(f => 
-                    f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
-                ).length;
-                t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-            } else {
-                t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
-            }
-            g.appendChild(r); g.appendChild(t);
-            g.onclick = (e) => {
-                e.stopPropagation();
-                if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
-                else { smartOpen(item); }
-            };
-            dynamicGroup.appendChild(g);
         }
-        applyWoodSearchFilter();
+    });
+
+    const filteredData = Array.from(itemsMap.values());
+    for (let [index, item] of filteredData.entries()) {
+        const x = (index % 2 === 0) ? 120 : 550;
+        const y = 250 + (Math.floor(index / 2) * 90);
+        
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
+        g.style.cursor = "pointer";
+
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        r.setAttribute("x", x); r.setAttribute("y", y); 
+        r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
+        r.setAttribute("rx", "12");
+        r.setAttribute("class", "list-item");
+        r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
+        r.style.stroke = "#fff";
+
+        const cleanName = item.name.replace(/\.[^/.]+$/, "");
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+        t.setAttribute("text-anchor", "middle"); 
+        t.setAttribute("fill", "white");
+        t.style.fontWeight = "bold"; 
+        t.style.fontSize = "17px";
+        t.setAttribute("data-search-name", cleanName.toLowerCase());
+
+        if (item.type === 'dir') {
+            const count = globalFileTree.filter(f => 
+                f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
+            ).length;
+            t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+        } else {
+            t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+        }
+
+        g.appendChild(r); 
+        g.appendChild(t);
+        g.onclick = (e) => {
+            e.stopPropagation();
+            if (item.type === 'dir') { 
+                currentFolder = item.path; 
+                updateWoodInterface(); 
+            } else { 
+                smartOpen(item); 
+            }
+        };
+        dynamicGroup.appendChild(g);
     }
+    applyWoodSearchFilter();
+}
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
