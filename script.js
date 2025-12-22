@@ -515,5 +515,3 @@ window.onload = function() {
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
 }, false);
-
-};
