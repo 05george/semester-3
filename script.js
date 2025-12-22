@@ -177,6 +177,22 @@ if ('serviceWorker' in navigator) {
 
 window.onload = async function() {
     setupGroupControls();
+    if (localStorage.getItem("selectedGroup")) {
+        await loadGroupSVG();
+        await fetchGlobalTree();
+        updateWoodInterface();
+        scan(); 
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            setTimeout(() => {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => loadingOverlay.style.display = 'none', 500);
+            }, 800);
+        }
+        const scrollContainer = document.getElementById('scroll-container');
+        scrollContainer.scrollTo({ left: 0, behavior: 'instant' });
+    }
+    setupGroupControls();
     await loadGroupSVG();
     await fetchGlobalTree();
     updateWoodInterface();
