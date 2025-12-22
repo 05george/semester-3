@@ -406,16 +406,16 @@ window.onload = function() {
             setTimeout(() => {
                 groupSelector.style.display = 'none';
                 if (loadingOverlay) { loadingOverlay.style.display = 'flex'; loadingOverlay.style.opacity = '1'; }
-            }, 500);
+            }, 100);
             setTimeout(() => {
                 if (loadingOverlay) {
                     loadingOverlay.style.opacity = '0';
                     setTimeout(() => { 
                         loadingOverlay.style.display = 'none'; mainSvg.style.opacity = '1';
                         scan(); updateWoodInterface(); goToMapEnd(); 
-                    }, 500);
+                    }, 50);
                 }
-            }, 1500); 
+            }, 100); 
         };
     });
 
