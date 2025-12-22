@@ -89,6 +89,49 @@ if ("serviceWorker" in navigator) {
 
 window.onload = function() {
     // جلب العناصر
+// داخل window.onload = function() { ... }
+
+const groupSelector = document.getElementById('group-selector');
+const groupButtons = document.querySelectorAll('.group-buttons button');
+
+groupButtons.forEach(button => {
+    button.onclick = function() {
+        const selectedGroup = this.getAttribute('data-group');
+        console.log("Selected Group:", selectedGroup);
+
+        // 1. إخفاء قائمة اختيار الجروب
+        groupSelector.style.display = 'none';
+
+        // 2. إظهار شاشة التحميل (تأكد أنها ليست مخفية بـ CSS)
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            loadingOverlay.style.opacity = '1';
+        }
+
+        // 3. هنا يمكنك إضافة منطق لتغيير ملف الـ SVG أو البيانات بناءً على الجروب
+        // مثال بسيط: إذا أردت إعادة تشغيل عملية المسح والفلاتر
+        setTimeout(() => {
+            // كود افتراضي لمحاكاة انتهاء التحميل إذا لم يكن هناك تحميل صور جديد
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => { 
+                    loadingOverlay.style.display = 'none';
+                    mainSvg.style.opacity = '1';
+                }, 500);
+            }
+        }, 1500); 
+    };
+});
+
+// لجعل زر "تغيير الجروب" داخل الخريطة يعمل أيضاً:
+const changeGroupBtn = document.getElementById('change-group-btn');
+if (changeGroupBtn) {
+    changeGroupBtn.onclick = () => {
+        groupSelector.style.display = 'flex';
+        mainSvg.style.opacity = '0';
+    };
+}
+
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     
