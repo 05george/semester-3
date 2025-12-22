@@ -1,5 +1,5 @@
 const REPO_NAME = "semester-3"; 
-const GITHUB_USER = "05george";
+const GITHUB_USER = "MUE24Med";
 
 // المتغيرات العالمية المبنية على اسم المستودع
 const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
