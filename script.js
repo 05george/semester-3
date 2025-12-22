@@ -487,9 +487,9 @@ window.onload = function() {
                             loadingOverlay.style.display = 'none'; 
                             mainSvg.style.opacity = '1'; 
                             scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 50);
+                        }, 500);
                     }
-                }, 100);
+                }, 600);
             }
         };
         img.src = u;
@@ -515,3 +515,5 @@ window.onload = function() {
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
 }, false);
+
+};
