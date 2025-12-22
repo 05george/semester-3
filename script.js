@@ -449,3 +449,10 @@ jsToggle.addEventListener('change', function() {
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
 }, false);
+    // إغلاق وظيفة fetchGlobalTree إذا لم تكن مغلقة
+} 
+
+// إضافة إغلاق للدالة window.onload التي بدأت في الجزء الثاني
+}; 
+
+/* تأكد من إضافة هذه الأقواس في آخر سطر في الملف */
