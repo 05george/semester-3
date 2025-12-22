@@ -1,6 +1,6 @@
 // --- 1. الإعدادات والثوابت العالمية ---
 const REPO_NAME = "semester-3"; 
-const GITHUB_USER = "MUE24Med";
+const GITHUB_USER = "05george";
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
@@ -18,29 +18,37 @@ let activeState = {
 const TAP_THRESHOLD_MS = 300;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
-// --- 2. نظام تحميل الخرائط (الجروبات) ---
-// 1. تعريف المتغيرات والصور لكل جروب
+// --- 2. نظام الفتح الذكي (Smart Open) - [تم التحديث] ---
+function smartOpen(item) {
+    if(!item || !item.path) return;
+    const url = item.path.startsWith('http') ? item.path : `${RAW_CONTENT_BASE}${item.path}`;
+    const lowerUrl = url.toLowerCase();
+
+    if(lowerUrl.endsWith('.pdf')) {
+        const overlay = document.getElementById("pdf-overlay");
+        const pdfViewer = document.getElementById("pdfFrame");
+        overlay.classList.remove("hidden");
+        // استخدام Viewer خارجي لضمان العرض الصحيح
+        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+    } else {
+        // فتح الـ SVG أو أي روابط أخرى في تاب جديدة (الوضع الافتراضي)
+        window.open(url, '_blank');
+    }
+}
+
+// --- 3. نظام تحميل الخرائط (الجروبات) ---
 const groupLogos = {
-    'A': 'image/logo-a.webp', // حط المسار الحقيقي لصور كل جروب
-    'B': 'image/logo-b.webp',
-    'C': 'image/logo-c.webp',
-    'D': 'image/logo-d.webp',
-    'default': 'image/o.webp'
+    'A': 'image/logo-a.webp', 'B': 'image/logo-b.webp',
+    'C': 'image/logo-c.webp', 'D': 'image/logo-d.webp', 'default': 'image/o.webp'
 };
 
-// 2. تحديث دالة تحميل الخريطة
 async function loadGroupMap(groupLetter) {
-    // --- الجزء الجديد: تحديث الصور بناءً على الجروب ---
     const logoPath = groupLogos[groupLetter] || groupLogos['default'];
-    
-    // تحديث صورة الـ Splash
     const splashImg = document.getElementById('splash-image');
     if (splashImg) splashImg.src = logoPath;
 
-    // تحديث أيقونة الموقع (Favicon)
     const favicon = document.getElementById('dynamic-favicon');
     if (favicon) favicon.href = logoPath;
-    // -------------------------------------------
 
     document.getElementById('group-selector').style.display = 'none';
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -51,15 +59,11 @@ async function loadGroupMap(groupLetter) {
         const response = await fetch(`maps/group-${groupLetter}.svg`);
         if (!response.ok) throw new Error('File not found');
         const svgText = await response.text();
-
         const wrapper = document.getElementById('map-wrapper');
         wrapper.innerHTML = svgText;
-
         const mainSvg = wrapper.querySelector('svg');
         mainSvg.id = "main-svg"; 
-
         setupSiteFunctions(); 
-
     } catch (err) {
         alert("خطأ في تحميل خريطة الجروب.");
         document.getElementById('group-selector').style.display = 'flex';
@@ -67,27 +71,19 @@ async function loadGroupMap(groupLetter) {
     }
 }
 
-// --- 3. المحرك الرئيسي (Engine) ---
+// --- 4. المحرك الرئيسي (Engine) ---
 function setupSiteFunctions() {
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
     const loadingOverlay = document.getElementById('loading-overlay');
-    
     if (!mainSvg) return;
 
-    // إنشاء defs إذا لم يكن موجوداً لعمليات الـ ClipPath
-    let clipDefs = mainSvg.querySelector('defs');
-    if (!clipDefs) {
-        clipDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        mainSvg.insertBefore(clipDefs, mainSvg.firstChild);
-    }
+    let clipDefs = mainSvg.querySelector('defs') || document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    if (!mainSvg.querySelector('defs')) mainSvg.insertBefore(clipDefs, mainSvg.firstChild);
 
     let loadedCount = 0;
     const images = mainSvg.querySelectorAll('image');
-
-    // توحيد الـ ViewBox بناءً على عدد الصور
-    const imgW = 1024;
-    const imgH = 2454;
+    const imgW = 1024; const imgH = 2454;
     mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
 
     images.forEach(si => {
@@ -113,16 +109,15 @@ function setupSiteFunctions() {
             setTimeout(() => { 
                 loadingOverlay.style.display = 'none'; 
                 mainSvg.style.opacity = '1'; 
-                scan(); // تشغيل الماسح الضوئي للعناصر
+                scan(); 
                 updateWoodInterface(); 
-                // أقصى اليمين (بداية الخريطة في RTL)
                 scrollContainer.scrollLeft = 0;
             }, 500);
         }, 600);
     }
 }
 
-// --- 4. وظائف الـ Scanner والـ Rects ---
+// --- 5. وظائف الـ Scanner والـ Rects ---
 function scan() {
     const mainSvg = document.getElementById('main-svg');
     if (!mainSvg) return;
@@ -131,8 +126,6 @@ function scan() {
 
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
-
-    // ضبط العرض الافتراضي للمربعات (اختياري حسب تصميمك)
     if(r.classList.contains('w')) r.setAttribute('width', '113.5');
     if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
@@ -149,7 +142,6 @@ function processRect(r) {
         txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
         txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
         txt.style.fontSize = fs + 'px'; txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
-
         r.parentNode.appendChild(txt);
         wrapText(txt, w);
 
@@ -158,7 +150,6 @@ function processRect(r) {
         bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
         bg.setAttribute('class', 'label-bg'); bg.setAttribute('data-original-for', href);
         bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
-
         r.parentNode.insertBefore(bg, txt);
     }
 
@@ -184,11 +175,10 @@ function processRect(r) {
         }
         cleanupHover();
     });
-
     r.setAttribute('data-processed', 'true');
 }
 
-// --- 5. منطق الـ Hover والـ Zoom والحركة ---
+// --- 6. منطق الـ Hover والـ Zoom والحركة ---
 function startHover() {  
     if (!interactionEnabled || this.classList.contains('list-item')) return;  
     const rect = this;  
@@ -291,7 +281,7 @@ function cleanupHover() {
     });
 }
 
-// --- 6. نظام الـ Wood (المكتبة) ---
+// --- 7. نظام الـ Wood (المكتبة) ---
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup) return;
@@ -310,8 +300,8 @@ async function updateWoodInterface() {
         dynamicGroup.appendChild(banner);
     } else {
         const pathParts = currentFolder.split('/');
-        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-        backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+        const currentName = pathParts[pathParts.length - 1];
+        backBtnText.textContent = `🔙 رجوع من (${currentName})`;
     }
 
     const folderPrefix = currentFolder ? currentFolder + '/' : '';
@@ -322,7 +312,6 @@ async function updateWoodInterface() {
             const relativePath = item.path.substring(folderPrefix.length);
             const pathParts = relativePath.split('/');
             const name = pathParts[0];
-
             if (!itemsMap.has(name) && name !== 'image' && name !== 'maps' && name !== '.github') {
                 const isDir = pathParts.length > 1 || item.type === 'tree';
                 const isPdf = item.path.toLowerCase().endsWith('.pdf');
@@ -332,19 +321,16 @@ async function updateWoodInterface() {
         }
     });
 
-    const filteredData = Array.from(itemsMap.values());
-    filteredData.forEach((item, index) => {
+    Array.from(itemsMap.values()).forEach((item, index) => {
         const x = (index % 2 === 0) ? 120 : 550;
         const y = 250 + (Math.floor(index / 2) * 90);
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.style.cursor = "pointer";
-
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
         r.setAttribute("class", "list-item");
         r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
         r.style.stroke = "#fff";
-
         const cleanName = item.name.replace(/\.[^/.]+$/, "");
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
         t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
@@ -368,8 +354,7 @@ async function updateWoodInterface() {
     });
 }
 
-// --- 7. وظائف عامة (Utilities) ---
-
+// --- 8. وظائف عامة (Utilities) ---
 function getCumulativeTranslate(el) {
     let x = 0, y = 0, curr = el;
     while (curr && curr.tagName !== 'svg') {
@@ -438,30 +423,10 @@ async function fetchGlobalTree() {
     } catch (err) { console.error("GitHub Tree Fetch Error", err); }
 }
 
-function smartOpen(item) {
-    if(!item || !item.path) return;
-    
-    // بناء الرابط الكامل
-    const url = item.path.startsWith('http') ? item.path : `${RAW_CONTENT_BASE}${item.path}`;
-    const lowerUrl = url.toLowerCase();
-
-    // لو ملف PDF، افتحه في الـ Overlay بتاعنا
-    if(lowerUrl.endsWith('.pdf')) {
-        document.getElementById("pdf-overlay").classList.remove("hidden");
-        document.getElementById("pdfFrame").src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
-    } 
-    // لو ملف SVG أو أي حاجة تانية، افتحه في تاب جديدة (الوضع الافتراضي للمتصفح)
-    else {
-        window.open(url, '_blank');
-    }
-}
-
-
-// --- 8. الأحداث النهائية عند تحميل الصفحة ---
+// --- 9. الأحداث النهائية عند تحميل الصفحة ---
 window.onload = function() {
     fetchGlobalTree();
 
-    // أزرار مشغل الـ PDF
     const closeBtn = document.getElementById("closePdfBtn");
     if (closeBtn) {
         closeBtn.onclick = () => {
@@ -497,7 +462,6 @@ window.onload = function() {
         };
     }
 
-    // زر تبديل مكان واجهة البحث (أعلى/أسفل)
     const moveBtn = document.getElementById('move-toggle');
     if (moveBtn) {
         moveBtn.onclick = () => {
@@ -506,7 +470,6 @@ window.onload = function() {
         };
     }
 
-    // زر تفعيل التفاعل (Interaction Switch)
     const jsToggle = document.getElementById('js-toggle');
     if (jsToggle) {
         jsToggle.onchange = (e) => {
@@ -515,46 +478,32 @@ window.onload = function() {
         };
     }
 
-    // --- إصلاحات زر الرجوع والتمرير (Crucial Fixes) ---
+    // [تم التحديث] - منطق الرجوع والتحكم الذكي
+    const backButtonGroup = document.getElementById('back-button-group');
+    if (backButtonGroup) {
+        backButtonGroup.onclick = (e) => {
+            e.preventDefault();
+            if (currentFolder !== "") {
+                let parts = currentFolder.split('/');
+                parts.pop();
+                currentFolder = parts.join('/');
+                updateWoodInterface();
+            } else {
+                // العودة لبداية الخريطة (أقصى اليمين)
+                document.getElementById('scroll-container').scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        };
+    }
 
-// 1. زر الرجوع اللي في واجهة الخشب (Wood Interface)
-const woodBackBtn = document.getElementById('back-button-group'); // تأكد إن ده الـ ID في الـ SVG بتاع الخشب
-if (woodBackBtn) {
-    woodBackBtn.onclick = (e) => {
-        e.preventDefault();
-        if (currentFolder !== "") {
-            // لو جوه مجلد، ارجع خطوة لورا
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/');
-            updateWoodInterface();
-        } else {
-            // لو في الرئيسية، سكرول لأول الخريطة (اليمين)
+    const searchIcon = document.getElementById('search-icon');
+    if (searchIcon) {
+        searchIcon.onclick = () => {
             const container = document.getElementById('scroll-container');
-            container.scrollTo({ left: 0, behavior: 'smooth' });
-        }
-    };
-}
+            // الذهاب لمنطقة الخشب (اليسار)
+            container.scrollTo({ left: -container.scrollWidth, behavior: 'smooth' });
+        };
+    }
 
-// 2. سهم الرجوع 🔙 اللي جوه مربع البحث
-const searchBackIcon = document.getElementById('search-icon');
-if (searchBackIcon) {
-    searchBackIcon.onclick = () => {
-        const container = document.getElementById('scroll-container');
-        // في نظام RTL، "البداية" هي 0 (أقصى اليمين)
-        // لو عايز تروح لأقصى اليسار (نهاية الخريطة) استخدم القيمة السالبة لـ scrollWidth
-        container.scrollTo({ left: 0, behavior: 'smooth' });
-        
-        // مسح نص البحث عند الرجوع
-        const input = document.getElementById('search-input');
-        if(input) {
-            input.value = "";
-            input.dispatchEvent(new Event('input')); // لتحديث الخريطة وإظهار العناصر المخفية
-        }
-    };
-}
-
-    // 3. منطق البحث وتصفية العناصر
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.oninput = (e) => {
@@ -563,7 +512,6 @@ if (searchBackIcon) {
                 const h = (r.getAttribute('data-href')||"").toLowerCase();
                 const t = (r.getAttribute('data-full-text')||"").toLowerCase();
                 const match = h.includes(query) || t.includes(query);
-                
                 r.style.display = (query !== "" && !match) ? "none" : "block";
                 const lbl = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);
                 const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);
@@ -573,10 +521,7 @@ if (searchBackIcon) {
         };
     }
 
-    // حماية الخريطة من الضغط المطول والقائمة المنبثقة
     document.addEventListener('contextmenu', e => {
-        if (e.target.closest('#main-svg') || e.target.closest('image')) {
-            e.preventDefault();
-        }
+        if (e.target.closest('#main-svg') || e.target.closest('image')) e.preventDefault();
     }, false);
 };
