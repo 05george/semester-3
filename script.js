@@ -1,8 +1,3 @@
-/* ---------------------------------------------------------
-   MUE Batch 24 - Interactive Map Engine (Full Version)
-   ---------------------------------------------------------
-*/
-
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
