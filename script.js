@@ -420,14 +420,19 @@ urls.forEach((u, index) => {
 });
 
 /* ===== البحث داخل الـ SVG + تطبيق الفلتر على الملفات ===== */
+/* الكود المصحح */
 searchInput.addEventListener('input', debounce(function(e) {
     const query = e.target.value.toLowerCase().trim();
     mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-        const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+        const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
+                        (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+        
+        // التصحيح هنا: استخدام الـ Backticks ` `
         const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
         const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+        
         rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-        if(label) label.style.display = rect.style.display; 
+        if(label) label.style.display = rect.style.display;
         if(bg) bg.style.display = rect.style.display;
     });
     applyWoodSearchFilter();
@@ -441,4 +446,4 @@ jsToggle.addEventListener('change', function() {
 /* ===== منع القائمة عند الضغط المطول على أي صورة داخل SVG ===== */
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
-}
+} false);
