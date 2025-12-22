@@ -1,3 +1,11 @@
+/* منع القائمة واللمس المطول على الصور والـ SVG */
+#main-svg, img, image, rect {
+    -webkit-touch-callout: none !important; /* iOS */
+    -webkit-user-select: none !important;    /* منع التحديد */
+    user-select: none !important;
+    touch-action: pan-x pan-y; /* السماح بالتمرير فقط */
+}
+
 /* تنسيق العناصر في قائمة الخشب */
 .list-item {
     stroke-width: 1px !important;
