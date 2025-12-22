@@ -153,14 +153,6 @@ function setupGroupControls() {
 }
 
 
-    groupButtons.forEach(btn => {
-        btn.onclick = () => {
-            const g = btn.getAttribute('data-group');
-            localStorage.setItem("selectedGroup", g);
-            location.reload(); 
-        };
-    });
-
     if (localStorage.getItem("selectedGroup")) {
         groupSelector.style.display = 'none';
     }
