@@ -88,6 +88,15 @@ if ("serviceWorker" in navigator) {
 ===================================================== */
 
 window.onload = function() {
+    // جلب العناصر
+    const mainSvg = document.getElementById('main-svg');
+    const scrollContainer = document.getElementById('scroll-container');
+    
+    // أضف هذا السطر فوراً:
+    if (!mainSvg || !scrollContainer) {
+        console.error("Critical Error: SVG or Container not found. Check your HTML IDs!");
+        return; // توقف عن التنفيذ لمنع الأخطاء المتسلسلة
+    }
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
