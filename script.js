@@ -7,7 +7,8 @@ let SELECTED_GROUP = localStorage.getItem("selectedGroup") || "B";
 
 // الموارد المتغيرة بناءً على الجروب
 const GROUP_RESOURCES = {
-    woodLogo: `image/logo-wood-${SELECTED_GROUP}.webp`,
+    // تأكد أن الصور في مجلد image بهذا الاسم بالضبط
+    splashLogo: `image/logo-${SELECTED_GROUP}.webp`, 
     svgPath: `groups/group-${SELECTED_GROUP}.svg` 
 };
 
