@@ -72,6 +72,71 @@ if ('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
+// --- داخل window.onload ---
+
+const groupSelector = document.getElementById('group-selector');
+const groupButtons = document.querySelectorAll('.group-btn'); 
+// متغير عالمي لحفظ مسار لوجو الخشب الخاص بالجروب
+window.currentGroupWoodLogo = "image/logo-wood.webp"; 
+
+groupButtons.forEach(button => {
+    button.onclick = function() {
+        // 1. استخراج المتغيرات من الزر (هذا هو طلبك الأساسي)
+        const splashPath = this.getAttribute('data-splash');
+        const woodLogoPath = this.getAttribute('data-wood-logo');
+        const svgPath = this.getAttribute('data-svg-file');
+        
+        // حفظ لوجو الخشب لاستخدامه في دالة updateWoodInterface
+        window.currentGroupWoodLogo = woodLogoPath;
+
+        // 2. تحديث صورة الـ Splash فوراً
+        const splashImg = document.getElementById('splash-image');
+        if (splashImg) splashImg.src = splashPath;
+
+        // 3. إخفاء القائمة وإظهار التحميل
+        groupSelector.style.opacity = '0';
+        setTimeout(() => {
+            groupSelector.style.display = 'none';
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+                loadingOverlay.style.opacity = '1';
+            }
+        }, 500);
+
+        // 4. منطق تحميل ملف الـ SVG الخاص بالجروب (إذا أردت تبديل الخريطة)
+        if (svgPath) {
+            console.log("سيتم جلب بيانات من: " + svgPath);
+            // يمكنك هنا إضافة fetch(svgPath) إذا كنت تريد تغيير الـ SVG برمجياً
+        }
+
+        // 5. إنهاء التحميل وتشغيل الواجهة
+        setTimeout(() => {
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => { 
+                    loadingOverlay.style.display = 'none';
+                    mainSvg.style.opacity = '1';
+                    
+                    // تشغيل الوظائف الأساسية بعد اختيار الجروب
+                    scan(); 
+                    updateWoodInterface(); 
+                    goToMapEnd(); 
+                }, 500);
+            }
+        }, 1500); 
+    };
+});
+
+// زر العودة لاختيار الجروب (تغيير الجروب)
+const changeGroupBtn = document.getElementById('change-group-btn');
+if (changeGroupBtn) {
+    changeGroupBtn.onclick = () => {
+        groupSelector.style.display = 'flex';
+        setTimeout(() => groupSelector.style.opacity = '1', 10);
+        mainSvg.style.opacity = '0';
+    };
+}
+
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
