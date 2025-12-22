@@ -1,21 +1,3 @@
-    <g id="files-list-container">
-      <image href="image/wood.webp" x="0" y="0" width="1024" height="2454" />
-      
-      <g id="change-group-btn" style="cursor: pointer;">
-        <rect x="312" y="40" width="400" height="60" rx="30" fill="#1a1a1a" stroke="#ffcc00" stroke-width="2" />
-        <text x="512" y="78" text-anchor="middle" fill="#ffcc00" font-size="18" font-weight="bold">🔄 تغيير الجروب (Group Selection)</text>
-      </g>
-
-      <g id="back-button-group" style="cursor: pointer;">
-        <rect x="112" y="140" width="800" height="70" rx="15" fill="#3e2723" stroke="#fff" stroke-width="2" />
-        <text x="512" y="185" id="back-btn-text" text-anchor="middle" fill="white" font-size="22" font-weight="bold">➡️ إلى الخريطة</text>
-      </g>
-
-      <g id="dynamic-links-group"></g>
-    </g>
-
-    <g id="map-content-container" transform="translate(1024, 0)"></g>
-
 <!-- الاسبوع الأول -->
 <g transform="translate(1024,0)">
 <image data-src="image/1.webp" width="1024" height="2454" />
