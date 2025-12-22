@@ -128,6 +128,38 @@ html, body {
 }
 
 /* ===== Loading Overlay ===== */
+.selector-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 30000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+}
+.groups-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+.groups-grid button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #222;
+    color: #ffcc00;
+    border: 2px solid #ffcc00;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.groups-grid button:hover {
+    background: #ffcc00;
+    color: #000;
+}
+
 #loading-overlay {
   position: fixed;
   inset: 0;
