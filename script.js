@@ -141,6 +141,29 @@ window.onload = function() {
             behavior: 'smooth' 
         });
     };
+/* ===== البحث داخل الـ SVG + تطبيق الفلتر على الملفات ===== */
+searchInput.addEventListener('input', debounce(function(e) {
+    const query = e.target.value.toLowerCase().trim();
+    mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+        // صمام أمان: التحقق من وجود السمات قبل القراءة
+        const href = rect.getAttribute('data-href') || '';
+        const fullText = rect.getAttribute('data-full-text') || '';
+        
+        const isMatch = href.toLowerCase().includes(query) || 
+                        fullText.toLowerCase().includes(query);
+
+        // صمام أمان: التأكد من أن dataset.href موجود قبل استخدامه في الكويري
+        if (rect.dataset.href) {
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display;
+            if(bg) bg.style.display = rect.style.display;
+        }
+    });
+    applyWoodSearchFilter();
+}, 150));
 
     /* ===== ربط أحداث البحث والتنقل ===== */
     const handleGoToWood = (e) => { e.preventDefault(); goToWood(); };
