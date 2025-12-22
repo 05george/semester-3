@@ -610,6 +610,7 @@ const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.da
 
 
 
+
         rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
         if(label) label.style.display = rect.style.display;
         if(bg) bg.style.display = rect.style.display;
