@@ -28,6 +28,7 @@ html {
   -webkit-filter: none !important;
   filter: none !important;
 }
+}
 
   color-scheme: only light !important;
   -webkit-text-size-adjust: 100%; /* منع تكبير النصوص في سامسونج و iOS */
