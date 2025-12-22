@@ -61,8 +61,13 @@ html, body {
   direction: rtl;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
+  white-space: nowrap;
+  display:block;
 }
 
+#map-wrapper{
+   height: 100%;
+   display: inline-block;
 #main-svg {
   height: 100%;
   width: auto;
