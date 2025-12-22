@@ -1,5 +1,4 @@
-<div id="scroll-container">
-  <svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
+<svg id="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMinYMin meet">
     <defs></defs>
 
     <g transform="translate(0,0)" id="files-list-container">
@@ -275,4 +274,3 @@
 </g>
 <g id="dynamic-links-group"></g>
 </svg>
-</div>
