@@ -487,9 +487,9 @@ window.onload = function() {
                             loadingOverlay.style.display = 'none'; 
                             mainSvg.style.opacity = '1'; 
                             scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 500);
+                        }, 50);
                     }
-                }, 600);
+                }, 100);
             }
         };
         img.src = u;
