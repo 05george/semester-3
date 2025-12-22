@@ -7,8 +7,10 @@
 const REPO_NAME = "semester-3";
 const GITHUB_USER = "MUE24Med";
 
-const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
+const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
+const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
+
 
 
 let globalFileTree = [];
@@ -602,9 +604,9 @@ searchInput.addEventListener('input', debounce(function(e) {
         const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
                         (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
 
-        // التصحيح هنا: استخدام الـ Backticks ` `
 const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
 const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+
 
 
         rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
