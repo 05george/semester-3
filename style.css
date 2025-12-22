@@ -400,7 +400,7 @@ img, image, svg, rect {
     -webkit-user-select: none;   /* يمنع تحديد النص/الصور */
     user-select: none;
 /* --- حل مشكلة الوضع الداكن في متصفح سامسونج وكروم --- */
-
+}
 /* 1. منع المتصفح من عكس ألوان العناصر الرسومية */
 img, image, svg, rect {
     filter: none !important;
