@@ -54,43 +54,6 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: #444 black;
 }
-#group-selector {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 30000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-}
-
-#group-preview {
-  max-width: 300px;
-  width: 80%;
-}
-
-.group-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
-.group-buttons button {
-  padding: 15px 25px;
-  font-size: 18px;
-  font-weight: bold;
-  background: #222;
-  color: #fff;
-  border: 2px solid #555;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.group-buttons button:hover {
-  background: #444;
-}
 
 #main-svg {
   height: 100%;
