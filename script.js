@@ -179,12 +179,23 @@ function initializeMapEngine() {
         }
     }
 
-    function updateDynamicSizes() {
-        const images = mainSvg.querySelectorAll('image');
-        if (!images.length) return;
-        const imgW = 1024; const imgH = 2454;
-        mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
-    }
+function updateDynamicSizes() {
+    const mainSvg = document.getElementById('main-svg');
+    const images = mainSvg.querySelectorAll('image');
+    if (!images.length) return;
+
+    const imgW = 1024; // العرض الافتراضي لكل صورة في ملفاتك
+    const imgH = 2454; // الطول الافتراضي
+    
+    // حساب العرض الكلي بناءً على عدد الصور
+    const totalWidth = images.length * imgW;
+    
+    // تحديد الـ ViewBox والـ Width يدوياً لضمان عدم الانضغاط
+    mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);
+    mainSvg.style.width = `${totalWidth}px`; 
+    mainSvg.style.height = "100%";
+}
+
     updateDynamicSizes();
 
     function getCumulativeTranslate(element) {
