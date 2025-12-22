@@ -398,6 +398,18 @@ if (changeGroupBtn) {
     }
 
     async function updateWoodInterface() {
+if (currentFolder === "") {
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    
+    banner.setAttribute("href", window.currentGroupWoodLogo);   
+    
+    banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43");   
+    banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04");   
+    banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";  
+    banner.style.pointerEvents = "none";  
+    dynamicGroup.appendChild(banner);  
+}
+
         const dynamicGroup = document.getElementById('dynamic-links-group');
         if (!dynamicGroup) return;
         dynamicGroup.innerHTML = ''; 
