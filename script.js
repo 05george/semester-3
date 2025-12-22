@@ -126,15 +126,31 @@ document.getElementById("shareBtn").onclick = () => {
 /* --- 4. إدارة اختيار الجروبات --- */
 
 function setupGroupControls() {
-    const changeGroupBtn = document.getElementById('change-group-btn');
-    const groupButtons = document.querySelectorAll('.group-buttons button');
     const groupSelector = document.getElementById('group-selector');
+    const groupButtons = document.querySelectorAll('.group-buttons button');
+    const splashImage = document.getElementById('splash-image');
 
-    if (changeGroupBtn) {
-        changeGroupBtn.onclick = () => {
-            groupSelector.style.display = 'flex';
-        };
+    // إذا لم يكن هناك جروب مخزن، أظهر واجهة الاختيار واحبس المستخدم فيها
+    if (!localStorage.getItem("selectedGroup")) {
+        groupSelector.style.display = 'flex';
+        if (loadingOverlay) loadingOverlay.style.display = 'none'; // إخفاء التحميل مؤقتاً لتظهر الأزرار
+    } else {
+        groupSelector.style.display = 'none';
+        // تحديث شعار شاشة التحميل بناءً على الجروب المختار
+        if (splashImage) {
+            splashImage.src = `image/logo-${SELECTED_GROUP}.webp`;
+        }
     }
+
+    groupButtons.forEach(btn => {
+        btn.onclick = () => {
+            const g = btn.getAttribute('data-group');
+            localStorage.setItem("selectedGroup", g);
+            location.reload(); 
+        };
+    });
+}
+
 
     groupButtons.forEach(btn => {
         btn.onclick = () => {
