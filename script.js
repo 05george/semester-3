@@ -441,4 +441,4 @@ jsToggle.addEventListener('change', function() {
 /* ===== منع القائمة عند الضغط المطول على أي صورة داخل SVG ===== */
 document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
     e.preventDefault();
-}, false);
+}
