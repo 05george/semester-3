@@ -6,7 +6,7 @@
       <image data-src="image/wood.webp" x="0" y="0" width="1024" height="2454" />
       <g id="back-button-group" style="cursor: pointer;">
  <g id="back-button-group" style="cursor: pointer;">
-
+<g id="dynamic-links-group"></g>
  <g id="back-button-group" style="cursor: pointer;">
   <rect id="back-btn" x="112" y="140" width="800" height="70" rx="15" fill="#3e2723" stroke="#fff" stroke-width="2" />
   <text x="512" y="185" id="back-btn-text" text-anchor="middle" fill="white" font-size="22" font-weight="bold">➡️ إلى الخريطة </text>
