@@ -12,6 +12,24 @@
 }
 
 :root {
+  /* إجبار المتصفح على عدم تطبيق فلتر الألوان */
+  color-scheme: only dark !important;
+}
+
+/* منع متصفح سامسونج وكروم من عكس الألوان */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: black !important;
+    filter: none !important;
+  }
+}
+
+/* لو المتصفح بيستخدم خاصية الـ Force Dark Mode القوية */
+html {
+  -webkit-filter: none !important;
+  filter: none !important;
+}
+
   color-scheme: only light !important;
   -webkit-text-size-adjust: 100%; /* منع تكبير النصوص في سامسونج و iOS */
   text-size-adjust: 100%;
