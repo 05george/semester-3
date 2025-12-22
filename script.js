@@ -98,8 +98,6 @@ window.onload = function() {
         return; // توقف عن التنفيذ لمنع الأخطاء المتسلسلة
     }
     let loadedCount = 0;
-    const mainSvg = document.getElementById('main-svg');
-    const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
