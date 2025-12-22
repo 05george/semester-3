@@ -440,14 +440,22 @@ async function fetchGlobalTree() {
 
 function smartOpen(item) {
     if(!item || !item.path) return;
+    
+    // بناء الرابط الكامل
     const url = item.path.startsWith('http') ? item.path : `${RAW_CONTENT_BASE}${item.path}`;
-    if(url.toLowerCase().endsWith('.pdf')) {
+    const lowerUrl = url.toLowerCase();
+
+    // لو ملف PDF، افتحه في الـ Overlay بتاعنا
+    if(lowerUrl.endsWith('.pdf')) {
         document.getElementById("pdf-overlay").classList.remove("hidden");
         document.getElementById("pdfFrame").src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
-    } else {
+    } 
+    // لو ملف SVG أو أي حاجة تانية، افتحه في تاب جديدة (الوضع الافتراضي للمتصفح)
+    else {
         window.open(url, '_blank');
     }
 }
+
 
 // --- 8. الأحداث النهائية عند تحميل الصفحة ---
 window.onload = function() {
