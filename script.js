@@ -1,3 +1,36 @@
+async function initApp(groupLetter) {
+    // 1. إخفاء واجهة الاختيار وإظهار المحتوى
+    document.getElementById('group-overlay').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    document.getElementById('loading-overlay').style.display = 'flex';
+
+    try {
+        // 2. جلب ملف الـ SVG الخاص بالمجموعة من مجلد maps
+        const response = await fetch(`./maps/group-${groupLetter}.svg`);
+        const svgText = await response.text();
+        
+        // 3. حقن الـ SVG داخل الحاوية
+        const wrapper = document.getElementById('map-wrapper');
+        wrapper.innerHTML = svgText;
+        
+        // 4. إعطاء الـ SVG آيدي موحد ليعمل عليه الكود القديم
+        const svgElement = wrapper.querySelector('svg');
+        svgElement.id = 'main-svg';
+        
+        // 5. تشغيل منطق الكود الأصلي الخاص بك
+        startOriginalLogic();
+        
+    } catch (err) {
+        alert("خطأ في تحميل خريطة المجموعة: " + err);
+    }
+}
+
+function startOriginalLogic() {
+    // ضع هنا كل محتوى window.onload الذي أرسلته أنت في رسالتك
+    // (بدءاً من تعريف المتغيرات وصولاً إلى نهاية الكود)
+    // هذا سيضمن أن الكود سيعمل فوراً على الـ SVG "المحقون"
+}
+
 // --- 1. الإعدادات والثوابت العالمية ---
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
