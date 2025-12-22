@@ -1,4 +1,3 @@
-/* --- 1. الإعدادات والمتغيرات العالمية --- */
 const GITHUB_USER = "MUE24Med";
 const REPO_NAME = "semester-3";
 const SELECTED_GROUP = localStorage.getItem("selectedGroup") || "B"; 
@@ -16,14 +15,14 @@ let globalFileTree = [];
 let currentFolder = ""; 
 let interactionEnabled = true;
 
-// حالة الهافر والزووم (بكامل تفاصيلها الأصلية)
+// حالة الهافر والزووم الأصلية (بدون تبسيط)
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
     baseText: null, baseBg: null, animationId: null, clipPathId: null,
     touchStartTime: 0, initialScrollLeft: 0
 };
 
-/* --- 2. وظائف التشغيل الأساسية --- */
+/* --- 2. وظائف النظام والاتصال --- */
 
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
@@ -31,7 +30,8 @@ async function fetchGlobalTree() {
         const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
-    } catch (err) { console.error("GitHub Error:", err); }
+        console.log("Tree Loaded:", globalFileTree.length);
+    } catch (err) { console.error("GitHub API Error:", err); }
 }
 
 function smartOpen(item) {
@@ -45,7 +45,7 @@ function smartOpen(item) {
     } else { window.open(url, '_blank'); }
 }
 
-/* --- 3. دالة الهافر المعقدة (startHover) - بدون حذف --- */
+/* --- 3. دالة الهافر المتقدمة (نظام الـ ClipPath والزووم) --- */
 
 function startHover() {  
     if (!interactionEnabled || this.classList.contains('list-item')) return;  
@@ -55,7 +55,8 @@ function startHover() {
     activeState.rect = rect;  
 
     const mainSvg = document.getElementById('main-svg');
-    const clipDefs = mainSvg.querySelector('defs');
+    const clipDefs = mainSvg.querySelector('defs') || mainSvg.insertAdjacentElement('afterbegin', document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
+    
     const rW = parseFloat(rect.getAttribute('width')) || rect.getBBox().width;  
     const rH = parseFloat(rect.getAttribute('height')) || rect.getBBox().height;  
     const cum = getCumulativeTranslate(rect);  
@@ -67,29 +68,33 @@ function startHover() {
     const yOffset = (rH * (scaleFactor - 1)) / 2;
     const hoveredY = absY - yOffset;
 
-    // تأثير التكبير الأساسي
+    // تكبير العنصر الأصلي
     rect.style.transformOrigin = `${parseFloat(rect.getAttribute('x')) + rW/2}px ${parseFloat(rect.getAttribute('y')) + rH/2}px`;  
     rect.style.transform = `scale(${scaleFactor})`;  
     rect.style.strokeWidth = '4px';  
 
-    // نظام الـ ClipPath والزووم على الصورة الخلفية
+    // نظام استخراج الصورة الخلفية وقصها
     const imgData = getGroupImage(rect);  
     if (imgData) {  
-        const clipId = `clip-${Date.now()}`;  
+        const clipId = `clip-${Date.now()}-${Math.floor(Math.random()*1000)}`;  
         activeState.clipPathId = clipId;  
         const clip = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');  
         clip.setAttribute('id', clipId);  
         const cRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');  
         cRect.setAttribute('x', absX); cRect.setAttribute('y', absY);  
         cRect.setAttribute('width', rW); cRect.setAttribute('height', rH);  
-        clipDefs.appendChild(clip).appendChild(cRect);  
+        clip.appendChild(cRect);
+        clipDefs.appendChild(clip);
 
         const zPart = document.createElementNS('http://www.w3.org/2000/svg', 'image');  
         zPart.setAttribute('href', imgData.src);  
         zPart.setAttribute('width', imgData.width); zPart.setAttribute('height', imgData.height);  
         zPart.setAttribute('clip-path', `url(#${clipId})`);  
+        
         const mTrans = imgData.group.getAttribute('transform')?.match(/translate\(\s*([\d.-]+)[ ,]+([\d.-]+)\s*\)/);  
-        zPart.setAttribute('x', mTrans ? mTrans[1] : 0); zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
+        zPart.setAttribute('x', mTrans ? mTrans[1] : 0); 
+        zPart.setAttribute('y', mTrans ? mTrans[2] : 0);  
+        
         zPart.style.pointerEvents = 'none';  
         zPart.style.transformOrigin = `${centerX}px ${absY + rH/2}px`;  
         zPart.style.transform = `scale(${scaleFactor})`;  
@@ -97,7 +102,7 @@ function startHover() {
         activeState.zoomPart = zPart;  
     }  
 
-    // نظام تكبير النص والـ Label
+    // نظام تكبير النصوص والأغلفة (Label Zoom)
     let bText = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);  
     if (bText) {  
         bText.style.opacity = '0';  
@@ -124,7 +129,7 @@ function startHover() {
         activeState.zoomText = zText; activeState.zoomBg = zBg;  
     }  
 
-    // نظام الألوان المتحركة (Glow)
+    // تأثير النبض اللوني (Glow Animation)
     let h = 0; let step = 0;  
     activeState.animationId = setInterval(() => {  
         h = (h + 10) % 360; step += 0.2;         
@@ -132,11 +137,14 @@ function startHover() {
         const color = `hsl(${h},100%,60%)`;
         rect.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;  
         if (activeState.zoomPart) activeState.zoomPart.style.filter = `drop-shadow(0 0 ${glowPower}px ${color})`;
-        if (activeState.zoomBg) activeState.zoomBg.style.stroke = color;  
+        if (activeState.zoomBg) {
+            activeState.zoomBg.style.stroke = color;
+            activeState.zoomBg.style.strokeWidth = "2px";
+        }
     }, 100);
 }
 
-/* --- 4. دالة التنظيف (cleanupHover) - كاملة التفاصيل --- */
+/* --- 4. دالة التنظيف الكاملة (Cleanup) --- */
 
 function cleanupHover() {
     if (!activeState.rect) return;
@@ -153,8 +161,10 @@ function cleanupHover() {
     if (activeState.baseText) activeState.baseText.style.opacity = '1';
     if (activeState.baseBg) activeState.baseBg.style.opacity = '1';
     
-    const clip = document.getElementById(activeState.clipPathId);
-    if (clip) clip.remove();
+    if (activeState.clipPathId) {
+        const clip = document.getElementById(activeState.clipPathId);
+        if (clip) clip.remove();
+    }
     
     Object.assign(activeState, {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -162,16 +172,17 @@ function cleanupHover() {
     });
 }
 
-/* --- 5. واجهة الخشب وتثبيت اللوجو (Wood Interface) --- */
+/* --- 5. واجهة الخشب والديناميكية (Wood Interface) --- */
 
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const backBtnText = document.getElementById('back-btn-text');
     if (!dynamicGroup) return;
+    
     dynamicGroup.innerHTML = ''; 
     await fetchGlobalTree();
 
-    // تثبيت اللوجو فوق الخشب في كل الحالات (logo-wood-B.webp)
+    // تثبيت اللوجو (يبقى ظاهراً دائماً حتى داخل المجلدات)
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
     banner.setAttribute("href", GROUP_RESOURCES.woodLogo); 
     banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
@@ -180,6 +191,7 @@ async function updateWoodInterface() {
     banner.style.pointerEvents = "none";
     dynamicGroup.appendChild(banner);
 
+    // تحديث مسار العودة (Breadcrumb)
     if (currentFolder === "") {
         if (backBtnText) backBtnText.textContent = "إلى الخريطة ←";
     } else {
@@ -203,29 +215,37 @@ async function updateWoodInterface() {
         }
     });
 
-    Array.from(itemsMap.values()).forEach((item, index) => {
+    const itemsArray = Array.from(itemsMap.values());
+    itemsArray.forEach((item, index) => {
         const x = (index % 2 === 0) ? 120 : 550;
         const y = 250 + (Math.floor(index / 2) * 90);
+        
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
-        
+        g.style.cursor = "pointer";
+
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", "350"); r.setAttribute("height", "70"); r.setAttribute("rx", "12");
         r.classList.add("list-item");
         r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
         r.style.stroke = "#fff";
+        r.style.strokeWidth = "2px";
 
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42); 
+        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
         t.style.fontSize = "17px"; t.style.fontWeight = "bold";
-        t.textContent = (item.type === 'dir' ? "📁 " : "📄 ") + item.name;
+        
+        const cleanName = item.name.replace(/\.[^/.]+$/, "");
+        t.textContent = (item.type === 'dir' ? "📁 " : "📄 ") + (cleanName.length > 20 ? cleanName.substring(0, 18) + ".." : cleanName);
 
         g.appendChild(r); g.appendChild(t);
+        
         g.onclick = (e) => {
             e.stopPropagation();
             if (item.type === 'dir') {
                 currentFolder = item.path;
-                document.getElementById('search-input').value = "";
+                document.getElementById('search-input').value = ""; // تصفير البحث عند الدخول لمجلد
                 updateWoodInterface();
             } else { smartOpen(item); }
         };
@@ -233,7 +253,7 @@ async function updateWoodInterface() {
     });
 }
 
-/* --- 6. باقي الدوال التقنية (Scan, Wrap, Translate) --- */
+/* --- 6. معالجة الـ SVG والبدء (Core Processing) --- */
 
 window.onload = function() {
     const mainSvg = document.getElementById('main-svg');
@@ -244,6 +264,7 @@ window.onload = function() {
 
     if (jsToggle) interactionEnabled = jsToggle.checked;
 
+    // تمرير RTL دقيق
     const goToWood = () => scrollContainer.scrollTo({ left: -100000, behavior: 'smooth' });
     const goToMapEnd = () => scrollContainer.scrollTo({ left: 100000, behavior: 'smooth' });
 
@@ -258,47 +279,83 @@ window.onload = function() {
         };
     }
 
-    // منطق البحث
+    // نظام البحث المتزامن
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const h = rect.getAttribute('data-href') || '';
             const t = rect.getAttribute('data-full-text') || '';
-            const isMatch = h.includes(query) || t.toLowerCase().includes(query);
+            const isMatch = h.toLowerCase().includes(query) || t.toLowerCase().includes(query);
             rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            if(label) label.style.display = rect.style.display;
+            if(bg) bg.style.display = rect.style.display;
         });
         applyWoodSearchFilter();
     }, 150));
 
-    // تحميل الصور والبدء
+    // تحميل الصور وبدء الـ Scan
     let loadedCount = 0;
     const images = mainSvg.querySelectorAll('image');
     const urls = Array.from(images).map(img => img.getAttribute('data-src')).filter(s => s);
 
+    if (urls.length === 0) { finishLoading(); }
     urls.forEach(u => {
         const img = new Image();
-        img.onload = () => {
+        img.onload = img.onerror = () => {
             loadedCount++;
-            if(loadedCount === urls.length) {
-                mainSvg.querySelectorAll('image').forEach(si => { if(si.dataset.src) si.setAttribute('href', si.dataset.src); });
-                document.getElementById('loading-overlay').style.display = 'none';
-                scan(); updateWoodInterface(); goToMapEnd();
-            }
+            if(loadedCount === urls.length) finishLoading();
         };
         img.src = u;
     });
+
+    function finishLoading() {
+        mainSvg.querySelectorAll('image').forEach(si => {
+            const src = si.getAttribute('data-src');
+            if(src) si.setAttribute('href', src);
+        });
+        document.getElementById('loading-overlay').style.display = 'none';
+        scan(); 
+        updateWoodInterface();
+        goToMapEnd();
+    }
 };
+
+/* --- 7. الدوال التقنية (Scan & Utility) --- */
 
 function scan() { document.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
 
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     const isTouch = window.matchMedia('(hover: none)').matches;
+    
+    // إعداد النصوص الأصلية للعثور عليها في الهافر
+    const href = r.getAttribute('data-href') || '';
     if (!isTouch) {
         r.addEventListener('mouseover', startHover);
         r.addEventListener('mouseout', cleanupHover);
     }
-    r.onclick = () => { const href = r.getAttribute('data-href'); if (href && href !== '#') window.open(href, '_blank'); };
+    
+    r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
+    
+    // دعم التاتش (Touch Support)
+    r.addEventListener('touchstart', function(e) { 
+        if(!interactionEnabled) return; 
+        activeState.touchStartTime = Date.now(); 
+        activeState.initialScrollLeft = document.getElementById('scroll-container').scrollLeft; 
+        startHover.call(this); 
+    });
+    r.addEventListener('touchend', function(e) { 
+        if (!interactionEnabled) return;
+        const scrollDiff = Math.abs(document.getElementById('scroll-container').scrollLeft - activeState.initialScrollLeft);
+        if (scrollDiff < 10 && (Date.now() - activeState.touchStartTime) < 300) {
+            if (href && href !== '#') window.open(href, '_blank');
+        }
+        cleanupHover();
+    });
+
     r.setAttribute('data-processed', 'true');
 }
 
@@ -307,7 +364,12 @@ function getGroupImage(element) {
     while (curr && curr.tagName !== 'svg') {
         if (curr.tagName === 'g') {
             const imgs = [...curr.children].filter(c => c.tagName === 'image');
-            if (imgs.length) return { src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'), width: parseFloat(imgs[0].getAttribute('width')), height: parseFloat(imgs[0].getAttribute('height')), group: curr };
+            if (imgs.length) return { 
+                src: imgs[0].getAttribute('data-src') || imgs[0].getAttribute('href'), 
+                width: parseFloat(imgs[0].getAttribute('width')), 
+                height: parseFloat(imgs[0].getAttribute('height')), 
+                group: curr 
+            };
         }
         curr = curr.parentNode;
     }
@@ -335,4 +397,6 @@ function applyWoodSearchFilter() {
     });
 }
 
-function debounce(func, delay) { let t; return function() { clearTimeout(t); t = setTimeout(() => func.apply(this, arguments), delay); } }
+function debounce(func, delay) {
+    let t; return function() { clearTimeout(t); t = setTimeout(() => func.apply(this, arguments), delay); }
+}
