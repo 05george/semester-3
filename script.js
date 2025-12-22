@@ -29,7 +29,9 @@ async function loadGroupSVG(groupKey) {
 function initGroupSelector() {
     const selector = document.getElementById("group-selector");
     if (!selector) return;
-
+document.querySelectorAll('image[data-src]').forEach(img=>{
+  img.setAttribute('href', img.dataset.src);
+});
     selector.querySelectorAll("button[data-group]").forEach(btn => {
         btn.onclick = async () => {
             SELECTED_GROUP = btn.dataset.group;
