@@ -53,28 +53,32 @@ html, body {
 }
 
 #scroll-container {
-  width: 100vw;
-  height: 100svh;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth; 
-  direction: rtl;
-  scrollbar-width: thin;
-  scrollbar-color: #444 black;
-  white-space: nowrap;
-  display:block;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: auto; /* السماح بالتمرير الأفقي */
+    overflow-y: hidden;
+    white-space: nowrap;
+    display: block;
+    -webkit-overflow-scrolling: touch;
 }
 
-#map-wrapper{
-   height: 100%;
-   display: inline-block;
-#main-svg {
-  height: 100%;
-  width: auto;
-  display: block;
-  transition: opacity .3s ease-out;
-  opacity: 0; 
+#map-wrapper {
+    display: inline-block;
+    height: 100%;
 }
+
+#main-svg {
+    height: 100vh; /* ملء ارتفاع الشاشة */
+    width: auto;   /* السماح للعرض بالتمدد حسب الصور */
+    display: block;
+}
+
+/* منع الصور من الانضغاط */
+#main-svg image {
+    width: 1024px; 
+    height: 2454px;
+}
+
 
 .m {
   fill: transparent;
