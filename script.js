@@ -19,7 +19,29 @@ const TAP_THRESHOLD_MS = 300;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
 // --- 2. نظام تحميل الخرائط (الجروبات) ---
+// 1. تعريف المتغيرات والصور لكل جروب
+const groupLogos = {
+    'A': 'image/logo-a.webp', // حط المسار الحقيقي لصور كل جروب
+    'B': 'image/logo-b.webp',
+    'C': 'image/logo-c.webp',
+    'D': 'image/logo-d.webp',
+    'default': 'image/o.webp'
+};
+
+// 2. تحديث دالة تحميل الخريطة
 async function loadGroupMap(groupLetter) {
+    // --- الجزء الجديد: تحديث الصور بناءً على الجروب ---
+    const logoPath = groupLogos[groupLetter] || groupLogos['default'];
+    
+    // تحديث صورة الـ Splash
+    const splashImg = document.getElementById('splash-image');
+    if (splashImg) splashImg.src = logoPath;
+
+    // تحديث أيقونة الموقع (Favicon)
+    const favicon = document.getElementById('dynamic-favicon');
+    if (favicon) favicon.href = logoPath;
+    // -------------------------------------------
+
     document.getElementById('group-selector').style.display = 'none';
     const loadingOverlay = document.getElementById('loading-overlay');
     loadingOverlay.style.display = 'flex';
@@ -36,11 +58,10 @@ async function loadGroupMap(groupLetter) {
         const mainSvg = wrapper.querySelector('svg');
         mainSvg.id = "main-svg"; 
 
-        // إعادة تشغيل المحرك
         setupSiteFunctions(); 
 
     } catch (err) {
-        alert("خطأ في تحميل الخريطة: تأكد من مسار الملف في مجلد maps.");
+        alert("خطأ في تحميل خريطة الجروب.");
         document.getElementById('group-selector').style.display = 'flex';
         loadingOverlay.style.display = 'none';
     }
