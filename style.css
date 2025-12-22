@@ -1,3 +1,20 @@
+.group-buttons button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.group-buttons button:active {
+  transform: scale(0.95); /* تأثير الضغط */
+  background-color: var(--color-v); /* يتغير للون الأزرق عند اللمس */
+  border-color: #fff;
+}
+
+.group-buttons button:hover {
+  background: #333;
+  box-shadow: 0 0 15px rgba(77, 166, 255, 0.4);
+}
+
 /* تنسيق العناصر في قائمة الخشب */
 .list-item {
     stroke-width: 1px !important;
