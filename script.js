@@ -183,12 +183,14 @@ window.onload = async function () {
         });
     };
 
-    const goToMapEnd = () => {
-        scrollContainer.scrollTo({ 
-            left: 0, 
-            behavior: 'smooth' 
-        });
-    };
+const goToMapEnd = () => {
+    // في نظام RTL، أقصى اليمين هو scrollLeft = 0 أو القيمة الموجبة القصوى حسب المتصفح
+    scrollContainer.scrollTo({ 
+        left: 10000, // قيمة كبيرة لضمان الوصول للطرف
+        behavior: 'smooth' 
+    });
+};
+
 
     // --- ربط الأحداث ---
     const handleGoToWood = (e) => {
