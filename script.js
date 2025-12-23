@@ -775,10 +775,8 @@ function finishLoading() {
     loadedBytes = totalBytes;
     updateLoadProgress();
 
-    setTimeout(() => {
         hideLoadingScreen();
         console.log('🎉 اكتمل التحميل والعرض');
-    }, 300);
 }
 window.loadImages = loadImages;
 
