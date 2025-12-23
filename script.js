@@ -1,4 +1,5 @@
-Const REPO_NAME = "semester-3"; 
+/* --- 1. الإعدادات والمتغيرات العالمية (بكامل التعقيد) --- */
+const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
 
 // المتغيرات العالمية المبنية على اسم المستودع
