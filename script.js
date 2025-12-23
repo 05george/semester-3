@@ -647,7 +647,6 @@ function processRect(r) {
     }
     
     if (!isTouchDevice) { 
-        ```javascript
         r.addEventListener('mouseover', startHover); 
         r.addEventListener('mouseout', cleanupHover); 
     }
