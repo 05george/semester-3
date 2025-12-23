@@ -63,7 +63,7 @@ async function loadGroupSVG(groupLetter) {
     try {
         console.log(`🔄 محاولة تحميل: groups/group-${groupLetter}.svg`);
         const response = await fetch(`groups/group-${groupLetter}.svg`);
-
+        
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             return;
@@ -71,17 +71,17 @@ async function loadGroupSVG(groupLetter) {
 
         const svgText = await response.text();
         console.log(`✓ تم جلب SVG بنجاح (${svgText.length} حرف)`);
-
+        
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
-
+        
         if (match && match[1]) {
             groupContainer.innerHTML = match[1];
             console.log(`✓ تم حقن المحتوى: ${groupContainer.children.length} عنصر`);
-
+            
             // **تفعيل الصور المحقونة**
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG المحقون: ${injectedImages.length}`);
-
+            
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src) {
@@ -89,7 +89,7 @@ async function loadGroupSVG(groupLetter) {
                     console.log(`  ↳ تم تفعيل: ${src}`);
                 }
             });
-
+            
         } else {
             console.error('❌ فشل استخراج محتوى SVG');
         }
@@ -121,7 +121,7 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     console.log(`🚀 بدء تهيئة المجموعة: ${groupLetter}`);
     console.log(`📌 تحميل أولي: ${isInitialLoad}`);
     console.log('========================================');
-
+    
     saveSelectedGroup(groupLetter);
 
     const toggleContainer = document.getElementById('js-toggle-container');
@@ -315,16 +315,16 @@ window.onload = function() {
     function updateDynamicSizes() {
         const allImages = mainSvg.querySelectorAll('image[width="1024"][height="2454"]');
         console.log(`📏 إعادة حساب viewBox: وجدنا ${allImages.length} صورة`);
-
+        
         if (allImages.length === 0) {
             console.warn('⚠️ لم يتم العثور على أي صور!');
             return;
         }
-
+        
         const imgW = 1024;
         const imgH = 2454;
         const totalWidth = allImages.length * imgW;
-
+        
         mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);
         console.log(`✓ تم تعيين viewBox: 0 0 ${totalWidth} ${imgH}`);
     }
@@ -632,36 +632,50 @@ window.onload = function() {
             return;
         }
 
-        urls.forEach((u, index) => {
-            const img = new Image();
-            img.onload = img.onerror = () => {
-                loadedCount++;
-                const p = (loadedCount / urls.length) * 100;
+ urls.forEach((u) => {
+    const img = new Image();
+    
+    const onImageLoad = () => {
+        loadedCount++;
+        const p = (loadedCount / urls.length) * 100;
 
-                if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-                if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-                if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-                if(loadedCount === urls.length) {
-                    document.getElementById('bulb-1')?.classList.add('on');
-                    console.log('✓ اكتمل تحميل جميع الصور');
+        // توزيع عادل 25% لكل مصباح
+        // المصباح الأول يضيء عند 25%
+        if (p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+        // المصباح الثاني يضيء عند 50%
+        if (p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+        // المصباح الثالث يضيء عند 75%
+        if (p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+        
+        // المصباح الرابع (الأخير) يضيء فقط عند الاكتمال التام 100%
+        if (loadedCount === urls.length) {
+            document.getElementById('bulb-1')?.classList.add('on');
+            
+            console.log('✓ اكتمل تحميل جميع الصور');
 
-                    mainSvg.querySelectorAll('image').forEach(si => {
-                        const actualSrc = si.getAttribute('data-src');
-                        if(actualSrc) si.setAttribute('href', actualSrc);
-                    });
+            // تحديث الصور في الـ SVG
+            mainSvg.querySelectorAll('image').forEach(si => {
+                const actualSrc = si.getAttribute('data-src');
+                if(actualSrc) si.setAttribute('href', actualSrc);
+            });
 
-                    setTimeout(() => {
-                        hideLoadingScreen();
-                        mainSvg.style.opacity = '1';
-                        window.updateDynamicSizes();
-                        scan();
-                        updateWoodInterface();
-                        goToMapEnd();
-                    }, 600);
-                }
-            };
-            img.src = u;
-        });
+            // تأخير بسيط ليعطي المستخدم فرصة لرؤية المصباح الأخير قبل الإغلاق
+            setTimeout(() => {
+                hideLoadingScreen();
+                mainSvg.style.opacity = '1';
+                window.updateDynamicSizes();
+                scan();
+                updateWoodInterface();
+                goToMapEnd();
+            }, 800); // زيادة التأخير قليلاً لراحة العين
+        }
+    };
+
+    img.onload = onImageLoad;
+    img.onerror = onImageLoad; // حتى لو فشلت صورة، يستمر العداد ولا يتوقف التحميل
+    img.src = u;
+});
+
     }
     window.loadImages = loadImages;
 
