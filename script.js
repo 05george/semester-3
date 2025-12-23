@@ -72,6 +72,9 @@ if ('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
+let currentRootFolder = "";
+    const changeGroupBtn = document.getElementById('change-group-btn');
+    const groupBtnText = document.getElementById('group-btn-text');
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
