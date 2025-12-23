@@ -7,7 +7,7 @@ const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/g
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
 let globalFileTree = []; 
-let currentGroup = null; // المجموعة المختارة حالياً
+let currentGroup = null;
 
 // 2. دالة جلب البيانات
 async function fetchGlobalTree() {
@@ -22,7 +22,6 @@ async function fetchGlobalTree() {
     }
 }
 
-// دالة حفظ واستعادة المجموعة المختارة
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
@@ -37,22 +36,14 @@ function loadSelectedGroup() {
     return false;
 }
 
-// دالة عرض شاشة التحميل مع صورة الجروب
 function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
     const splashImage = document.getElementById('splash-image');
-
-    // تغيير الصورة حسب الجروب
     splashImage.src = `image/logo-${groupLetter}.webp`;
-
-    // إظهار شاشة التحميل
     loadingOverlay.classList.add('active');
-
-    // إعادة تعيين الأضواء
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
 }
 
-// دالة إخفاء شاشة التحميل
 function hideLoadingScreen() {
     const loadingOverlay = document.getElementById('loading-overlay');
     setTimeout(() => {
@@ -64,54 +55,54 @@ function hideLoadingScreen() {
     }, 600);
 }
 
-// دالة تحميل SVG الخاص بالجروب
+// ===== التعديل الأساسي: دالة تحميل SVG محسّنة =====
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
-    groupContainer.innerHTML = ''; // مسح المحتوى السابق
+    groupContainer.innerHTML = '';
 
     try {
-        console.log(`محاولة تحميل: groups/group-${groupLetter}.svg`);
+        console.log(`🔄 محاولة تحميل: groups/group-${groupLetter}.svg`);
         const response = await fetch(`groups/group-${groupLetter}.svg`);
         
         if (!response.ok) {
-            console.warn(`ملف SVG للمجموعة ${groupLetter} غير موجود (Status: ${response.status})`);
+            console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
             return;
         }
 
         const svgText = await response.text();
-        console.log(`تم جلب محتوى SVG للمجموعة ${groupLetter}، الحجم: ${svgText.length} حرف`);
+        console.log(`✓ تم جلب SVG بنجاح (${svgText.length} حرف)`);
         
-        // استخراج المحتوى بين <svg> و </svg>
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
         
         if (match && match[1]) {
-            // حقن المحتوى مباشرة
             groupContainer.innerHTML = match[1];
-            console.log(`✓ تم تحميل وحقن SVG للمجموعة ${groupLetter} بنجاح`);
-            console.log(`عدد العناصر المحقونة: ${groupContainer.children.length}`);
+            console.log(`✓ تم حقن المحتوى: ${groupContainer.children.length} عنصر`);
             
-            // إعادة مسح الرسومات بعد التحميل
-            setTimeout(() => {
-                console.log('تشغيل scan() بعد تحميل SVG');
-                scan();
-            }, 100);
+            // **تفعيل الصور المحقونة**
+            const injectedImages = groupContainer.querySelectorAll('image[data-src]');
+            console.log(`🖼️ عدد الصور في SVG المحقون: ${injectedImages.length}`);
+            
+            injectedImages.forEach(img => {
+                const src = img.getAttribute('data-src');
+                if (src) {
+                    img.setAttribute('href', src);
+                    console.log(`  ↳ تم تفعيل: ${src}`);
+                }
+            });
+            
         } else {
-            console.error(`لم يتم العثور على محتوى SVG صالح في الملف`);
+            console.error('❌ فشل استخراج محتوى SVG');
         }
     } catch (err) {
-        console.error(`خطأ في تحميل SVG للمجموعة ${groupLetter}:`, err);
+        console.error(`❌ خطأ في loadGroupSVG:`, err);
     }
 }
 
-// دالة تحديث صورة الـ Logo على الخشب
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-
-    // إزالة أي banner قديم
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
 
-    // إضافة البانر الجديد
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
     banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`); 
     banner.setAttribute("x", "186.86");
@@ -124,45 +115,41 @@ function updateWoodLogo(groupLetter) {
     dynamicGroup.appendChild(banner);
 }
 
-// دالة تهيئة المجموعة المختارة
+// ===== التعديل الأساسي: تهيئة المجموعة محسّنة =====
 async function initializeGroup(groupLetter, isInitialLoad = false) {
-    console.log('=== بدء تهيئة المجموعة ===');
-    console.log('المجموعة:', groupLetter);
-    console.log('تحميل أولي:', isInitialLoad);
+    console.log('========================================');
+    console.log(`🚀 بدء تهيئة المجموعة: ${groupLetter}`);
+    console.log(`📌 تحميل أولي: ${isInitialLoad}`);
+    console.log('========================================');
     
     saveSelectedGroup(groupLetter);
 
-    // إظهار عناصر التحكم والـ scroll container
     const toggleContainer = document.getElementById('js-toggle-container');
     const scrollContainer = document.getElementById('scroll-container');
     toggleContainer.style.display = 'flex';
     scrollContainer.style.display = 'block';
 
-    // إخفاء شاشة اختيار الجروب
     document.getElementById('group-selection-screen').classList.add('hidden');
-
-    // عرض شاشة التحميل
     showLoadingScreen(groupLetter);
 
-    // تحميل الملفات
     await fetchGlobalTree();
     await loadGroupSVG(groupLetter);
 
+    // **إعادة حساب الأحجام بعد الحقن**
+    window.updateDynamicSizes();
+
     if (isInitialLoad) {
-        // إذا كان تحميل أولي، ننتظر تحميل الصور
-        loadImages();
+        window.loadImages();
     } else {
-        // إذا كان تغيير مجموعة، نخفي التحميل فوراً
         hideLoadingScreen();
         const mainSvg = document.getElementById('main-svg');
         mainSvg.style.opacity = '1';
-        scan();
-        updateWoodInterface();
-        goToMapEnd();
+        window.scan();
+        window.updateWoodInterface();
+        window.goToMapEnd();
     }
 }
 
-// زر الإغلاق
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -170,7 +157,6 @@ document.getElementById("closePdfBtn").onclick = () => {
     overlay.classList.add("hidden");
 };
 
-// زر التحميل
 document.getElementById("downloadBtn").onclick = () => {
     const iframe = document.getElementById("pdfFrame");
     let src = iframe.src;
@@ -188,7 +174,6 @@ document.getElementById("downloadBtn").onclick = () => {
     }
 };
 
-// زر المشاركة
 document.getElementById("shareBtn").onclick = () => {
     const iframe = document.getElementById("pdfFrame");
     let src = iframe.src;
@@ -238,25 +223,20 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // ربط أزرار اختيار المجموعة
     document.querySelectorAll('.group-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const group = this.getAttribute('data-group');
-            console.log('تم اختيار المجموعة:', group);
+            console.log('👆 تم اختيار المجموعة:', group);
             initializeGroup(group, true);
         });
     });
 
-    // زر تغيير المجموعة
     changeGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        // إظهار شاشة اختيار المجموعة
         groupSelectionScreen.classList.remove('hidden');
-        // العودة للخريطة
-        goToMapEnd();
+        window.goToMapEnd();
     });
 
-    // --- وظيفة الفتح الذكي ---
     function smartOpen(item) {
         if(!item || !item.path) return;
         const url = `${RAW_CONTENT_BASE}${item.path}`;
@@ -271,7 +251,6 @@ window.onload = function() {
         }
     }
 
-    // --- وظائف الحركة ---
     const goToWood = () => {
         scrollContainer.scrollTo({ 
             left: -scrollContainer.scrollWidth, 
@@ -285,6 +264,7 @@ window.onload = function() {
             behavior: 'smooth' 
         });
     };
+    window.goToMapEnd = goToMapEnd;
 
     const handleGoToWood = (e) => {
         e.preventDefault();
@@ -315,7 +295,7 @@ window.onload = function() {
             let parts = currentFolder.split('/');
             parts.pop();
             currentFolder = parts.join('/'); 
-            updateWoodInterface(); 
+            window.updateWoodInterface(); 
         } else { 
             goToMapEnd(); 
         } 
@@ -331,14 +311,24 @@ window.onload = function() {
         }
     }
 
+    // ===== التعديل الأساسي: دالة تحديث الأحجام محسّنة =====
     function updateDynamicSizes() {
-        const images = mainSvg.querySelectorAll('image');
-        if (!images.length) return;
+        const allImages = mainSvg.querySelectorAll('image[width="1024"][height="2454"]');
+        console.log(`📏 إعادة حساب viewBox: وجدنا ${allImages.length} صورة`);
+        
+        if (allImages.length === 0) {
+            console.warn('⚠️ لم يتم العثور على أي صور!');
+            return;
+        }
+        
         const imgW = 1024;
         const imgH = 2454;
-        mainSvg.setAttribute('viewBox', `0 0 ${images.length * imgW} ${imgH}`);
+        const totalWidth = allImages.length * imgW;
+        
+        mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);
+        console.log(`✓ تم تعيين viewBox: 0 0 ${totalWidth} ${imgH}`);
     }
-    updateDynamicSizes();
+    window.updateDynamicSizes = updateDynamicSizes;
 
     function getCumulativeTranslate(element) {
         let x = 0, y = 0, current = element;
@@ -569,6 +559,7 @@ window.onload = function() {
         }
         applyWoodSearchFilter();
     }
+    window.updateWoodInterface = updateWoodInterface;
 
     function applyWoodSearchFilter() {
         const query = searchInput.value.toLowerCase().trim();
@@ -616,27 +607,36 @@ window.onload = function() {
     }
 
     function scan() { 
-        console.log('تشغيل scan() - البحث عن المستطيلات...');
+        console.log('🔍 تشغيل scan()...');
         const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-        console.log(`عدد المستطيلات المكتشفة: ${rects.length}`);
+        console.log(`✓ تم اكتشاف ${rects.length} مستطيل`);
         rects.forEach(r => processRect(r)); 
     }
-
-    window.scan = scan; // جعلها متاحة عالمياً
+    window.scan = scan;
 
     function loadImages() {
         const urls = Array.from(mainSvg.querySelectorAll('image'))
                       .map(img => img.getAttribute('data-src'))
                       .filter(src => src !== null && src !== "");
 
-        console.log(`بدء تحميل ${urls.length} صورة`);
+        console.log(`🖼️ بدء تحميل ${urls.length} صورة...`);
+
+        if (urls.length === 0) {
+            console.warn('⚠️ لا توجد صور للتحميل!');
+            hideLoadingScreen();
+            mainSvg.style.opacity = '1';
+            window.updateDynamicSizes();
+            scan();
+            updateWoodInterface();
+            goToMapEnd();
+            return;
+        }
 
         urls.forEach((u, index) => {
             const img = new Image();
             img.onload = img.onerror = () => {
                 loadedCount++;
                 const p = (loadedCount / urls.length) * 100;
-                console.log(`تم تحميل صورة ${loadedCount}/${urls.length} (${p.toFixed(0)}%)`);
                 
                 if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
                 if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
@@ -649,21 +649,21 @@ window.onload = function() {
                         const actualSrc = si.getAttribute('data-src');
                         if(actualSrc) si.setAttribute('href', actualSrc);
                     });
+                    
                     setTimeout(() => {
                         hideLoadingScreen();
-                        mainSvg.style.opacity = '1'; 
-                        console.log('استدعاء scan() بعد تحميل الصور');
-                        scan(); 
-                        updateWoodInterface(); 
-                        goToMapEnd(); 
+                        mainSvg.style.opacity = '1';
+                        window.updateDynamicSizes();
+                        scan();
+                        updateWoodInterface();
+                        goToMapEnd();
                     }, 600);
                 }
             };
             img.src = u;
         });
     }
-
-    window.loadImages = loadImages; // جعلها متاحة عالمياً
+    window.loadImages = loadImages;
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
@@ -683,26 +683,20 @@ window.onload = function() {
         if(!interactionEnabled) cleanupHover(); 
     });
 
-    // منع القائمة عند الضغط المطول
     document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
         e.preventDefault();
     }, false);
 
-    // التحقق من وجود مجموعة محفوظة
     const hasSavedGroup = loadSelectedGroup();
 
     if (hasSavedGroup) {
-        // إذا كان المستخدم قد اختار مجموعة من قبل، نبدأ التحميل مباشرة
-        console.log('تحميل المجموعة المحفوظة:', currentGroup);
+        console.log('📂 تحميل المجموعة المحفوظة:', currentGroup);
         initializeGroup(currentGroup, true);
     } else {
-        // إذا لم يختر، نعرض شاشة الاختيار ونخفي التحميل
-        console.log('لا توجد مجموعة محفوظة - عرض شاشة الاختيار');
+        console.log('❓ لا توجد مجموعة محفوظة');
         loadingOverlay.classList.remove('active');
         loadingOverlay.style.display = 'none';
         groupSelectionScreen.classList.remove('hidden');
-
-        // إخفاء عناصر التحكم حتى يتم اختيار مجموعة
         toggleContainer.style.display = 'none';
         scrollContainer.style.display = 'none';
     }
