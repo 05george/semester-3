@@ -8,12 +8,15 @@ const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REP
 
 let globalFileTree = []; 
 let currentGroup = null;
-let loadedCount = 0;
-let totalLoadSteps = 0;
 let currentFolder = ""; 
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
+
+// ✅ متغيرات تتبع التحميل الجديدة
+let totalBytes = 0;
+let loadedBytes = 0;
+let imageUrlsToLoad = [];
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -49,10 +52,8 @@ async function fetchGlobalTree() {
         const data = await response.json();
         globalFileTree = data.tree || [];
         console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
-        updateLoadProgress(); // تحديث المصابيح
     } catch (err) {
         console.error("خطأ في الاتصال بـ GitHub:", err);
-        updateLoadProgress(); // تحديث حتى لو فشل
     }
 }
 
@@ -80,10 +81,11 @@ function showLoadingScreen(groupLetter) {
 
     // إعادة تعيين المصابيح
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
-    
-    // إعادة تعيين العداد
-    loadedCount = 0;
-    totalLoadSteps = 4; // 4 خطوات: جلب الشجرة + تحميل SVG + تحميل الصور + المعالجة
+
+    // ✅ إعادة تعيين متغيرات التتبع
+    totalBytes = 0;
+    loadedBytes = 0;
+    imageUrlsToLoad = [];
 
     // إظهار فوري
     loadingOverlay.classList.add('active');
@@ -100,18 +102,53 @@ function hideLoadingScreen() {
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
-// دالة تحديث المصابيح بناءً على التقدم
+// ✅ دالة تحديث المصابيح بناءً على النسبة المئوية الفعلية
 function updateLoadProgress() {
-    loadedCount++;
-    const progress = (loadedCount / totalLoadSteps) * 100;
+    if (totalBytes === 0) return;
 
-    console.log(`📊 التقدم: ${Math.round(progress)}% (${loadedCount}/${totalLoadSteps})`);
+    const progress = (loadedBytes / totalBytes) * 100;
+    console.log(`📊 التقدم: ${Math.round(progress)}% (${(loadedBytes/1024).toFixed(1)}KB / ${(totalBytes/1024).toFixed(1)}KB)`);
 
-    // توزيع المصابيح: كل مصباح يمثل 25% من التقدم
+    // توزيع المصابيح بشكل متساوي
     if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
     if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
     if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
     if (progress >= 100) document.getElementById('bulb-1')?.classList.add('on');
+}
+
+// ✅ دالة حساب الحجم التقديري للملفات
+function estimateFileSize(url) {
+    const ext = url.split('.').pop().toLowerCase();
+    
+    // أحجام تقديرية بناءً على نوع الملف (بالبايت)
+    const sizesMap = {
+        'webp': 150000,  // 150KB
+        'jpg': 200000,   // 200KB
+        'jpeg': 200000,
+        'png': 300000,   // 300KB
+        'svg': 50000,    // 50KB
+        'pdf': 500000,   // 500KB
+        'json': 10000,   // 10KB
+        'js': 50000,     // 50KB
+        'css': 30000     // 30KB
+    };
+    
+    return sizesMap[ext] || 100000; // افتراضي 100KB
+}
+
+// ✅ دالة حساب الحجم الإجمالي
+function calculateTotalSize() {
+    totalBytes = 0;
+    
+    // حساب حجم ملفات الصور
+    imageUrlsToLoad.forEach(url => {
+        totalBytes += estimateFileSize(url);
+    });
+    
+    // إضافة حجم ملف SVG (تقديري)
+    totalBytes += 100000; // ~100KB للـ SVG
+    
+    console.log(`📦 الحجم الإجمالي المتوقع: ${(totalBytes/1024).toFixed(1)}KB`);
 }
 
 // ===== دالة تحميل SVG محسّنة =====
@@ -125,12 +162,17 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
-            updateLoadProgress();
             return;
         }
 
         const svgText = await response.text();
-        console.log(`✓ تم جلب SVG بنجاح (${svgText.length} حرف)`);
+        
+        // ✅ تحديث التقدم بناءً على حجم SVG الفعلي
+        const svgSize = new Blob([svgText]).size;
+        loadedBytes += svgSize;
+        updateLoadProgress();
+        
+        console.log(`✓ تم جلب SVG بنجاح (${(svgSize/1024).toFixed(1)}KB)`);
 
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
 
@@ -138,32 +180,33 @@ async function loadGroupSVG(groupLetter) {
             groupContainer.innerHTML = match[1];
             console.log(`✓ تم حقن المحتوى: ${groupContainer.children.length} عنصر`);
 
-            // **تفعيل الصور المحقونة**
+            // ✅ جمع عناوين الصور للتحميل
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG المحقون: ${injectedImages.length}`);
 
+            imageUrlsToLoad = [];
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
-                if (src) {
-                    img.setAttribute('href', src);
-                    console.log(`  ↳ تم تفعيل: ${src}`);
+                if (src && !imageUrlsToLoad.includes(src)) {
+                    imageUrlsToLoad.push(src);
                 }
             });
+
+            // حساب الحجم الإجمالي بعد معرفة عدد الصور
+            calculateTotalSize();
 
         } else {
             console.error('❌ فشل استخراج محتوى SVG');
         }
-        
-        updateLoadProgress(); // تحديث المصابيح بعد تحميل SVG
+
     } catch (err) {
         console.error(`❌ خطأ في loadGroupSVG:`, err);
-        updateLoadProgress();
     }
 }
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    
+
     // احذف الصورة القديمة فقط إن وجدت
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
@@ -198,22 +241,20 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
     showLoadingScreen(groupLetter);
 
-    await fetchGlobalTree(); // خطوة 1
-    await loadGroupSVG(groupLetter); // خطوة 2
+    await fetchGlobalTree();
+    await loadGroupSVG(groupLetter);
 
     // **إعادة حساب الأحجام بعد الحقن**
     window.updateDynamicSizes();
 
     if (isInitialLoad) {
-        window.loadImages(); // خطوة 3 (ستنتهي في finishLoading)
+        window.loadImages(); // سيتم تحديث التقدم داخلياً
     } else {
-        updateLoadProgress(); // خطوة 3 (تخطي الصور)
         hideLoadingScreen();
         if (mainSvg) mainSvg.style.opacity = '1';
         window.scan();
         window.updateWoodInterface();
-        window.goToWood(); // ✅ عكس الاتجاه: البداية من اليسار
-        updateLoadProgress(); // خطوة 4
+        window.goToWood();
     }
 }
 
@@ -277,11 +318,10 @@ function smartOpen(item) {
     }
 }
 
-// ✅ عكس الاتجاهات
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ 
-            left: 0, // ✅ أقصى اليسار
+            left: 0,
             behavior: 'smooth' 
         });
     }
@@ -292,7 +332,7 @@ window.goToMapEnd = () => {
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
     scrollContainer.scrollTo({ 
-        left: maxScrollRight, // ✅ أقصى اليمين
+        left: maxScrollRight,
         behavior: 'smooth' 
     });
 };
@@ -307,7 +347,6 @@ function debounce(func, delay) {
     }
 }
 
-// ===== دالة تحديث الأحجام محسّنة =====
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
@@ -487,9 +526,8 @@ async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup || !backBtnText) return;
 
-    // ✅ احذف فقط عناصر القوائم واحتفظ بالصورة
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
-    
+
     await fetchGlobalTree();
 
     if (currentFolder === "") {
@@ -500,7 +538,6 @@ async function updateWoodInterface() {
         backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
     }
 
-    // ✅ أضف/حدّث الصورة فقط عند الرجوع للصفحة الرئيسية
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
     }
@@ -599,7 +636,7 @@ function processRect(r) {
         bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
         r.parentNode.insertBefore(bg, txt);
     }
-if (!isTouchDevice) { 
+    if (!isTouchDevice) { 
         r.addEventListener('mouseover', startHover); 
         r.addEventListener('mouseout', cleanupHover); 
     }
@@ -631,54 +668,75 @@ function scan() {
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
     console.log(`✓ تم اكتشاف ${rects.length} مستطيل`);
     rects.forEach(r => processRect(r));
-    
-    updateLoadProgress(); // خطوة 4: المعالجة النهائية
 }
 window.scan = scan;
 
+// ✅ دالة تحميل الصور محسّنة مع تتبع الحجم الحقيقي
 function loadImages() {
     if (!mainSvg) return;
 
-    const urls = Array.from(mainSvg.querySelectorAll('image'))
-                  .map(img => img.getAttribute('data-src'))
-                  .filter(src => src !== null && src !== "");
+    console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
 
-    console.log(`🖼️ بدء تحميل ${urls.length} صورة...`);
-
-    if (urls.length === 0) {
+    if (imageUrlsToLoad.length === 0) {
         console.warn('⚠️ لا توجد صور للتحميل!');
-        updateLoadProgress(); // خطوة 3
         finishLoading();
         return;
     }
 
-    let imagesLoaded = 0;
+    let imagesCompleted = 0;
 
-    urls.forEach((u) => {
-        const img = new Image();
-
-        const onImageLoad = () => {
-            imagesLoaded++;
-            
-            console.log(`📦 تم تحميل صورة ${imagesLoaded}/${urls.length}`);
-
-            // تحديث الصور في الـ SVG فورياً
-            mainSvg.querySelectorAll('image').forEach(si => {
-                const actualSrc = si.getAttribute('data-src');
-                if(actualSrc === u) si.setAttribute('href', actualSrc);
+    imageUrlsToLoad.forEach((url) => {
+        // ✅ استخدام fetch لقياس الحجم الفعلي
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                // ✅ الحصول على الحجم الفعلي من الـ headers
+                const contentLength = response.headers.get('content-length');
+                const actualSize = contentLength ? parseInt(contentLength, 10) : estimateFileSize(url);
+                
+                console.log(`📦 حجم ${url.split('/').pop()}: ${(actualSize/1024).toFixed(1)}KB`);
+                
+                return response.blob().then(blob => ({ blob, actualSize }));
+            })
+            .then(({ blob, actualSize }) => {
+                // ✅ تحديث التقدم بالحجم الفعلي
+                loadedBytes += actualSize;
+                updateLoadProgress();
+                
+                // إنشاء URL محلي للصورة
+                const objectUrl = URL.createObjectURL(blob);
+                
+                // تحديث جميع عناصر الصورة في الـ SVG
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const dataSrc = si.getAttribute('data-src');
+                    if (dataSrc === url) {
+                        si.setAttribute('href', objectUrl);
+                    }
+                });
+                
+                imagesCompleted++;
+                
+                // عند اكتمال جميع الصور
+                if (imagesCompleted === imageUrlsToLoad.length) {
+                    console.log('✅ اكتمل تحميل جميع الصور');
+                    finishLoading();
+                }
+            })
+            .catch(error => {
+                console.error(`❌ خطأ في تحميل ${url}:`, error);
+                
+                // حتى في حالة الفشل، نحدث العداد
+                const estimatedSize = estimateFileSize(url);
+                loadedBytes += estimatedSize;
+                updateLoadProgress();
+                
+                imagesCompleted++;
+                
+                if (imagesCompleted === imageUrlsToLoad.length) {
+                    finishLoading();
+                }
             });
-
-            // عند اكتمال جميع الصور
-            if (imagesLoaded === urls.length) {
-                console.log('✓ اكتمل تحميل جميع الصور');
-                updateLoadProgress(); // خطوة 3: تحميل الصور
-                finishLoading();
-            }
-        };
-
-        img.onload = onImageLoad;
-        img.onerror = onImageLoad; 
-        img.src = u;
     });
 }
 
@@ -687,9 +745,13 @@ function finishLoading() {
     if (mainSvg) mainSvg.style.opacity = '1';
 
     window.updateDynamicSizes();
-    scan(); // ستستدعي updateLoadProgress داخلياً للخطوة 4
+    scan();
     updateWoodInterface();
-    window.goToWood(); // ✅ البداية من اليسار
+    window.goToWood();
+
+    // التأكد من إضاءة جميع المصابيح
+    loadedBytes = totalBytes;
+    updateLoadProgress();
 
     // تأخير بسيط لضمان ظهور المصباح الأخير
     setTimeout(() => {
@@ -712,7 +774,7 @@ if (changeGroupBtn) {
     changeGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        window.goToWood(); // ✅ عكس الاتجاه
+        window.goToWood();
     });
 }
 
@@ -720,7 +782,7 @@ if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            window.goToWood(); // ✅ عكس الاتجاه
+            window.goToWood();
         }
     };
 
@@ -754,7 +816,7 @@ if (moveToggle) {
 if (searchIcon) {
     searchIcon.onclick = (e) => {
         e.preventDefault();
-        window.goToWood(); // ✅ عكس الاتجاه
+        window.goToWood();
     };
 }
 
@@ -767,7 +829,7 @@ if (backButtonGroup) {
             window.updateWoodInterface(); 
         } else { 
             console.log("العودة إلى أقصى يمين الخريطة...");
-            window.goToMapEnd(); // ✅ الذهاب لليمين
+            window.goToMapEnd();
         } 
     };
 }
