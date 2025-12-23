@@ -47,7 +47,7 @@ html, body {
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth; 
-  direction: rtl;
+  direction: ltr;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
 }
@@ -78,6 +78,7 @@ html, body {
 
 /* ===== شاشة اختيار الجروب ===== */
 #group-selection-screen {
+  height: 100svh;
   position: fixed;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
@@ -206,6 +207,7 @@ html, body {
 
 /* تنسيق عارض PDF المنبثق */
 #pdf-overlay {
+  height: 100svh;
   transition: transform .35s ease, opacity .35s ease;
   position: fixed;
   top: 0;
@@ -253,6 +255,7 @@ html, body {
 /* ===== Loading Overlay ===== */
 #loading-overlay {
   position: fixed;
+  height: 100svh;
   inset: 0;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   display: none; /* مخفي افتراضياً */
