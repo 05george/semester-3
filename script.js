@@ -73,29 +73,26 @@ if ('serviceWorker' in navigator) {
 let mainSvg, scrollContainer, clipDefs, searchInput; 
 
 window.onload = function() {
+    // 1. ربط العناصر الأساسية
     mainSvg = document.getElementById('main-svg');
     scrollContainer = document.getElementById('scroll-container');
-    clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
     searchInput = document.getElementById('search-input');
-const groups = [
-    { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
-    { id: "B", name: "المجموعة B", folder: "group-B", logo: "logo-B.webp", woodLogo: "logo-wood-B.webp", svg: "groups/group-B.svg" },
-    { id: "C", name: "المجموعة C", folder: "group-C", logo: "logo-C.webp", woodLogo: "logo-wood-C.webp", svg: "groups/group-C.svg" }
-];
-let currentGroupIndex = 0;
-let currentRootFolder = "";
-    const changeGroupBtn = document.getElementById('change-group-btn');
-    const groupBtnText = document.getElementById('group-btn-text');
-    let loadedCount = 0;
-    const clipDefs = mainSvg.querySelector('defs');
+    
+    // 2. التحقق من وجود mainSvg قبل البحث عن defs
+    if (mainSvg) {
+        clipDefs = mainSvg.querySelector('defs');
+    }
+
+    // 3. تعريف المتغيرات الأخرى (بدون إعادة تعريف let/const إذا كانت معرفة في الخارج)
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
-    const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+    const changeGroupBtn = document.getElementById('change-group-btn');
+    const groupBtnText = document.getElementById('group-btn-text');
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
