@@ -78,16 +78,18 @@ html, body {
 
 /* ===== شاشة اختيار الجروب (تنسيق الشاشة الواحدة) ===== */
 #group-selection-screen {
-  height: 100svh; /* ملء الشاشة تماماً */
+  height: 100svh;
   width: 100vw;
   position: fixed;
   inset: 0;
+  /* تدرج لوني عميق لإعطاء عمق بصري خلف الأزرار */
   background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
-  overflow: hidden; /* منع التمرير نهائياً */
+  z-index: 100000; /* قيمة قصوى لضمان عدم التداخل مع الخريطة */
+  overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
 #group-selection-content {
@@ -95,65 +97,78 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 95svh; /* ترك مساحة بسيطة للهوامش */
+  height: 95svh;
   width: 90%;
   max-width: 500px;
+  perspective: 1000px; /* لإضافة بعد بصري عند التفاعل */
 }
 
 #main-logo {
-  height: auto ;
-  width: calc50%;
+  height: auto;
+  width: 50%; /* تم التصحيح: عرض الصورة يساوي نصف عرض الحاوية */
   margin-bottom: 2vh;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+  border-radius: 20px;
+  /* توهج خارجي متدرج */
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.3), 0 0 40px rgba(255, 204, 0, 0.1);
   animation: logo-pulse 2s infinite ease-in-out;
+  object-fit: contain;
 }
 
 #group-selection-content h1 {
   color: #ffcc00;
-  font-size: clamp(1.2rem, 4svh, 2rem); /* حجم خط مرن */
+  /* حجم خط مرن يعتمد على أصغر بعد للشاشة */
+  font-size: clamp(1.2rem, 4svh, 2.2rem);
   margin: 0 0 3svh 0;
   text-transform: uppercase;
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+  font-weight: 800;
 }
 
 #group-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 20px;
   width: 100%;
 }
 
 .group-btn {
-  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-  border: 2px solid #444;
-  border-radius: 15px;
-  padding: 2svh 10px; /* التباعد الداخلي يعتمد على ارتفاع الشاشة */
+  /* خلفية زجاجية مع تدرج قوي */
+  background: linear-gradient(145deg, #2a2a2a, #151515);
+  border: 2px solid #333;
+  border-radius: 20px;
+  padding: 3svh 15px;
   cursor: pointer;
-  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* منحنى انتقال ناعم جداً */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 8px;
   position: relative;
   overflow: hidden;
+  box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
 
-/* المزايا البصرية (التحويم والاكشن) */
+/* طبقة الإضاءة الداخلية عند التحويم */
 .group-btn::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(145deg, transparent, rgba(255, 204, 0, 0.15));
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.1) 0%, transparent 70%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
 .group-btn:hover {
   border-color: #ffcc00;
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(255, 204, 0, 0.25);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(255, 204, 0, 0.2);
 }
 
 .group-btn:hover::before {
@@ -161,42 +176,67 @@ html, body {
 }
 
 .group-btn:active {
-  transform: scale(0.95);
-  background: #333;
+  transform: scale(0.92);
+  background: #111;
+  transition: all 0.1s;
 }
 
 .group-letter {
-  font-size: 5svh; /* حجم الحرف مرن بناءً على الشاشة */
-  font-weight: bold;
+  font-size: 6svh; /* حجم حرف ضخم وواضح */
+  font-weight: 900;
   color: #ffcc00;
-  text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
+  line-height: 1;
+  text-shadow: 2px 2px 0px #000, 0 0 10px rgba(255, 204, 0, 0.5);
 }
 
 .group-label {
-  font-size: 1.5svh;
-  color: #ccc;
+  font-size: 1.6svh;
+  color: #999;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
 }
 
-/* التلميح السفلي */
-.group-selection-content p {
-  font-size: 1.5svh;
-  margin-top: 3svh;
-  color: #666;
+#group-selection-content p {
+  font-size: 1.4svh;
+  margin-top: 4svh;
+  color: #555;
+  text-align: center;
+  max-width: 80%;
+  line-height: 1.6;
 }
 
-/* الأنميشن الخاص باللوجو */
+/* أنيميشن النبض الخاص باللوجو */
 @keyframes logo-pulse {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.05); filter: brightness(1.2); }
+  0%, 100% { 
+    transform: scale(1); 
+    filter: brightness(1) drop-shadow(0 0 5px rgba(255, 204, 0, 0.2)); 
+  }
+  50% { 
+    transform: scale(1.06); 
+    filter: brightness(1.2) drop-shadow(0 0 20px rgba(255, 204, 0, 0.5)); 
+  }
 }
 
-/* تعديل خاص للشاشات العريضة جداً والقيرة (مثل الـ Tablets في وضع العرض) */
-@media (max-height: 500px) {
-  #main-logo { height: 15svh; }
-  #group-buttons { gap: 10px; }
-  .group-btn { padding: 1svh 5px; }
+/* توافق الشاشات الأفقية (Landscape) */
+@media (max-height: 550px) {
+  #group-selection-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  #main-logo { width: 25%; margin-bottom: 0; }
+  #group-buttons { width: 60%; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .group-btn { padding: 1.5svh 5px; }
+  .group-letter { font-size: 4svh; }
+}
+
+/* الكلاس الخاص بالإخفاء عبر البرمجة */
+#group-selection-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.5s ease;
 }
 /*=====================================*/
   .group-btn {
