@@ -72,18 +72,32 @@ if ('serviceWorker' in navigator) {
 }
 let mainSvg, scrollContainer, clipDefs, searchInput; 
 
+
+    let activeState = {
+        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
+        baseText: null, baseBg: null, animationId: null, clipPathId: null,
+        touchStartTime: 0, initialScrollLeft: 0
+    };
+
+// المتغيرات العامة (خارج onload لضمان الوصول إليها من أي مكان)
+let mainSvg, scrollContainer, clipDefs, searchInput;
+let globalFileTree = [];
+const groups = [
+    { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
+    { id: "B", name: "المجموعة B", folder: "group-B", logo: "logo-B.webp", woodLogo: "logo-wood-B.webp", svg: "groups/group-B.svg" },
+    { id: "C", name: "المجموعة C", folder: "group-C", logo: "logo-C.webp", woodLogo: "logo-wood-C.webp", svg: "groups/group-C.svg" }
+];
+let currentGroupIndex = 0;
+let currentRootFolder = "group-A"; // القيمة الافتراضية
+let currentFolder = "group-A";
+
 window.onload = function() {
-    // 1. ربط العناصر الأساسية
+    // 1. ربط العناصر
     mainSvg = document.getElementById('main-svg');
     scrollContainer = document.getElementById('scroll-container');
     searchInput = document.getElementById('search-input');
-    
-    // 2. التحقق من وجود mainSvg قبل البحث عن defs
-    if (mainSvg) {
-        clipDefs = mainSvg.querySelector('defs');
-    }
+    clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
 
-    // 3. تعريف المتغيرات الأخرى (بدون إعادة تعريف let/const إذا كانت معرفة في الخارج)
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
     const searchIcon = document.getElementById('search-icon');
@@ -94,17 +108,54 @@ window.onload = function() {
     const changeGroupBtn = document.getElementById('change-group-btn');
     const groupBtnText = document.getElementById('group-btn-text');
 
+    let loadedCount = 0; // تعريف العداد
+    let interactionEnabled = jsToggle ? jsToggle.checked : true;
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
         touchStartTime: 0, initialScrollLeft: 0
     };
 
-    let currentFolder = ""; 
-    let interactionEnabled = jsToggle.checked;
-    const isTouchDevice = window.matchMedia('(hover: none)').matches;
-    const TAP_THRESHOLD_MS = 300;
+    // 2. معالجة الصور والتحميل
+    const images = mainSvg.querySelectorAll('image');
+    const urls = Array.from(images).map(img => img.getAttribute('data-src')).filter(src => src);
 
+    if (urls.length === 0) {
+        // إذا لم توجد صور (لحماية الكود من التوقف)
+        if(loadingOverlay) loadingOverlay.style.display = 'none';
+        scan(); updateWoodInterface();
+    }
+
+    urls.forEach((u) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            let progress = (loadedCount / urls.length) * 100;
+            // تحديث اللمبات (Bulbs)
+            if(progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if(progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if(progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            
+            if(loadedCount === urls.length) {
+                document.getElementById('bulb-1')?.classList.add('on');
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const actualSrc = si.getAttribute('data-src');
+                    if(actualSrc) si.setAttribute('href', actualSrc);
+                });
+                setTimeout(() => {
+                    if(loadingOverlay) {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => { 
+                            loadingOverlay.style.display = 'none'; 
+                            mainSvg.style.opacity = '1'; 
+                            scan(); updateWoodInterface(); goToMapEnd(); 
+                        }, 500);
+                    }
+                }, 600);
+            }
+        };
+        img.src = u;
+    });
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
         if(!item || !item.path) return;
@@ -479,39 +530,6 @@ window.onload = function() {
     }
 
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
-
-    const urls = Array.from(mainSvg.querySelectorAll('image'))
-                  .map(img => img.getAttribute('data-src'))
-                  .filter(src => src !== null && src !== "");
-
-    urls.forEach((u, index) => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            if(loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-                setTimeout(() => {
-                    if(loadingOverlay) {
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => { 
-                            loadingOverlay.style.display = 'none'; 
-                            mainSvg.style.opacity = '1'; 
-                            scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 500);
-                    }
-                }, 600);
-            }
-        };
-        img.src = u;
-    });
 
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
