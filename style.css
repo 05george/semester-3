@@ -78,7 +78,7 @@ html, body {
 
 /* ===== شاشة اختيار الجروب (تنسيق الشاشة الواحدة) ===== */
 #group-selection-screen {
-  height: 100vh; /* ملء الشاشة تماماً */
+  height: 100svh; /* ملء الشاشة تماماً */
   width: 100vw;
   position: fixed;
   inset: 0;
@@ -95,13 +95,13 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 95vh; /* ترك مساحة بسيطة للهوامش */
+  height: 95svh; /* ترك مساحة بسيطة للهوامش */
   width: 90%;
   max-width: 500px;
 }
 
 #main-logo {
-  height: 20vh; /* طول اللوجو يعتمد على ارتفاع الشاشة */
+  height: 20svh; /* طول اللوجو يعتمد على ارتفاع الشاشة */
   width: auto;
   margin-bottom: 2vh;
   border-radius: 15px;
@@ -111,8 +111,8 @@ html, body {
 
 #group-selection-content h1 {
   color: #ffcc00;
-  font-size: clamp(1.2rem, 4vh, 2rem); /* حجم خط مرن */
-  margin: 0 0 3vh 0;
+  font-size: clamp(1.2rem, 4svh, 2rem); /* حجم خط مرن */
+  margin: 0 0 3svh 0;
   text-transform: uppercase;
   letter-spacing: 2px;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
@@ -129,7 +129,7 @@ html, body {
   background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
   border: 2px solid #444;
   border-radius: 15px;
-  padding: 2vh 10px; /* التباعد الداخلي يعتمد على ارتفاع الشاشة */
+  padding: 2svh 10px; /* التباعد الداخلي يعتمد على ارتفاع الشاشة */
   cursor: pointer;
   transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -166,14 +166,14 @@ html, body {
 }
 
 .group-letter {
-  font-size: 5vh; /* حجم الحرف مرن بناءً على الشاشة */
+  font-size: 5svh; /* حجم الحرف مرن بناءً على الشاشة */
   font-weight: bold;
   color: #ffcc00;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
 }
 
 .group-label {
-  font-size: 1.5vh;
+  font-size: 1.5svh;
   color: #ccc;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -181,8 +181,8 @@ html, body {
 
 /* التلميح السفلي */
 .group-selection-content p {
-  font-size: 1.5vh;
-  margin-top: 3vh;
+  font-size: 1.5svh;
+  margin-top: 3svh;
   color: #666;
 }
 
@@ -194,9 +194,9 @@ html, body {
 
 /* تعديل خاص للشاشات العريضة جداً والقيرة (مثل الـ Tablets في وضع العرض) */
 @media (max-height: 500px) {
-  #main-logo { height: 15vh; }
+  #main-logo { height: 15svh; }
   #group-buttons { gap: 10px; }
-  .group-btn { padding: 1vh 5px; }
+  .group-btn { padding: 1svh 5px; }
 }
 /*=====================================*/
   .group-btn {
