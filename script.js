@@ -264,12 +264,14 @@ window.onload = function() {
             behavior: 'smooth' 
         });
     };
-    window.goToMapEnd = goToMapEnd;
+const goToMapEnd = () => {
+    const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
-    const handleGoToWood = (e) => {
-        e.preventDefault();
-        goToWood();
-    };
+    scrollContainer.scrollTo({ 
+        left: maxScrollRight, 
+        behavior: 'smooth' 
+    });
+};
 
     searchIcon.onclick = handleGoToWood;
     searchIcon.addEventListener('touchend', handleGoToWood);
