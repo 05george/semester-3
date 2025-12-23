@@ -500,9 +500,13 @@ function wrapText(el, maxW) {
 /* --- 12. تحديث واجهة القوائم --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
+    const groupBtnText = document.getElementById('group-btn-text'); // العنصر الجديد
+
     if (!dynamicGroup || !backBtnText) return;
 
-    // ✅ حذف القوائم فقط - صورة wood.webp محمية في files-list-container
+    if (groupBtnText && currentGroup) {
+        groupBtnText.textContent = `Change Group 🔄 ${currentGroup}`;
+    }
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
 
     await fetchGlobalTree();
