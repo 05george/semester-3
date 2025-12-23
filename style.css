@@ -209,7 +209,7 @@ body {
 @media (max-width: 480px) {
   #group-buttons {
     grid-template-columns: 1fr;
-gap: 15px;
+    gap: 15px;
   }
 
   .group-btn {
@@ -352,9 +352,33 @@ gap: 15px;
   transition: all .4s ease;
 }
 
-.light-bulb.on {
-  background-color: #ffcc00;
-  box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff9900;
+/* ===== 🎨 ألوان المصابيح المختلفة ===== */
+
+/* المصباح الأول (الأخضر) - يضيء عند 100% */
+#bulb-1.on {
+  background-color: #4dff88;
+  box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
+  border-color: #fff;
+}
+
+/* المصباح الثاني (الأصفر) - يضيء عند 75% */
+#bulb-2.on {
+  background-color: #ffff4d;
+  box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
+  border-color: #fff;
+}
+
+/* المصباح الثالث (البرتقالي) - يضيء عند 50% */
+#bulb-3.on {
+  background-color: #ffaa00;
+  box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
+  border-color: #fff;
+}
+
+/* المصباح الرابع (الأحمر) - يضيء عند 25% */
+#bulb-4.on {
+  background-color: #ff4d4d;
+  box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
   border-color: #fff;
 }
 
