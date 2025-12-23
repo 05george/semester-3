@@ -318,10 +318,11 @@ function smartOpen(item) {
     }
 }
 
+// ✅ عكس الاتجاهات
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ 
-            left: 0,
+            left: 0, // ✅ أقصى اليسار
             behavior: 'smooth' 
         });
     }
@@ -332,7 +333,7 @@ window.goToMapEnd = () => {
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
     scrollContainer.scrollTo({ 
-        left: maxScrollRight,
+        left: maxScrollRight, // ✅ أقصى اليمين
         behavior: 'smooth' 
     });
 };
@@ -347,6 +348,7 @@ function debounce(func, delay) {
     }
 }
 
+// ===== دالة تحديث الأحجام محسّنة =====
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
@@ -526,6 +528,7 @@ async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup || !backBtnText) return;
 
+    // ✅ احذف فقط عناصر القوائم واحتفظ بالصورة
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
 
     await fetchGlobalTree();
@@ -538,6 +541,7 @@ async function updateWoodInterface() {
         backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
     }
 
+    // ✅ أضف/حدّث الصورة فقط عند الرجوع للصفحة الرئيسية
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
     }
@@ -617,7 +621,7 @@ function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     if(r.classList.contains('w')) r.setAttribute('width', '113.5');
     if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
-    const href = r.getAttribute('data-href') || '';
+    ```javascript
     const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
     const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
