@@ -660,15 +660,12 @@ backButtonGroup.onclick = () => {
                 if(actualSrc) si.setAttribute('href', actualSrc);
             });
 
-            // تأخير بسيط ليعطي المستخدم فرصة لرؤية المصباح الأخير قبل الإغلاق
-            setTimeout(() => {
-                hideLoadingScreen();
-                mainSvg.style.opacity = '1';
-                window.updateDynamicSizes();
-                scan();
-                updateWoodInterface();
-                goToMapEnd();
-            }, 800); // زيادة التأخير قليلاً لراحة العين
+hideLoadingScreen();
+mainSvg.style.opacity = '1';
+window.updateDynamicSizes();
+scan();
+updateWoodInterface();
+goToMapEnd();
         }
     };
 
