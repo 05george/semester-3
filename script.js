@@ -190,7 +190,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-window.onload = function() {
+document.addEventListener("DOMContentLoaded", function () {
     let loadedCount = 0;
     const mainSvg = document.getElementById('main-svg');
     const scrollContainer = document.getElementById('scroll-container');
