@@ -605,3 +605,67 @@ window.onload = function() {
 
     function loadImages() {
         const urls = Array.from(mainSvg.querySelectorAll('image'))
+                      .map(img => img.getAttribute('data-src'))
+                      .filter(src => src !== null && src !== "");
+
+        urls.forEach((u, index) => {
+            const img = new Image();
+            img.onload = img.onerror = () => {
+                loadedCount++;
+                const p = (loadedCount / urls.length) * 100;
+                if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+                if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+                if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+                if(loadedCount === urls.length) {
+                    document.getElementById('bulb-1')?.classList.add('on');
+                    mainSvg.querySelectorAll('image').forEach(si => {
+                        const actualSrc = si.getAttribute('data-src');
+                        if(actualSrc) si.setAttribute('href', actualSrc);
+                    });
+                    setTimeout(() => {
+                        hideLoadingScreen();
+                        mainSvg.style.opacity = '1'; 
+                        scan(); 
+                        updateWoodInterface(); 
+                        goToMapEnd(); 
+                    }, 600);
+                }
+            };
+            img.src = u;
+        });
+    }
+
+    window.loadImages = loadImages; // جعلها متاحة عالمياً
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display; 
+            if(bg) bg.style.display = rect.style.display;
+        });
+        applyWoodSearchFilter();
+    }, 150));
+
+    jsToggle.addEventListener('change', function() { 
+        interactionEnabled = this.checked; 
+        if(!interactionEnabled) cleanupHover(); 
+    });
+
+    // منع القائمة عند الضغط المطول
+    document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+
+    // التحقق من وجود مجموعة محفوظة
+    if (loadSelectedGroup()) {
+        // إذا كان المستخدم قد اختار مجموعة من قبل، نبدأ التحميل مباشرة
+        initializeGroup(currentGroup, true);
+    } else {
+        // إذا لم يختار، نعرض شاشة الاختيار
+        groupSelectionScreen.classList.remove('hidden');
+    }
+};
