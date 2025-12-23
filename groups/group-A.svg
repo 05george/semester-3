@@ -1,2 +1,33 @@
-<!-- الاسبوع الأول -->
-<g transform="translate(1024,0)">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <!-- محتوى خاص بـ Group A -->
+  
+  <!-- مثال: الأسبوع الأول - خاص بالمجموعة A -->
+  <g transform="translate(1024,0)">
+    <image data-src="image/A/1.webp" width="1024" height="2454" />
+    
+    <!-- Saturday -->
+    <g transform="translate(140,0)">
+      <rect x="0" y="309" height="340.63" class="m w l" data-href="RRS/Lecture/pharma-1-A.pdf"/>
+      <rect x="0" y="876" height="349" class="m w i" data-href="IPC/book-A.pdf"/>
+    </g>
+    
+    <!-- Monday -->
+    <g transform="translate(370,0)">
+      <rect x="0" y="422.3" height="456.42" class="m w l" data-href="RRS/Lecture/physio-3-A.pdf"/>
+    </g>
+  </g>
+  
+  <!-- الأسبوع الثاني - خاص بالمجموعة A -->
+  <g transform="translate(2048,0)">
+    <image data-src="image/A/2.webp" width="1024" height="2454" />
+    
+    <!-- أضف المستطيلات الخاصة بهذا الأسبوع -->
+    <g transform="translate(140,0)">
+      <rect x="0" y="400" height="300" class="m w l" data-href="RRS/Lecture/example-A.pdf"/>
+    </g>
+  </g>
+  
+  <!-- يمكنك إضافة المزيد من الأسابيع هنا -->
+  
+</svg>
