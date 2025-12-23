@@ -533,7 +533,6 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
     e.preventDefault();
 }, false);
 
-};
 changeGroupBtn.onclick = () => {
     // الانتقال للمجموعة التالية
     currentGroupIndex = (currentGroupIndex + 1) % groups.length;
@@ -574,4 +573,4 @@ async function loadNewGroupSVG(svgPath) {
         console.error("فشل تحميل ملف المجموعة:", err);
     }
 }
-
+};
