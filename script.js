@@ -435,8 +435,9 @@ let currentRootFolder = "";
         applyWoodSearchFilter();
     }
 
-    function applyWoodSearchFilter() {
-        const query = searchInput.value.toLowerCase().trim();
+ function applyWoodSearchFilter() {
+    if (!mainSvg) return;
+    const query = searchInput.value.toLowerCase().trim();
         mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
             const name = group.querySelector('text').getAttribute('data-search-name') || "";
             group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
