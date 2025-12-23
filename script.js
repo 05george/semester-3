@@ -517,3 +517,19 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
 }, false);
 
 };
+document.addEventListener("DOMContentLoaded", function() {
+  const containers = document.querySelectorAll('.external-week');
+  
+  containers.forEach(container => {
+    const url = container.getAttribute('data-src');
+    
+    fetch(url)
+      .then(response => response.text())
+      .then(data => {
+        container.innerHTML = data;
+        // إذا كان الجافا سكريبت الخاص بك يحتاج لعمل "تعريف" للعناصر الجديدة
+        // يمكنك استدعاء وظيفة الـ Click listeners هنا إذا لم تكن تعمل تلقائياً
+      })
+      .catch(err => console.error('Error loading SVG:', err));
+  });
+});
