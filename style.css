@@ -1,24 +1,3 @@
-#group-selector {
-    transition: opacity 0.5s ease; /* تأكد من وجود الانتقال لجعل العودة ناعمة */
-}
-
-.group-buttons button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.group-buttons button:active {
-  transform: scale(0.95); /* تأثير الضغط */
-  background-color: var(--color-v); /* يتغير للون الأزرق عند اللمس */
-  border-color: #fff;
-}
-
-.group-buttons button:hover {
-  background: #333;
-  box-shadow: 0 0 15px rgba(77, 166, 255, 0.4);
-}
-
 /* تنسيق العناصر في قائمة الخشب */
 .list-item {
     stroke-width: 1px !important;
@@ -74,43 +53,6 @@ html, body {
   direction: rtl;
   scrollbar-width: thin;
   scrollbar-color: #444 black;
-}
-#group-selector {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  z-index: 30000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-}
-
-#group-preview {
-  max-width: 300px;
-  width: 80%;
-}
-
-.group-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
-.group-buttons button {
-  padding: 15px 25px;
-  font-size: 18px;
-  font-weight: bold;
-  background: #222;
-  color: #fff;
-  border: 2px solid #555;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.group-buttons button:hover {
-  background: #444;
 }
 
 #main-svg {
