@@ -6,8 +6,6 @@ const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/c
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
-let globalFileTree = []; 
-
 // 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
