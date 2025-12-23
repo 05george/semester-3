@@ -41,13 +41,13 @@ function loadSelectedGroup() {
 function showLoadingScreen(groupLetter) {
     const loadingOverlay = document.getElementById('loading-overlay');
     const splashImage = document.getElementById('splash-image');
-    
+
     // تغيير الصورة حسب الجروب
     splashImage.src = `image/logo-${groupLetter}.webp`;
-    
+
     // إظهار شاشة التحميل
     loadingOverlay.classList.add('active');
-    
+
     // إعادة تعيين الأضواء
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
 }
@@ -68,28 +68,35 @@ function hideLoadingScreen() {
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     groupContainer.innerHTML = ''; // مسح المحتوى السابق
-    
+
     try {
+        console.log(`محاولة تحميل: groups/group-${groupLetter}.svg`);
         const response = await fetch(`groups/group-${groupLetter}.svg`);
+        
         if (!response.ok) {
-            console.warn(`ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            console.warn(`ملف SVG للمجموعة ${groupLetter} غير موجود (Status: ${response.status})`);
             return;
         }
-        
+
         const svgText = await response.text();
+        console.log(`تم جلب محتوى SVG للمجموعة ${groupLetter}، الحجم: ${svgText.length} حرف`);
         
-        // استخراج محتوى الـ SVG (كل ما بداخل <svg>)
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-        const svgContent = svgDoc.querySelector('svg');
+        // استخراج المحتوى بين <svg> و </svg>
+        const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
         
-        if (svgContent) {
-            // نسخ جميع العناصر الداخلية
-            Array.from(svgContent.children).forEach(child => {
-                const imported = document.importNode(child, true);
-                groupContainer.appendChild(imported);
-            });
-            console.log(`تم تحميل SVG للمجموعة ${groupLetter}`);
+        if (match && match[1]) {
+            // حقن المحتوى مباشرة
+            groupContainer.innerHTML = match[1];
+            console.log(`✓ تم تحميل وحقن SVG للمجموعة ${groupLetter} بنجاح`);
+            console.log(`عدد العناصر المحقونة: ${groupContainer.children.length}`);
+            
+            // إعادة مسح الرسومات بعد التحميل
+            setTimeout(() => {
+                console.log('تشغيل scan() بعد تحميل SVG');
+                scan();
+            }, 100);
+        } else {
+            console.error(`لم يتم العثور على محتوى SVG صالح في الملف`);
         }
     } catch (err) {
         console.error(`خطأ في تحميل SVG للمجموعة ${groupLetter}:`, err);
@@ -99,11 +106,11 @@ async function loadGroupSVG(groupLetter) {
 // دالة تحديث صورة الـ Logo على الخشب
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    
+
     // إزالة أي banner قديم
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
-    
+
     // إضافة البانر الجديد
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
     banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`); 
@@ -119,25 +126,28 @@ function updateWoodLogo(groupLetter) {
 
 // دالة تهيئة المجموعة المختارة
 async function initializeGroup(groupLetter, isInitialLoad = false) {
-    console.log('بدء تهيئة المجموعة:', groupLetter);
-    saveSelectedGroup(groupLetter);
+    console.log('=== بدء تهيئة المجموعة ===');
+    console.log('المجموعة:', groupLetter);
+    console.log('تحميل أولي:', isInitialLoad);
     
+    saveSelectedGroup(groupLetter);
+
     // إظهار عناصر التحكم والـ scroll container
     const toggleContainer = document.getElementById('js-toggle-container');
     const scrollContainer = document.getElementById('scroll-container');
     toggleContainer.style.display = 'flex';
     scrollContainer.style.display = 'block';
-    
+
     // إخفاء شاشة اختيار الجروب
     document.getElementById('group-selection-screen').classList.add('hidden');
-    
+
     // عرض شاشة التحميل
     showLoadingScreen(groupLetter);
-    
+
     // تحميل الملفات
     await fetchGlobalTree();
     await loadGroupSVG(groupLetter);
-    
+
     if (isInitialLoad) {
         // إذا كان تحميل أولي، ننتظر تحميل الصور
         loadImages();
@@ -606,7 +616,10 @@ window.onload = function() {
     }
 
     function scan() { 
-        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); 
+        console.log('تشغيل scan() - البحث عن المستطيلات...');
+        const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
+        console.log(`عدد المستطيلات المكتشفة: ${rects.length}`);
+        rects.forEach(r => processRect(r)); 
     }
 
     window.scan = scan; // جعلها متاحة عالمياً
@@ -616,16 +629,22 @@ window.onload = function() {
                       .map(img => img.getAttribute('data-src'))
                       .filter(src => src !== null && src !== "");
 
+        console.log(`بدء تحميل ${urls.length} صورة`);
+
         urls.forEach((u, index) => {
             const img = new Image();
             img.onload = img.onerror = () => {
                 loadedCount++;
                 const p = (loadedCount / urls.length) * 100;
-                if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-                if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-                if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+                console.log(`تم تحميل صورة ${loadedCount}/${urls.length} (${p.toFixed(0)}%)`);
+                
+                if(p = 25) document.getElementById('bulb-4')?.classList.add('on');
+                if(p = 50) document.getElementById('bulb-3')?.classList.add('on');
+                if(p = 75) document.getElementById('bulb-2')?.classList.add('on');
                 if(loadedCount === urls.length) {
                     document.getElementById('bulb-1')?.classList.add('on');
+                    console.log('✓ اكتمل تحميل جميع الصور');
+                    
                     mainSvg.querySelectorAll('image').forEach(si => {
                         const actualSrc = si.getAttribute('data-src');
                         if(actualSrc) si.setAttribute('href', actualSrc);
@@ -633,6 +652,7 @@ window.onload = function() {
                     setTimeout(() => {
                         hideLoadingScreen();
                         mainSvg.style.opacity = '1'; 
+                        console.log('استدعاء scan() بعد تحميل الصور');
                         scan(); 
                         updateWoodInterface(); 
                         goToMapEnd(); 
@@ -670,18 +690,18 @@ window.onload = function() {
 
     // التحقق من وجود مجموعة محفوظة
     const hasSavedGroup = loadSelectedGroup();
-    
+
     if (hasSavedGroup) {
         // إذا كان المستخدم قد اختار مجموعة من قبل، نبدأ التحميل مباشرة
         console.log('تحميل المجموعة المحفوظة:', currentGroup);
         initializeGroup(currentGroup, true);
     } else {
-        // إذا لم يختار، نعرض شاشة الاختيار ونخفي التحميل
+        // إذا لم يختر، نعرض شاشة الاختيار ونخفي التحميل
         console.log('لا توجد مجموعة محفوظة - عرض شاشة الاختيار');
         loadingOverlay.classList.remove('active');
         loadingOverlay.style.display = 'none';
         groupSelectionScreen.classList.remove('hidden');
-        
+
         // إخفاء عناصر التحكم حتى يتم اختيار مجموعة
         toggleContainer.style.display = 'none';
         scrollContainer.style.display = 'none';
