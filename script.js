@@ -105,10 +105,10 @@ function updateLoadProgress() {
     const progress = (loadedBytes / totalBytes) * 100;
     console.log(`📊 التقدم: ${Math.round(progress)}%`);
 
-    if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
-    if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
-    if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
-    if (progress >= 100) document.getElementById('bulb-1')?.classList.add('on');
+    if (progress >= 20) document.getElementById('bulb-4')?.classList.add('on');
+    if (progress >= 40) document.getElementById('bulb-3')?.classList.add('on');
+    if (progress >= 60) document.getElementById('bulb-2')?.classList.add('on');
+    if (progress >= 80) document.getElementById('bulb-1')?.classList.add('on');
 }
 
 function estimateFileSize(url) {
