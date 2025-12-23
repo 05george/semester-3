@@ -517,19 +517,27 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
 }, false);
 
 };
-document.addEventListener("DOMContentLoaded", function() {
-  const containers = document.querySelectorAll('.external-week');
-  
-  containers.forEach(container => {
-    const url = container.getAttribute('data-src');
-    
-    fetch(url)
-      .then(response => response.text())
-      .then(data => {
-        container.innerHTML = data;
-        // إذا كان الجافا سكريبت الخاص بك يحتاج لعمل "تعريف" للعناصر الجديدة
-        // يمكنك استدعاء وظيفة الـ Click listeners هنا إذا لم تكن تعمل تلقائياً
-      })
-      .catch(err => console.error('Error loading SVG:', err));
-  });
+
+window.addEventListener('DOMContentLoaded', () => {
+    // نبحث عن كل المجموعات التي تحتوي على مسار ملف خارجي
+    const externalGroups = document.querySelectorAll('g[data-src]');
+
+    externalGroups.forEach(group => {
+        const filePath = group.getAttribute('data-src');
+
+        fetch(filePath)
+            .then(response => response.text())
+            .then(svgContent => {
+                // نحول النص إلى عناصر SVG حقيقية
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgContent, "image/svg+xml");
+                const importedContent = doc.documentElement;
+
+                // ننقل المحتوى داخل الـ <g> في صفحتنا
+                while (importedContent.firstChild) {
+                    group.appendChild(importedContent.firstChild);
+                }
+            })
+            .catch(err => console.error('خطأ في تحميل الملف: ' + filePath, err));
+    });
 });
