@@ -77,8 +77,6 @@ window.onload = function() {
     scrollContainer = document.getElementById('scroll-container');
     clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
     searchInput = document.getElementById('search-input');
-}
-window.onload = function() {
 const groups = [
     { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
     { id: "B", name: "المجموعة B", folder: "group-B", logo: "logo-B.webp", woodLogo: "logo-wood-B.webp", svg: "groups/group-B.svg" },
