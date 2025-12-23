@@ -557,3 +557,21 @@ changeGroupBtn.onclick = () => {
     // 5. تحديث واجهة الخشب
     updateWoodInterface();
 };
+async function loadNewGroupSVG(svgPath) {
+    try {
+        const response = await fetch(svgPath);
+        const svgText = await response.text();
+        
+        // افترضنا أن الـ SVG الجديد سيتم حقنه داخل عنصر g معين أو استبدال أجزاء
+        // الأفضل هو استبدال محتوى مجموعة داخل الـ main-svg مخصصة للخرائط
+        const mapContainer = document.getElementById('map-content-group'); 
+        if (mapContainer) {
+            mapContainer.innerHTML = svgText;
+            // إعادة تشغيل مسح المربعات ليتعرف الكود على المربعات الجديدة
+            setTimeout(scan, 100); 
+        }
+    } catch (err) {
+        console.error("فشل تحميل ملف المجموعة:", err);
+    }
+}
+
