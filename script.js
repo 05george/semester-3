@@ -70,7 +70,14 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('Service Worker Failed', err));
   });
 }
+let mainSvg, scrollContainer, clipDefs, searchInput; 
 
+window.onload = function() {
+    mainSvg = document.getElementById('main-svg');
+    scrollContainer = document.getElementById('scroll-container');
+    clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
+    searchInput = document.getElementById('search-input');
+}
 window.onload = function() {
 const groups = [
     { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
@@ -82,8 +89,6 @@ let currentRootFolder = "";
     const changeGroupBtn = document.getElementById('change-group-btn');
     const groupBtnText = document.getElementById('group-btn-text');
     let loadedCount = 0;
-    const mainSvg = document.getElementById('main-svg');
-    const scrollContainer = document.getElementById('scroll-container');
     const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
