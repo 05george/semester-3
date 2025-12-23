@@ -260,22 +260,25 @@ html, body {
 
 /* تنسيق عارض PDF المنبثق */
 #pdf-overlay {
-  height: 100svh;
-  transition: transform .35s ease, opacity .35s ease;
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100svh; /* استخدام svh لضمان تغطية الشاشة بالكامل */
   background: #000;
-  z-index: 20000;
+  z-index: 20000; /* يجب أن يكون أعلى من كل شيء */
   display: flex;
   flex-direction: column;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  opacity: 1;
+  visibility: visible;
 }
 
+/* الحالة الافتراضية: مخفي تماماً */
 #pdf-overlay.hidden {
-  transform: translateY(100%);
-  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none; /* لمنع التفاعل معه وهو مخفي */
 }
 
 #toolbar {
