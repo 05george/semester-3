@@ -202,14 +202,14 @@ body {
 /* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
-    transform: scale(0.85);
+    zoom: 0.78;
   }
 }
 
 @media (max-width: 480px) {
   #group-buttons {
     grid-template-columns: 1fr;
-    gap: 15px;
+gap: 15px;
   }
 
   .group-btn {
