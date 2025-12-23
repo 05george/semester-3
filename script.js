@@ -252,7 +252,7 @@ window.onload = function() {
     }
 
 // الذهاب للنهاية (أقصى اليمين)
-const goToWood = () => {
+goToWood = () => {
     const scrollContainer = document.getElementById('scroll-container');
 
     scrollContainer.scrollTo({ 
@@ -261,7 +261,7 @@ const goToWood = () => {
     });
 };
 
-const goToMapEnd = () => {
+goToMapEnd = () => {
     const scrollContainer = document.getElementById('scroll-container');
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
