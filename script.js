@@ -369,7 +369,8 @@ window.onload = function() {
                     const isDir = pathParts.length > 1 || item.type === 'tree';
                     const isPdf = item.path.toLowerCase().endsWith('.pdf');
 
-                    if (isDir && name !== 'image') {
+     if (isDir && name !== 'image' && name !== 'groups') {
+
                         itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
                     } else if (isPdf && pathParts.length === 1) {
                         itemsMap.set(name, { name: name, type: 'file', path: item.path });
