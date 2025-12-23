@@ -86,9 +86,9 @@ window.onload = function() {
     const backBtnText = document.getElementById('back-btn-text');
 // تحديد العناصر
 const groupButtons = document.querySelectorAll('.group-btn');
-const loadingOverlay = document.getElementById('loading-overlay');
+loadingOverlay = document.getElementById('loading-overlay');
 const splashImg = document.getElementById('splash-image');
-const mainSvg = document.getElementById('main-svg');
+mainSvg = document.getElementById('main-svg');
 
 groupButtons.forEach(btn => {
     btn.onclick = function() {
