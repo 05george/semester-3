@@ -89,7 +89,7 @@ html, body {
   transition: opacity .5s ease-out, transform .5s ease-out;
 }
 
-/* ===== تعديل أمان لمنع أي خروج أفقي ===== */
+/* منع أي سحب أفقي */
 body {
   overflow-x: hidden;
 }
@@ -100,13 +100,16 @@ body {
   pointer-events: none;
 }
 
+/* ===== هنا الحل الأساسي ===== */
 #group-selection-content {
   text-align: center;
   width: 90%;
   max-width: 600px;
-
-  /* ===== تعديل أمان ===== */
   box-sizing: border-box;
+
+  /* تصغير نسبي ذكي حسب ارتفاع الشاشة */
+  transform: scale(clamp(0.82, 0.9 + 0.2vh, 1));
+  transform-origin: center top;
 }
 
 #main-logo {
@@ -121,16 +124,12 @@ body {
 
 #group-selection-content h1 {
   color: #ffcc00;
-
-  /* ===== تعديل ذكي لحجم الخط ===== */
   font-size: clamp(1.2rem, 4vw, 2rem);
-
   margin-bottom: 40px;
   text-transform: uppercase;
   letter-spacing: 3px;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 
-  /* ===== منع خروج النص ===== */
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -141,8 +140,6 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   padding: 0 20px;
-
-  /* ===== أمان ===== */
   box-sizing: border-box;
 }
 
@@ -190,9 +187,6 @@ body {
   font-weight: bold;
   color: #ffcc00;
   text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
-
-  /* ===== أمان ===== */
-  max-width: 100%;
 }
 
 .group-label {
@@ -201,14 +195,19 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
 
-  /* ===== منع خروج النص ===== */
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
   text-align: center;
 }
 
-/* ===== تحسين الموبايل ===== */
+/* ===== موبايل صغير جدًا ===== */
+@media (max-height: 700px) {
+  #group-selection-content {
+    transform: scale(0.85);
+  }
+}
+
 @media (max-width: 480px) {
   #group-buttons {
     grid-template-columns: 1fr;
@@ -230,8 +229,6 @@ body {
 
   #group-selection-content h1 {
     margin-bottom: 25px;
-
-    /* ===== تقليل التمدد ===== */
     letter-spacing: 1px;
   }
 
