@@ -801,14 +801,3 @@ if (hasSavedGroup) {
     if (toggleContainer) toggleContainer.style.display = 'none';
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
-📋 ملخص التغييرات الرئيسية:
-✅ 1. عكس الاتجاهات:
-// من اليسار إلى اليمين
-window.goToWood = () => {
-    scrollContainer.scrollTo({ left: 0, behavior: 'smooth' }); // أقصى اليسار
-};
-
-window.goToMapEnd = () => {
-    const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-    scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' }); // أقصى اليمين
-};
