@@ -1,11 +1,12 @@
-/* --- 1. الجذر وإعدادات المحرك (Core Engine) --- */
+/* --- 1. الجذر والمتغيرات المركزية (Global Variables) --- */
 :root {
+  /* منع تكبير النصوص التلقائي وضمان عرض Light Mode */
   color-scheme: only light !important;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
 
-  /* الألوان الوظيفية للماب */
+  /* الألوان السداسية الأصلية (لا تقم بتغيير المسميات لضمان الربط) */
   --color-q: #ff4d4d; /* أسئلة */
   --color-v: #4da6ff; /* فيديو */
   --color-i: #ffffff; /* مواد أخرى */
@@ -13,14 +14,14 @@
   --color-s: #4dff88; /* عملي */
   --color-l: #ffff4d; /* محاضرات */
 
-  /* ألوان الواجهة الاحترافية */
-  --ui-bg: rgba(15, 15, 15, 0.85);
-  --ui-border: rgba(255, 255, 255, 0.15);
-  --gold: #ffcc00;
-  --wood-dark: #3e2723;
+  /* نظام الألوان للواجهة (UI Glassmorphism) */
+  --ui-glass-bg: rgba(15, 15, 15, 0.85);
+  --ui-glass-border: rgba(255, 255, 255, 0.15);
+  --gold-main: #ffcc00;
+  --black-solid: #000000;
 }
 
-/* ريست شامل لضمان توحيد الرؤية في موزيلا */
+/* --- 2. ريست شامل وتحسينات الأداء (Reset & Performance) --- */
 *, *::before, *::after {
   box-sizing: border-box !important;
   -webkit-tap-highlight-color: transparent;
@@ -31,19 +32,18 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100vh;
-  height: 100svh;
+  height: 100svh; /* توافق مع شاشات الموبايل الحديثة */
   width: 100vw;
   overflow: hidden;
-  background-color: #000 !important;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  touch-action: none; /* منع الزووم الافتراضي للمتصفح للتحكم به يدوياً */
+  background-color: var(--black-solid) !important;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  touch-action: none; /* تحكم يدوي كامل في الإيماءات */
 }
 
-/* --- 2. نظام التمرير والحاوية العظمى (The Matrix) --- */
+/* --- 3. حاوية التمرير والماب (The Matrix Scroll) --- */
 #scroll-container {
   width: 100vw;
-  height: 100vh;
-  height: 100svh;
+  height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   display: block;
@@ -51,37 +51,37 @@ html, body {
   position: relative;
   direction: ltr; /* التمرير من اليسار لليمين برمجياً */
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  background: #000;
-  /* تحسينات موزيلا للتمرير */
+  background-color: var(--black-solid);
+  /* تحسينات Firefox الخاصة بالتمرير */
   scrollbar-width: thin;
-  scrollbar-color: #444 #000;
+  scrollbar-color: #444 var(--black-solid);
+  -webkit-overflow-scrolling: touch;
 }
 
 #main-svg {
-  height: 100.1%; /* كسر بسيط لمنع ظهور حواف بيضاء في موزيلا */
+  height: 100%;
   width: auto;
   display: inline-block;
   vertical-align: top;
   transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
-  /* تحسين رندر الصور في موزيلا وكروم */
+  /* منع التشوه (Blur) في الصور عند التكبير في موزيلا وكروم */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
-  -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* --- 3. عناصر الماب التفاعلية (Interactive Layers) --- */
+/* --- 4. العناصر التفاعلية (SVG Shapes) --- */
 .m {
   fill: transparent;
   stroke: transparent;
   stroke-width: 2.5px;
-  vector-effect: non-scaling-stroke; /* أهم خاصية لثبات السمك عند الزووم */
+  /* يحافظ على سمك الخط ثابتاً مهما كان مستوى الزووم */
+  vector-effect: non-scaling-stroke; 
   transition: filter 0.3s ease, stroke 0.3s ease;
   cursor: pointer;
 }
 
-/* ربط الكلاسات بالألوان المتغيرة */
+/* ربط الفئات السداسية بالألوان */
 .q { stroke: var(--color-q); }
 .v { stroke: var(--color-v); }
 .i { stroke: var(--color-i); }
@@ -89,71 +89,82 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
-/* --- 4. شاشة اختيار المجموعة (The Vault) --- */
+/* --- 5. شاشة اختيار المجموعة (Group Selection) --- */
 #group-selection-screen {
   position: fixed;
   inset: 0;
   z-index: 100000;
   background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(15px);
+  transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 #group-selection-screen.hidden {
   opacity: 0;
   visibility: hidden;
-  transform: scale(1.1);
+  pointer-events: none;
+}
+
+#group-selection-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  max-width: 500px;
+}
+
+#group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
 }
 
 .group-btn {
-  background: linear-gradient(145deg, #222, #111);
-  border: 1px solid var(--ui-border);
-  border-radius: 24px;
-  padding: 30px 20px;
-  min-width: 140px;
+  background: linear-gradient(145deg, #2a2a2a, #151515);
+  border: 1px solid var(--ui-glass-border);
+  border-radius: 20px;
+  padding: 25px 15px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
 .group-btn:hover {
-  border-color: var(--gold);
+  border-color: var(--gold-main);
   transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(255, 204, 0, 0.2);
+  box-shadow: 0 15px 30px rgba(255, 204, 0, 0.2);
 }
 
 .group-letter {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 900;
-  color: var(--gold);
-  line-height: 1;
-  text-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+  color: var(--gold-main);
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
 }
 
-/* --- 5. نظام البحث والتحكم (Control Center) --- */
+/* --- 6. نظام البحث والتحكم (Control UI) --- */
 #js-toggle-container {
   position: fixed;
   right: 20px;
   z-index: 10000;
+  padding: 15px;
+  background: var(--ui-glass-bg);
+  border: 1px solid var(--ui-glass-border);
+  border-radius: 15px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  width: 180px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 15px;
-  background: var(--ui-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--ui-border);
-  border-radius: 18px;
-  width: 190px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-  transition: top 0.4s ease, bottom 0.4s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 
 #js-toggle-container.top { top: 20px; }
@@ -161,70 +172,23 @@ html, body {
 
 #search-input {
   width: 100%;
-  height: 42px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
   color: #fff;
-  padding: 0 10px 0 40px;
-  font-size: 14px;
+  padding: 10px 10px 10px 38px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
-.clickable-area {
-  position: absolute;
-  left: 5px;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
-}
-
-/* --- 6. شاشة التحميل (Cyber Loading) --- */
-#loading-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#splash-image {
-  width: 320px;
-  max-width: 80vw;
-  border-radius: 25px;
-  animation: pulse-glow 2s infinite ease-in-out;
-}
-
-.light-bulb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  margin: 0 8px;
-  transition: all 0.3s ease;
-}
-
-.light-bulb.on {
-  background: var(--gold);
-  box-shadow: 0 0 20px var(--gold), 0 0 40px #ff9900;
-  border-color: #fff;
-}
-
-/* --- 7. عارض ملفات PDF (The Theater) --- */
+/* --- 7. عارض ملفات PDF (The Vault) --- */
 #pdf-overlay {
   position: fixed;
   inset: 0;
   z-index: 200000;
-  background: #000;
+  background: var(--black-solid);
   display: flex;
   flex-direction: column;
-  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #pdf-overlay.hidden {
@@ -232,7 +196,7 @@ html, body {
 }
 
 #toolbar {
-  height: 65px;
+  height: 60px;
   background: #111;
   border-bottom: 1px solid #222;
   display: flex;
@@ -241,73 +205,76 @@ html, body {
   padding: 0 20px;
 }
 
-.toolbar-btn {
-  background: #222;
-  color: #fff;
-  border: 1px solid #333;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
+/* --- 8. شاشة التحميل (Cyber Loading) --- */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: var(--black-solid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease;
 }
 
-.toolbar-btn:active { transform: scale(0.95); background: #333; }
+#splash-image {
+  width: 300px;
+  max-width: 80vw;
+  border-radius: 20px;
+  animation: logo-glow 2.5s infinite ease-in-out;
+}
 
-/* --- 8. عناصر الـ SVG الديناميكية (Dynamic UI) --- */
+.light-bulb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  margin: 0 10px;
+  transition: all 0.4s ease;
+}
+
+.light-bulb.on {
+  background: var(--gold-main);
+  box-shadow: 0 0 15px var(--gold-main), 0 0 30px #ff9900;
+}
+
+/* --- 9. نصوص وخلفيات الـ SVG الديناميكية --- */
 .label-bg {
-  rx: 5;
-  ry: 5;
-  fill: #000;
-  fill-opacity: 0.88;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  rx: 4; ry: 4;
+  fill: var(--black-solid);
+  fill-opacity: 0.9;
 }
 
 .rect-label {
-  font-weight: 800;
+  font-weight: bold;
   fill: #ffffff;
   pointer-events: none;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  dominant-baseline: middle; /* تحسين تموضع النص في موزيلا */
+  /* تحسين تموضع النص في Firefox */
+  dominant-baseline: central; 
 }
 
-/* --- 9. ميديا كويري للهواتف (Optimization) --- */
+/* --- 10. توافق الهواتف ومنع التحديد --- */
 @media (max-width: 480px) {
   #js-toggle-container {
-    width: 160px;
+    width: 155px;
     right: 12px;
     padding: 10px;
   }
-  
-  .group-btn {
-    padding: 20px 10px;
-    min-width: 120px;
-  }
-  
-  .group-letter { font-size: 2.5rem; }
-  
-  #splash-image { width: 240px; }
+  .group-letter { font-size: 2.2rem; }
+  #splash-image { width: 220px; }
 }
 
-/* --- 10. الحركات (Animations) --- */
-@keyframes pulse-glow {
-  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 204, 0, 0.2)); }
-  50% { filter: brightness(1.2) drop-shadow(0 0 30px rgba(255, 204, 0, 0.5)); }
-}
-
-/* منع أي تحديد أو تداخل غير مقصود */
-img, image, svg, rect, text, div {
+/* منع التحديد العشوائي والقوائم المنبثقة للصور */
+img, image, svg, rect, text {
   -webkit-user-select: none;
   -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
-/* إضافة لمسة لموزيلا لجعل التمرير انسيابي أكثر */
-@-moz-document url-prefix() {
-  #scroll-container {
-    scroll-snap-type: none;
-    overflow-x: scroll;
-  }
+/* أنيميشن التوهج */
+@keyframes logo-glow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 204, 0, 0.2)); }
+  50% { filter: brightness(1.1) drop-shadow(0 0 25px rgba(255, 204, 0, 0.5)); }
 }
