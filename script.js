@@ -8,11 +8,14 @@ const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REP
 
 let globalFileTree = []; 
 let currentGroup = null;
-let loadedCount = 0;
 let currentFolder = ""; 
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
 const TAP_THRESHOLD_MS = 300;
+
+// متغيرات مراقبة التحميل
+let totalResources = 0;
+let loadedResources = 0;
 
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -40,16 +43,58 @@ if (jsToggle) {
     interactionEnabled = jsToggle.checked;
 }
 
+// دالة تحديث نسبة التحميل
+function updateLoadingProgress() {
+    if (totalResources === 0) return;
+    
+    const percentage = (loadedResources / totalResources) * 100;
+    console.log(`📊 نسبة التحميل: ${percentage.toFixed(1)}% (${loadedResources}/${totalResources})`);
+    
+    // إضاءة المصابيح حسب النسبة
+    if (percentage >= 25) {
+        document.getElementById('bulb-4')?.classList.add('on');
+        console.log('🔴 المصباح الأحمر: 25%');
+    }
+    if (percentage >= 50) {
+        document.getElementById('bulb-3')?.classList.add('on');
+        console.log('🟠 المصباح البرتقالي: 50%');
+    }
+    if (percentage >= 75) {
+        document.getElementById('bulb-2')?.classList.add('on');
+        console.log('🟡 المصباح الأصفر: 75%');
+    }
+    if (percentage >= 90) {
+        document.getElementById('bulb-1')?.classList.add('on');
+        console.log('🟢 المصباح الأخضر: 90%');
+    }
+    
+    // الانتهاء الكامل
+    if (loadedResources === totalResources) {
+        console.log('✅ اكتمل تحميل جميع الموارد 100%');
+        finishLoading();
+    }
+}
+
+// دالة لتسجيل مورد محمّل
+function resourceLoaded() {
+    loadedResources++;
+    updateLoadingProgress();
+}
+
 // 2. دالة جلب البيانات
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
+    totalResources++; // مورد واحد: GitHub API
+    
     try {
         const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
-        console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
+        console.log("✓ تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
+        resourceLoaded();
     } catch (err) {
         console.error("خطأ في الاتصال بـ GitHub:", err);
+        resourceLoaded(); // احسبها محملة حتى لو فشلت
     }
 }
 
@@ -69,27 +114,27 @@ function loadSelectedGroup() {
 
 function showLoadingScreen(groupLetter) {
     if (!loadingOverlay) return;
-    
+
     const splashImage = document.getElementById('splash-image');
     if (splashImage) {
         splashImage.src = `image/logo-${groupLetter}.webp`;
     }
-    
+
     // إعادة تعيين المصابيح
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
-    
+
     // إظهار فوري
     loadingOverlay.classList.add('active');
-    
+
     console.log(`🔦 تم تفعيل شاشة التحميل للمجموعة ${groupLetter}`);
 }
 
 function hideLoadingScreen() {
     if (!loadingOverlay) return;
-    
+
     // إخفاء فوري بدون أي تأخير
     loadingOverlay.classList.remove('active');
-    
+
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
@@ -97,6 +142,8 @@ function hideLoadingScreen() {
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     groupContainer.innerHTML = '';
+    
+    totalResources++; // مورد واحد: ملف SVG
 
     try {
         console.log(`🔄 محاولة تحميل: groups/group-${groupLetter}.svg`);
@@ -104,6 +151,7 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            resourceLoaded();
             return;
         }
 
@@ -116,9 +164,12 @@ async function loadGroupSVG(groupLetter) {
             groupContainer.innerHTML = match[1];
             console.log(`✓ تم حقن المحتوى: ${groupContainer.children.length} عنصر`);
 
-            // **تفعيل الصور المحقونة**
+            // **حساب الصور في SVG المحقون**
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور في SVG المحقون: ${injectedImages.length}`);
+            
+            // إضافة عدد الصور إلى إجمالي الموارد
+            totalResources += injectedImages.length;
 
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
@@ -127,12 +178,16 @@ async function loadGroupSVG(groupLetter) {
                     console.log(`  ↳ تم تفعيل: ${src}`);
                 }
             });
+            
+            resourceLoaded(); // SVG محمّل
 
         } else {
             console.error('❌ فشل استخراج محتوى SVG');
+            resourceLoaded();
         }
     } catch (err) {
         console.error(`❌ خطأ في loadGroupSVG:`, err);
+        resourceLoaded();
     }
 }
 
@@ -160,6 +215,10 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     console.log(`📌 تحميل أولي: ${isInitialLoad}`);
     console.log('========================================');
 
+    // إعادة تعيين عداد التحميل
+    totalResources = 0;
+    loadedResources = 0;
+
     saveSelectedGroup(groupLetter);
 
     if (toggleContainer) toggleContainer.style.display = 'flex';
@@ -177,11 +236,9 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     if (isInitialLoad) {
         window.loadImages();
     } else {
-        hideLoadingScreen();
-        if (mainSvg) mainSvg.style.opacity = '1';
-        window.scan();
-        window.updateWoodInterface();
-        window.goToMapEnd();
+        // عند تغيير المجموعة، انتهى التحميل
+        loadedResources = totalResources;
+        updateLoadingProgress();
     }
 }
 
@@ -277,7 +334,7 @@ function debounce(func, delay) {
 // ===== دالة تحديث الأحجام محسّنة =====
 function updateDynamicSizes() {
     if (!mainSvg) return;
-    
+
     const allImages = mainSvg.querySelectorAll('image[width="1024"][height="2454"]');
     console.log(`📏 إعادة حساب viewBox: وجدنا ${allImages.length} صورة`);
 
@@ -347,7 +404,7 @@ function cleanupHover() {
 function startHover() {  
     if (!interactionEnabled || this.classList.contains('list-item')) return;
     if (!mainSvg || !clipDefs) return;
-    
+
     const rect = this;  
     if (activeState.rect === rect) return;  
     cleanupHover();  
@@ -453,7 +510,7 @@ function wrapText(el, maxW) {
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup || !backBtnText) return;
-    
+
     dynamicGroup.innerHTML = ''; 
     await fetchGlobalTree();
 
@@ -531,7 +588,7 @@ window.updateWoodInterface = updateWoodInterface;
 
 function applyWoodSearchFilter() {
     if (!searchInput || !mainSvg) return;
-    
+
     const query = searchInput.value.toLowerCase().trim();
     mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
         const name = group.querySelector('text').getAttribute('data-search-name') || "";
@@ -558,212 +615,4 @@ function processRect(r) {
         r.parentNode.appendChild(txt); wrapText(txt, w);
         const bbox = txt.getBBox();
         const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
-        bg.setAttribute('class', 'label-bg'); bg.setAttribute('data-original-for', href);
-        bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
-        r.parentNode.insertBefore(bg, txt);
-    }
-    if (!isTouchDevice) { 
-        r.addEventListener('mouseover', startHover); 
-        r.addEventListener('mouseout', cleanupHover); 
-    }
-    r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
-    
-    if (scrollContainer) {
-        r.addEventListener('touchstart', function(e) { 
-            if(!interactionEnabled) return; 
-            activeState.touchStartTime = Date.now(); 
-            activeState.initialScrollLeft = scrollContainer.scrollLeft; 
-            startHover.call(this); 
-        });
-        r.addEventListener('touchend', function(e) { 
-            if (!interactionEnabled) return;
-            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if (href && href !== '#') window.open(href, '_blank');
-            }
-            cleanupHover();
-        });
-    }
-    
-    r.setAttribute('data-processed', 'true');
-}
-
-function scan() { 
-    if (!mainSvg) return;
-    
-    console.log('🔍 تشغيل scan()...');
-    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
-    console.log(`✓ تم اكتشاف ${rects.length} مستطيل`);
-    rects.forEach(r => processRect(r)); 
-}
-window.scan = scan;
-
-function loadImages() {
-    if (!mainSvg) return;
-    
-    const urls = Array.from(mainSvg.querySelectorAll('image'))
-                  .map(img => img.getAttribute('data-src'))
-                  .filter(src => src !== null && src !== "");
-
-    console.log(`🖼️ بدء تحميل ${urls.length} صورة...`);
-
-    if (urls.length === 0) {
-        console.warn('⚠️ لا توجد صور للتحميل!');
-        finishLoading();
-        return;
-    }
-
-    // إعادة تعيين العداد
-    loadedCount = 0;
-
-    urls.forEach((u) => {
-        const img = new Image();
-
-        const onImageLoad = () => {
-            loadedCount++;
-            const progress = (loadedCount / urls.length) * 100;
-
-            // توزيع المصابيح: كل مصباح يمثل 25% من التقدم
-            if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
-
-            // المصباح الأخير يضيء عند الاكتمال التام
-            if (loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                console.log('✓ اكتمل تحميل جميع الصور');
-
-                // تحديث الصور في الـ SVG
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-
-                // إنهاء التحميل فورًا
-                finishLoading();
-            }
-        };
-
-        img.onload = onImageLoad;
-        img.onerror = onImageLoad; 
-        img.src = u;
-    });
-}
-
-// دالة مساعدة لإنهاء التحميل وعرض المحتوى
-function finishLoading() {
-    hideLoadingScreen();
-    
-    if (mainSvg) mainSvg.style.opacity = '1';
-    
-    window.updateDynamicSizes();
-    scan();
-    updateWoodInterface();
-    window.goToMapEnd();
-    
-    console.log('🎉 اكتمل التحميل والعرض');
-}
-window.loadImages = loadImages;
-
-// ===== تهيئة مستمعي الأحداث =====
-document.querySelectorAll('.group-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const group = this.getAttribute('data-group');
-        console.log('👆 تم اختيار المجموعة:', group);
-        initializeGroup(group, true);
-    });
-});
-
-if (changeGroupBtn) {
-    changeGroupBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        window.goToMapEnd();
-    });
-}
-
-if (searchInput) {
-    searchInput.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            window.goToWood();
-        }
-    };
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        if (!mainSvg) return;
-        
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-        applyWoodSearchFilter();
-    }, 150));
-}
-
-if (moveToggle) {
-    moveToggle.onclick = (e) => {
-        e.preventDefault();
-        if (toggleContainer && toggleContainer.classList.contains('top')) {
-            toggleContainer.classList.replace('top', 'bottom');
-        } else if (toggleContainer) {
-            toggleContainer.classList.replace('bottom', 'top');
-        }
-    };
-}
-
-if (searchIcon) {
-    searchIcon.onclick = (e) => {
-        e.preventDefault();
-        window.goToWood();
-    };
-}
-
-if (backButtonGroup) {
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/'); 
-            window.updateWoodInterface(); 
-        } else { 
-            console.log("العودة إلى أقصى يمين الخريطة...");
-            window.goToMapEnd(); 
-        } 
-    };
-}
-
-if (jsToggle) {
-    jsToggle.addEventListener('change', function() { 
-        interactionEnabled = this.checked; 
-        if(!interactionEnabled) cleanupHover(); 
-    });
-}
-
-if (mainSvg) {
-    mainSvg.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    }, false);
-}
-
-// ===== البدء الفوري =====
-const hasSavedGroup = loadSelectedGroup();
-
-if (hasSavedGroup) {
-    console.log('📂 تحميل المجموعة المحفوظة:', currentGroup);
-    initializeGroup(currentGroup, true);
-} else {
-    console.log('❓ لا توجد مجموعة محفوظة');
-    if (loadingOverlay) {
-        loadingOverlay.classList.remove('active');
-        loadingOverlay.style.display = 'none';
-    }
-    if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-    if (toggleContainer) toggleContainer.style.display = 'none';
-    if (scrollContainer) scrollContainer.style.display = 'none';
-}
+        bg.setAttribute('x', x); bg
