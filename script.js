@@ -1,10 +1,12 @@
-const REPO_NAME = "semester-3"; 
+Const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "05george";
 
 // المتغيرات العالمية المبنية على اسم المستودع
 const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
+
+let globalFileTree = []; 
 
 // 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
 async function fetchGlobalTree() {
@@ -69,90 +71,31 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
-    let activeState = {
-        rect: null, zoomPart: null, zoomText: null, zoomBg: null,
-        baseText: null, baseBg: null, animationId: null, clipPathId: null,
-        touchStartTime: 0, initialScrollLeft: 0
-    };
-
-// المتغيرات العامة (خارج onload لضمان الوصول إليها من أي مكان)
-let mainSvg, scrollContainer, clipDefs, searchInput;
-let globalFileTree = [];
-const groups = [
-    { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
-    { id: "B", name: "المجموعة B", folder: "group-B", logo: "logo-B.webp", woodLogo: "logo-wood-B.webp", svg: "groups/group-B.svg" },
-    { id: "C", name: "المجموعة C", folder: "group-C", logo: "logo-C.webp", woodLogo: "logo-wood-C.webp", svg: "groups/group-C.svg" }
-];
-let currentGroupIndex = 0;
-let currentRootFolder = "group-A"; // القيمة الافتراضية
-let currentFolder = "group-A";
-
 window.onload = function() {
-    // 1. ربط العناصر
-    mainSvg = document.getElementById('main-svg');
-    scrollContainer = document.getElementById('scroll-container');
-    searchInput = document.getElementById('search-input');
-    clipDefs = mainSvg ? mainSvg.querySelector('defs') : null;
-
+    let loadedCount = 0;
+    const mainSvg = document.getElementById('main-svg');
+    const scrollContainer = document.getElementById('scroll-container');
+    const clipDefs = mainSvg.querySelector('defs');
     const loadingOverlay = document.getElementById('loading-overlay');
     const jsToggle = document.getElementById('js-toggle');
+    const searchInput = document.getElementById('search-input');
     const searchIcon = document.getElementById('search-icon');
     const moveToggle = document.getElementById('move-toggle');
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
-    const changeGroupBtn = document.getElementById('change-group-btn');
-    const groupBtnText = document.getElementById('group-btn-text');
 
-    let loadedCount = 0; // تعريف العداد
-    let interactionEnabled = jsToggle ? jsToggle.checked : true;
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
         baseText: null, baseBg: null, animationId: null, clipPathId: null,
         touchStartTime: 0, initialScrollLeft: 0
     };
 
-    // 2. معالجة الصور والتحميل
-    const images = mainSvg.querySelectorAll('image');
-    const urls = Array.from(images).map(img => img.getAttribute('data-src')).filter(src => src);
+    let currentFolder = ""; 
+    let interactionEnabled = jsToggle.checked;
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+    const TAP_THRESHOLD_MS = 300;
 
-    if (urls.length === 0) {
-        // إذا لم توجد صور (لحماية الكود من التوقف)
-        if(loadingOverlay) loadingOverlay.style.display = 'none';
-        scan(); updateWoodInterface();
-    }
-
-    urls.forEach((u) => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            let progress = (loadedCount / urls.length) * 100;
-            // تحديث اللمبات (Bulbs)
-            if(progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if(progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            
-            if(loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-                setTimeout(() => {
-                    if(loadingOverlay) {
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => { 
-                            loadingOverlay.style.display = 'none'; 
-                            mainSvg.style.opacity = '1'; 
-                            scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 500);
-                    }
-                }, 600);
-            }
-        };
-        img.src = u;
-    });
     // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
         if(!item || !item.path) return;
@@ -389,39 +332,32 @@ window.onload = function() {
         });
     }
 
-  async function updateWoodInterface() {
-    const dynamicGroup = document.getElementById('dynamic-links-group');
-    if (!dynamicGroup) return;
-    
-    // 1. مسح المحتوى القديم تماماً لتجنب التكرار
-    dynamicGroup.innerHTML = ''; 
-    await fetchGlobalTree();
+    async function updateWoodInterface() {
+        const dynamicGroup = document.getElementById('dynamic-links-group');
+        if (!dynamicGroup) return;
+        dynamicGroup.innerHTML = ''; 
+        await fetchGlobalTree();
 
-    // 2. تحديث نص زر الرجوع/المسار
-    if (currentFolder === currentRootFolder || currentFolder === "") {
-        backBtnText.textContent = "➡️ إلى الخريطة";
-    } else {
-        const pathParts = currentFolder.replace(currentRootFolder + '/', '').split('/');
-        backBtnText.textContent = `🔙 الرئيسية > ${pathParts.join(' > ')}`;
-    }
+        if (currentFolder === "") {
+            backBtnText.textContent = "➡️ إلى الخريطة";
+        } else {
+            const pathParts = currentFolder.split('/');
+            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+        }
 
-    // 3. إضافة لوجو الخشب الخاص بالمجموعة الحالية (في الصفحة الرئيسية للمجموعة فقط)
-    if (currentFolder === currentRootFolder || currentFolder === "") {
-        const activeGroup = groups[currentGroupIndex];
-        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-        banner.setAttribute("href", `image/${activeGroup.woodLogo}`); 
-        banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-        banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-        banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-        banner.style.pointerEvents = "none";
-        dynamicGroup.appendChild(banner);
-    }
+        if (currentFolder === "") {
+            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            banner.setAttribute("href", "image/logo-wood.webp"); 
+            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
+            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
+            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
+            banner.style.pointerEvents = "none";
+            dynamicGroup.appendChild(banner);
+        }
 
-    // 4. منطق الفلترة المجلدات والملفات (كما هو في كودك)
-    const folderPrefix = currentFolder ? currentFolder + '/' : '';
-    const itemsMap = new Map();
-    // ... بقية منطق الـ globalFileTree والـ filteredData كما في كودك الأصلي ...
-}
+        const folderPrefix = currentFolder ? currentFolder + '/' : '';
+        const itemsMap = new Map();
 
         globalFileTree.forEach(item => {
             if (item.path.startsWith(folderPrefix)) {
@@ -433,8 +369,7 @@ window.onload = function() {
                     const isDir = pathParts.length > 1 || item.type === 'tree';
                     const isPdf = item.path.toLowerCase().endsWith('.pdf');
 
-     if (isDir && name !== 'image' && name !== 'groups') {
-
+         if (isDir && name !== 'image' && name !== 'groups') {
                         itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
                     } else if (isPdf && pathParts.length === 1) {
                         itemsMap.set(name, { name: name, type: 'file', path: item.path });
@@ -480,9 +415,8 @@ window.onload = function() {
         applyWoodSearchFilter();
     }
 
- function applyWoodSearchFilter() {
-    if (!mainSvg) return;
-    const query = searchInput.value.toLowerCase().trim();
+    function applyWoodSearchFilter() {
+        const query = searchInput.value.toLowerCase().trim();
         mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
             const name = group.querySelector('text').getAttribute('data-search-name') || "";
             group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
@@ -528,6 +462,39 @@ window.onload = function() {
 
     function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
 
+    const urls = Array.from(mainSvg.querySelectorAll('image'))
+                  .map(img => img.getAttribute('data-src'))
+                  .filter(src => src !== null && src !== "");
+
+    urls.forEach((u, index) => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loadedCount++;
+            const p = (loadedCount / urls.length) * 100;
+            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            if(loadedCount === urls.length) {
+                document.getElementById('bulb-1')?.classList.add('on');
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const actualSrc = si.getAttribute('data-src');
+                    if(actualSrc) si.setAttribute('href', actualSrc);
+                });
+                setTimeout(() => {
+                    if(loadingOverlay) {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => { 
+                            loadingOverlay.style.display = 'none'; 
+                            mainSvg.style.opacity = '1'; 
+                            scan(); updateWoodInterface(); goToMapEnd(); 
+                        }, 500);
+                    }
+                }, 600);
+            }
+        };
+        img.src = u;
+    });
+
     searchInput.addEventListener('input', debounce(function(e) {
         const query = e.target.value.toLowerCase().trim();
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
@@ -549,43 +516,4 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
     e.preventDefault();
 }, false);
 
-changeGroupBtn.onclick = () => {
-    // الانتقال للمجموعة التالية
-    currentGroupIndex = (currentGroupIndex + 1) % groups.length;
-    const activeGroup = groups[currentGroupIndex];
-
-    // 1. تحديث نص الزر
-    groupBtnText.textContent = `📂 ${activeGroup.name}`;
-
-    // 2. تحديث المجلدات للـ API
-    currentRootFolder = activeGroup.folder;
-    currentFolder = activeGroup.folder;
-
-    // 3. تحديث الصور (لوجو السبلاش ولوجو الخشب)
-    const splashLogo = document.getElementById('splash-logo'); // تأكد من وجود ID له
-    if(splashLogo) splashLogo.setAttribute('href', `image/${activeGroup.logo}`);
-    
-    // 4. تحديث الـ SVG الرئيسي (المربعات والأسابيع)
-    // ملاحظة: هذا يتطلب تحميل محتوى الـ SVG الجديد داخل الـ container
-    loadNewGroupSVG(activeGroup.svg);
-
-    // 5. تحديث واجهة الخشب
-    updateWoodInterface();
 };
-async function loadNewGroupSVG(svgPath) {
-    try {
-        const response = await fetch(svgPath);
-        const svgText = await response.text();
-        
-        // افترضنا أن الـ SVG الجديد سيتم حقنه داخل عنصر g معين أو استبدال أجزاء
-        // الأفضل هو استبدال محتوى مجموعة داخل الـ main-svg مخصصة للخرائط
-        const mapContainer = document.getElementById('map-content-group'); 
-        if (mapContainer) {
-            mapContainer.innerHTML = svgText;
-            // إعادة تشغيل مسح المربعات ليتعرف الكود على المربعات الجديدة
-            setTimeout(scan, 100); 
-        }
-    } catch (err) {
-        console.error("فشل تحميل ملف المجموعة:", err);
-    }
-}
