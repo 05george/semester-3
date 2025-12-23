@@ -665,7 +665,6 @@ function processRect(r) {
 
     r.setAttribute('data-processed', 'true');
 }
-
 function scan() { 
     if (!mainSvg) return;
 
