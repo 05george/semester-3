@@ -84,6 +84,49 @@ window.onload = function() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+// تحديد العناصر
+const groupButtons = document.querySelectorAll('.group-btn');
+const loadingOverlay = document.getElementById('loading-overlay');
+const splashImg = document.getElementById('splash-image');
+const mainSvg = document.getElementById('main-svg');
+
+groupButtons.forEach(btn => {
+    btn.onclick = function() {
+        const groupName = this.getAttribute('data-group'); // A or B
+        const splashSrc = this.getAttribute('data-splash');
+        const svgFile = this.getAttribute('data-svg-file');
+
+        // 1. إظهار شاشة التحميل
+        loadingOverlay.style.display = 'flex';
+        loadingOverlay.style.opacity = '1';
+
+        // 2. تغيير صورة الـ Splash حسب الجروب
+        if (splashImg) splashImg.src = splashSrc;
+
+        // 3. إضافة كلاس للـ Body أو الـ Container لتغيير التصميم بالـ CSS
+        document.body.className = ''; // مسح الكلاسات القديمة
+        document.body.classList.add(`group-mode-${groupName}`);
+
+        // 4. محاكاة تحميل البيانات (هنا يمكنك استدعاء دالة fetch لملف الـ SVG الجديد)
+        loadGroupData(groupName, svgFile);
+    };
+});
+
+async function loadGroupData(group, svgPath) {
+    // هنا ننتظر قليلاً لمحاكاة التحميل أو نقوم بجلب ملف الـ SVG برمجياً
+    console.log(`Loading data for Group: ${group}`);
+    
+    // مثال: تغيير الـ SVG (إذا كنت تستخدم ملفات منفصلة)
+    // أو ببساطة إخفاء شاشة التحميل بعد ثانية واحدة
+    setTimeout(() => {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+            // إخفاء قائمة اختيار الجروب بعد الاختيار
+            document.getElementById('group-selector').style.display = 'none';
+        }, 500);
+    }, 1000); 
+}
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
