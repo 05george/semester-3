@@ -712,4 +712,4 @@ goToMapEnd();
         toggleContainer.style.display = 'none';
         scrollContainer.style.display = 'none';
     }
-};
+});
