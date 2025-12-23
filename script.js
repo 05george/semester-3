@@ -632,36 +632,50 @@ window.onload = function() {
             return;
         }
 
-        urls.forEach((u, index) => {
-            const img = new Image();
-            img.onload = img.onerror = () => {
-                loadedCount++;
-                const p = (loadedCount / urls.length) * 100;
-                
-                if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-                if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-                if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-                if(loadedCount === urls.length) {
-                    document.getElementById('bulb-1')?.classList.add('on');
-                    console.log('✓ اكتمل تحميل جميع الصور');
-                    
-                    mainSvg.querySelectorAll('image').forEach(si => {
-                        const actualSrc = si.getAttribute('data-src');
-                        if(actualSrc) si.setAttribute('href', actualSrc);
-                    });
-                    
-                    setTimeout(() => {
-                        hideLoadingScreen();
-                        mainSvg.style.opacity = '1';
-                        window.updateDynamicSizes();
-                        scan();
-                        updateWoodInterface();
-                        goToMapEnd();
-                    }, 600);
-                }
-            };
-            img.src = u;
-        });
+ urls.forEach((u) => {
+    const img = new Image();
+    
+    const onImageLoad = () => {
+        loadedCount++;
+        const p = (loadedCount / urls.length) * 100;
+
+        // توزيع عادل 25% لكل مصباح
+        // المصباح الأول يضيء عند 25%
+        if (p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+        // المصباح الثاني يضيء عند 50%
+        if (p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+        // المصباح الثالث يضيء عند 75%
+        if (p >= 75) document.getElementById('bulb-2')?.classList.add('on');
+        
+        // المصباح الرابع (الأخير) يضيء فقط عند الاكتمال التام 100%
+        if (loadedCount === urls.length) {
+            document.getElementById('bulb-1')?.classList.add('on');
+            
+            console.log('✓ اكتمل تحميل جميع الصور');
+
+            // تحديث الصور في الـ SVG
+            mainSvg.querySelectorAll('image').forEach(si => {
+                const actualSrc = si.getAttribute('data-src');
+                if(actualSrc) si.setAttribute('href', actualSrc);
+            });
+
+            // تأخير بسيط ليعطي المستخدم فرصة لرؤية المصباح الأخير قبل الإغلاق
+            setTimeout(() => {
+                hideLoadingScreen();
+                mainSvg.style.opacity = '1';
+                window.updateDynamicSizes();
+                scan();
+                updateWoodInterface();
+                goToMapEnd();
+            }, 800); // زيادة التأخير قليلاً لراحة العين
+        }
+    };
+
+    img.onload = onImageLoad;
+    img.onerror = onImageLoad; // حتى لو فشلت صورة، يستمر العداد ولا يتوقف التحميل
+    img.src = u;
+});
+
     }
     window.loadImages = loadImages;
 
