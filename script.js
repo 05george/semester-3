@@ -251,14 +251,14 @@ window.onload = function() {
         }
     }
 
-// الذهاب للنهاية (أقصى اليمين)
-goToWood = () => {
+window.goToWood = () => {
     const scrollContainer = document.getElementById('scroll-container');
-
-    scrollContainer.scrollTo({ 
-        left: 0,
-        behavior: 'smooth' 
-    });
+    if (scrollContainer) {
+        scrollContainer.scrollTo({ 
+            left: 0,
+            behavior: 'smooth' 
+        });
+    }
 };
 
 goToMapEnd = () => {
@@ -286,6 +286,12 @@ goToMapEnd = () => {
             toggleContainer.classList.replace('bottom', 'top');
         }
     };
+
+searchIcon.onclick = (e) => {
+    e.preventDefault();
+    window.goToWood();
+};
+
 
 backButtonGroup.onclick = () => { 
     if (currentFolder !== "") { 
