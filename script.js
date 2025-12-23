@@ -638,9 +638,9 @@ window.onload = function() {
                 const p = (loadedCount / urls.length) * 100;
                 console.log(`تم تحميل صورة ${loadedCount}/${urls.length} (${p.toFixed(0)}%)`);
                 
-                if(p = 25) document.getElementById('bulb-4')?.classList.add('on');
-                if(p = 50) document.getElementById('bulb-3')?.classList.add('on');
-                if(p = 75) document.getElementById('bulb-2')?.classList.add('on');
+                if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
+                if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
+                if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
                 if(loadedCount === urls.length) {
                     document.getElementById('bulb-1')?.classList.add('on');
                     console.log('✓ اكتمل تحميل جميع الصور');
