@@ -9,6 +9,7 @@ const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REP
 let globalFileTree = []; 
 let currentGroup = null;
 let loadedCount = 0;
+let totalLoadSteps = 0;
 let currentFolder = ""; 
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -48,8 +49,10 @@ async function fetchGlobalTree() {
         const data = await response.json();
         globalFileTree = data.tree || [];
         console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
+        updateLoadProgress(); // تحديث المصابيح
     } catch (err) {
         console.error("خطأ في الاتصال بـ GitHub:", err);
+        updateLoadProgress(); // تحديث حتى لو فشل
     }
 }
 
@@ -77,6 +80,10 @@ function showLoadingScreen(groupLetter) {
 
     // إعادة تعيين المصابيح
     document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
+    
+    // إعادة تعيين العداد
+    loadedCount = 0;
+    totalLoadSteps = 4; // 4 خطوات: جلب الشجرة + تحميل SVG + تحميل الصور + المعالجة
 
     // إظهار فوري
     loadingOverlay.classList.add('active');
@@ -93,6 +100,20 @@ function hideLoadingScreen() {
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
+// دالة تحديث المصابيح بناءً على التقدم
+function updateLoadProgress() {
+    loadedCount++;
+    const progress = (loadedCount / totalLoadSteps) * 100;
+
+    console.log(`📊 التقدم: ${Math.round(progress)}% (${loadedCount}/${totalLoadSteps})`);
+
+    // توزيع المصابيح: كل مصباح يمثل 25% من التقدم
+    if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
+    if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
+    if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
+    if (progress >= 100) document.getElementById('bulb-1')?.classList.add('on');
+}
+
 // ===== دالة تحميل SVG محسّنة =====
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
@@ -104,6 +125,7 @@ async function loadGroupSVG(groupLetter) {
 
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            updateLoadProgress();
             return;
         }
 
@@ -131,15 +153,23 @@ async function loadGroupSVG(groupLetter) {
         } else {
             console.error('❌ فشل استخراج محتوى SVG');
         }
+        
+        updateLoadProgress(); // تحديث المصابيح بعد تحميل SVG
     } catch (err) {
         console.error(`❌ خطأ في loadGroupSVG:`, err);
+        updateLoadProgress();
     }
 }
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
+    
+    // احذف الصورة القديمة فقط إن وجدت
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
+
+    // أضف الصورة الجديدة فقط إذا كنا في الصفحة الرئيسية
+    if (currentFolder !== "") return;
 
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
     banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`); 
@@ -168,20 +198,22 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
     showLoadingScreen(groupLetter);
 
-    await fetchGlobalTree();
-    await loadGroupSVG(groupLetter);
+    await fetchGlobalTree(); // خطوة 1
+    await loadGroupSVG(groupLetter); // خطوة 2
 
     // **إعادة حساب الأحجام بعد الحقن**
     window.updateDynamicSizes();
 
     if (isInitialLoad) {
-        window.loadImages();
+        window.loadImages(); // خطوة 3 (ستنتهي في finishLoading)
     } else {
+        updateLoadProgress(); // خطوة 3 (تخطي الصور)
         hideLoadingScreen();
         if (mainSvg) mainSvg.style.opacity = '1';
         window.scan();
         window.updateWoodInterface();
-        window.goToMapEnd();
+        window.goToWood(); // ✅ عكس الاتجاه: البداية من اليسار
+        updateLoadProgress(); // خطوة 4
     }
 }
 
@@ -245,10 +277,11 @@ function smartOpen(item) {
     }
 }
 
+// ✅ عكس الاتجاهات
 window.goToWood = () => {
     if (scrollContainer) {
         scrollContainer.scrollTo({ 
-            left: 0,
+            left: 0, // ✅ أقصى اليسار
             behavior: 'smooth' 
         });
     }
@@ -259,7 +292,7 @@ window.goToMapEnd = () => {
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
     scrollContainer.scrollTo({ 
-        left: maxScrollRight, 
+        left: maxScrollRight, // ✅ أقصى اليمين
         behavior: 'smooth' 
     });
 };
@@ -454,7 +487,9 @@ async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup || !backBtnText) return;
 
-    dynamicGroup.innerHTML = ''; 
+    // ✅ احذف فقط عناصر القوائم واحتفظ بالصورة
+    dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
+    
     await fetchGlobalTree();
 
     if (currentFolder === "") {
@@ -465,6 +500,7 @@ async function updateWoodInterface() {
         backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
     }
 
+    // ✅ أضف/حدّث الصورة فقط عند الرجوع للصفحة الرئيسية
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
     }
@@ -563,7 +599,7 @@ function processRect(r) {
         bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
         r.parentNode.insertBefore(bg, txt);
     }
-    if (!isTouchDevice) { 
+if (!isTouchDevice) { 
         r.addEventListener('mouseover', startHover); 
         r.addEventListener('mouseout', cleanupHover); 
     }
@@ -594,7 +630,9 @@ function scan() {
     console.log('🔍 تشغيل scan()...');
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
     console.log(`✓ تم اكتشاف ${rects.length} مستطيل`);
-    rects.forEach(r => processRect(r)); 
+    rects.forEach(r => processRect(r));
+    
+    updateLoadProgress(); // خطوة 4: المعالجة النهائية
 }
 window.scan = scan;
 
@@ -609,37 +647,31 @@ function loadImages() {
 
     if (urls.length === 0) {
         console.warn('⚠️ لا توجد صور للتحميل!');
+        updateLoadProgress(); // خطوة 3
         finishLoading();
         return;
     }
 
-    // إعادة تعيين العداد
-    loadedCount = 0;
+    let imagesLoaded = 0;
 
     urls.forEach((u) => {
         const img = new Image();
 
         const onImageLoad = () => {
-            loadedCount++;
-            const progress = (loadedCount / urls.length) * 100;
+            imagesLoaded++;
+            
+            console.log(`📦 تم تحميل صورة ${imagesLoaded}/${urls.length}`);
 
-            // توزيع المصابيح: كل مصباح يمثل 25% من التقدم
-            if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
+            // تحديث الصور في الـ SVG فورياً
+            mainSvg.querySelectorAll('image').forEach(si => {
+                const actualSrc = si.getAttribute('data-src');
+                if(actualSrc === u) si.setAttribute('href', actualSrc);
+            });
 
-            // المصباح الأخير يضيء عند الاكتمال التام
-            if (loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
+            // عند اكتمال جميع الصور
+            if (imagesLoaded === urls.length) {
                 console.log('✓ اكتمل تحميل جميع الصور');
-
-                // تحديث الصور في الـ SVG
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-
-                // إنهاء التحميل فورًا
+                updateLoadProgress(); // خطوة 3: تحميل الصور
                 finishLoading();
             }
         };
@@ -652,16 +684,18 @@ function loadImages() {
 
 // دالة مساعدة لإنهاء التحميل وعرض المحتوى
 function finishLoading() {
-    hideLoadingScreen();
-
     if (mainSvg) mainSvg.style.opacity = '1';
 
     window.updateDynamicSizes();
-    scan();
+    scan(); // ستستدعي updateLoadProgress داخلياً للخطوة 4
     updateWoodInterface();
-    window.goToMapEnd();
+    window.goToWood(); // ✅ البداية من اليسار
 
-    console.log('🎉 اكتمل التحميل والعرض');
+    // تأخير بسيط لضمان ظهور المصباح الأخير
+    setTimeout(() => {
+        hideLoadingScreen();
+        console.log('🎉 اكتمل التحميل والعرض');
+    }, 300);
 }
 window.loadImages = loadImages;
 
@@ -678,7 +712,7 @@ if (changeGroupBtn) {
     changeGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-        window.goToMapEnd();
+        window.goToWood(); // ✅ عكس الاتجاه
     });
 }
 
@@ -686,7 +720,7 @@ if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            window.goToWood();
+            window.goToWood(); // ✅ عكس الاتجاه
         }
     };
 
@@ -720,7 +754,7 @@ if (moveToggle) {
 if (searchIcon) {
     searchIcon.onclick = (e) => {
         e.preventDefault();
-        window.goToWood();
+        window.goToWood(); // ✅ عكس الاتجاه
     };
 }
 
@@ -733,7 +767,7 @@ if (backButtonGroup) {
             window.updateWoodInterface(); 
         } else { 
             console.log("العودة إلى أقصى يمين الخريطة...");
-            window.goToMapEnd(); 
+            window.goToMapEnd(); // ✅ الذهاب لليمين
         } 
     };
 }
@@ -767,3 +801,14 @@ if (hasSavedGroup) {
     if (toggleContainer) toggleContainer.style.display = 'none';
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
+📋 ملخص التغييرات الرئيسية:
+✅ 1. عكس الاتجاهات:
+// من اليسار إلى اليمين
+window.goToWood = () => {
+    scrollContainer.scrollTo({ left: 0, behavior: 'smooth' }); // أقصى اليسار
+};
+
+window.goToMapEnd = () => {
+    const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+    scrollContainer.scrollTo({ left: maxScrollRight, behavior: 'smooth' }); // أقصى اليمين
+};
