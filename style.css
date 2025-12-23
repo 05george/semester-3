@@ -260,44 +260,49 @@ html, body {
 
 /* تنسيق عارض PDF المنبثق */
 #pdf-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100svh; 
-  background: #000; /* خلفية سوداء لعدم رؤية ما خلفه */
-  z-index: 999999; /* رقم مرتفع جداً ليكون فوق الخريطة والـ UI */
-  display: flex;
-  flex-direction: column;
-  transition: opacity 0.3s ease;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  transition: transform .35s ease, opacity .35s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 20000; /* أعلى من كل شيء */
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
 }
 
-/* الحالة النشطة عند فتح ملف */
-#pdf-overlay:not(.hidden) {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: all;
-}
-
-#pdfFrame {
-  flex: 1;
-  width: 100%;
-  height: calc(100svh - 50px);
-  border: none;
-  background: #fff;
+#pdf-overlay.hidden {
+    transform: translateY(100%); /* إخفاء للأسفل */
+    pointer-events: none;
 }
 
 #toolbar {
-  height: 50px;
-  background: #333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  border-bottom: 1px solid #555;
+    height: 50px;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid #555;
+}
+
+#pdfFrame {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #fff;
+}
+
+.toolbar-btn {
+    background: #555;
+    color: white;
+    border: 1px solid #777;
+    padding: 5px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 /* ===== Loading Overlay ===== */
