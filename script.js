@@ -621,7 +621,8 @@ function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     if(r.classList.contains('w')) r.setAttribute('width', '113.5');
     if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
-    ```javascript
+    const href = r.getAttribute('data-href') || '';
+```javascript
     const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
     const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
