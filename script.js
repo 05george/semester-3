@@ -528,15 +528,25 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
 
 };
 changeGroupBtn.onclick = () => {
-    // تبديل بين المجلد الرئيسي ومجلد محدد (مثلاً مجلد اسمه 'practical')
-    if (currentRootFolder === "") {
-        currentRootFolder = "practical"; 
-        currentFolder = "practical"; // ننتقل فوراً لداخل المجلد
-        groupBtnText.textContent = "🏠 العودة للرئيسي";
-    } else {
-        currentRootFolder = "";
-        currentFolder = "";
-        groupBtnText.textContent = "📂 عرض العملي";
-    }
-    updateWoodInterface(); // إعادة بناء الواجهة بناءً على المجلد الجديد
+    // الانتقال للمجموعة التالية
+    currentGroupIndex = (currentGroupIndex + 1) % groups.length;
+    const activeGroup = groups[currentGroupIndex];
+
+    // 1. تحديث نص الزر
+    groupBtnText.textContent = `📂 ${activeGroup.name}`;
+
+    // 2. تحديث المجلدات للـ API
+    currentRootFolder = activeGroup.folder;
+    currentFolder = activeGroup.folder;
+
+    // 3. تحديث الصور (لوجو السبلاش ولوجو الخشب)
+    const splashLogo = document.getElementById('splash-logo'); // تأكد من وجود ID له
+    if(splashLogo) splashLogo.setAttribute('href', `image/${activeGroup.logo}`);
+    
+    // 4. تحديث الـ SVG الرئيسي (المربعات والأسابيع)
+    // ملاحظة: هذا يتطلب تحميل محتوى الـ SVG الجديد داخل الـ container
+    loadNewGroupSVG(activeGroup.svg);
+
+    // 5. تحديث واجهة الخشب
+    updateWoodInterface();
 };
