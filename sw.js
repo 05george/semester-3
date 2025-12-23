@@ -5,7 +5,16 @@ const ASSETS_TO_CACHE = [
   './style.css',
   './script.js',
   './image/wood.webp',
-  './image/o.webp',
+  './image/0.png',
+'./image/logo-A.webp',
+'./image/logo-B.webp',
+'./image/logo-C.webp',
+'./image/logo-D.webp',
+'./image/logo-wood-A.webp',
+'./image/logo-wood-B.webp',
+'./image/logo-wood-C.webp',
+'./image/logo-wood-D.webp',
+   
   // أضف أي صور أساسية أخرى هنا
 ];
 
