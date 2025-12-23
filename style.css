@@ -106,8 +106,8 @@ body {
   width: 90%;
   max-width: 600px;
   box-sizing: border-box;
-transform: scale(clamp(0.75, 0.85 + 0.15vh, 0.95));
-  transform-origin: center top;
+
+  zoom: 0.85;
 }
 
 #main-logo {
