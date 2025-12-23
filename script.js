@@ -237,7 +237,6 @@ window.onload = function() {
         window.goToMapEnd();
     });
 
-    // --- وظيفة الفتح الذكي المخصصة ---
     function smartOpen(item) {
         if(!item || !item.path) return;
         const url = `${RAW_CONTENT_BASE}${item.path}`;
@@ -245,7 +244,6 @@ window.onload = function() {
             const overlay = document.getElementById("pdf-overlay");
             const pdfViewer = document.getElementById("pdfFrame");
             overlay.classList.remove("hidden");
-
             pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                             encodeURIComponent(url) + "#zoom=page-width"; 
         } else {
