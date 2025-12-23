@@ -237,45 +237,21 @@ window.onload = function() {
         window.goToMapEnd();
     });
 
-// دالة الفتح الذكي
-function smartOpen(item) {
-    if(!item || !item.path) return;
-    const url = `${RAW_CONTENT_BASE}${item.path}`;
-    
-    if(url.endsWith('.pdf')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        
-        // 1. إظهار الطبقة أولاً
-        overlay.classList.remove("hidden");
-        
-        // 2. تحميل الرابط في الـ iframe
-        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width"; 
-                        
-        // 3. إخفاء الـ UI الخاص بالبحث والتنقل لعدم التشويش
-        document.getElementById('js-toggle-container').style.visibility = 'hidden';
-    } else {
-        window.open(url, '_blank');
+    // --- وظيفة الفتح الذكي المخصصة ---
+    function smartOpen(item) {
+        if(!item || !item.path) return;
+        const url = `${RAW_CONTENT_BASE}${item.path}`;
+        if(url.endsWith('.pdf')) {
+            const overlay = document.getElementById("pdf-overlay");
+            const pdfViewer = document.getElementById("pdfFrame");
+            overlay.classList.remove("hidden");
+
+            pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                            encodeURIComponent(url) + "#zoom=page-width"; 
+        } else {
+            window.open(url, '_blank');
+        }
     }
-}
-
-// دالة الإغلاق
-document.getElementById("closePdfBtn").onclick = () => {
-    const overlay = document.getElementById("pdf-overlay");
-    const pdfViewer = document.getElementById("pdfFrame");
-    
-    // 1. إخفاء الطبقة
-    overlay.classList.add("hidden");
-    
-    // 2. تفريغ الـ src تماماً (هذا يقتل صفحة موزيلا فوراً)
-    pdfViewer.removeAttribute('src'); 
-    pdfViewer.src = "";
-    
-    // 3. إظهار الـ UI الخاص بالبحث مرة أخرى
-    document.getElementById('js-toggle-container').style.visibility = 'visible';
-};
-
 
 window.goToWood = () => {
     const scrollContainer = document.getElementById('scroll-container');
