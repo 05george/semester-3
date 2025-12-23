@@ -258,13 +258,8 @@ window.onload = function() {
         });
     };
 
-    const goToMapEnd = () => {
-        scrollContainer.scrollTo({ 
-            left: 0, 
-            behavior: 'smooth' 
-        });
-    };
 const goToMapEnd = () => {
+    const scrollContainer = document.getElementById('scroll-container');
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
 
     scrollContainer.scrollTo({ 
@@ -272,6 +267,8 @@ const goToMapEnd = () => {
         behavior: 'smooth' 
     });
 };
+window.goToMapEnd = goToMapEnd;
+
 
     searchIcon.onclick = handleGoToWood;
     searchIcon.addEventListener('touchend', handleGoToWood);
@@ -292,16 +289,20 @@ const goToMapEnd = () => {
         }
     };
 
-    backButtonGroup.onclick = () => { 
-        if (currentFolder !== "") { 
-            let parts = currentFolder.split('/');
-            parts.pop();
-            currentFolder = parts.join('/'); 
-            window.updateWoodInterface(); 
-        } else { 
-            goToMapEnd(); 
-        } 
-    };
+backButtonGroup.onclick = () => { 
+    if (currentFolder !== "") { 
+        // منطق المجلدات
+        let parts = currentFolder.split('/');
+        parts.pop();
+        currentFolder = parts.join('/'); 
+        window.updateWoodInterface(); 
+    } else { 
+        // تنفيذ التمرير لأقصى اليمين (نهاية الخريطة)
+        console.log("العودة إلى أقصى يمين الخريطة...");
+        goToMapEnd(); 
+    } 
+};
+
 
     function debounce(func, delay) {
         let timeoutId;
