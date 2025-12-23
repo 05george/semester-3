@@ -119,7 +119,14 @@ function updateWoodLogo(groupLetter) {
 
 // دالة تهيئة المجموعة المختارة
 async function initializeGroup(groupLetter, isInitialLoad = false) {
+    console.log('بدء تهيئة المجموعة:', groupLetter);
     saveSelectedGroup(groupLetter);
+    
+    // إظهار عناصر التحكم والـ scroll container
+    const toggleContainer = document.getElementById('js-toggle-container');
+    const scrollContainer = document.getElementById('scroll-container');
+    toggleContainer.style.display = 'flex';
+    scrollContainer.style.display = 'block';
     
     // إخفاء شاشة اختيار الجروب
     document.getElementById('group-selection-screen').classList.add('hidden');
@@ -225,6 +232,7 @@ window.onload = function() {
     document.querySelectorAll('.group-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const group = this.getAttribute('data-group');
+            console.log('تم اختيار المجموعة:', group);
             initializeGroup(group, true);
         });
     });
@@ -661,11 +669,21 @@ window.onload = function() {
     }, false);
 
     // التحقق من وجود مجموعة محفوظة
-    if (loadSelectedGroup()) {
+    const hasSavedGroup = loadSelectedGroup();
+    
+    if (hasSavedGroup) {
         // إذا كان المستخدم قد اختار مجموعة من قبل، نبدأ التحميل مباشرة
+        console.log('تحميل المجموعة المحفوظة:', currentGroup);
         initializeGroup(currentGroup, true);
     } else {
-        // إذا لم يختار، نعرض شاشة الاختيار
+        // إذا لم يختار، نعرض شاشة الاختيار ونخفي التحميل
+        console.log('لا توجد مجموعة محفوظة - عرض شاشة الاختيار');
+        loadingOverlay.classList.remove('active');
+        loadingOverlay.style.display = 'none';
         groupSelectionScreen.classList.remove('hidden');
+        
+        // إخفاء عناصر التحكم حتى يتم اختيار مجموعة
+        toggleContainer.style.display = 'none';
+        scrollContainer.style.display = 'none';
     }
 };
