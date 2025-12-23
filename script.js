@@ -341,44 +341,39 @@ let currentRootFolder = "";
         });
     }
 
-    async function updateWoodInterface() {
-if (currentFolder === currentRootFolder || currentFolder === "") {
-    const activeGroup = groups[currentGroupIndex];
-    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    // استخدام لوجو المجموعة الحالي
-    banner.setAttribute("href", `image/${activeGroup.woodLogo}`); 
-    banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-    banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-    banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-    banner.style.pointerEvents = "none";
-    dynamicGroup.appendChild(banner);
+  async function updateWoodInterface() {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
+    
+    // 1. مسح المحتوى القديم تماماً لتجنب التكرار
+    dynamicGroup.innerHTML = ''; 
+    await fetchGlobalTree();
+
+    // 2. تحديث نص زر الرجوع/المسار
+    if (currentFolder === currentRootFolder || currentFolder === "") {
+        backBtnText.textContent = "➡️ إلى الخريطة";
+    } else {
+        const pathParts = currentFolder.replace(currentRootFolder + '/', '').split('/');
+        backBtnText.textContent = `🔙 الرئيسية > ${pathParts.join(' > ')}`;
+    }
+
+    // 3. إضافة لوجو الخشب الخاص بالمجموعة الحالية (في الصفحة الرئيسية للمجموعة فقط)
+    if (currentFolder === currentRootFolder || currentFolder === "") {
+        const activeGroup = groups[currentGroupIndex];
+        const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        banner.setAttribute("href", `image/${activeGroup.woodLogo}`); 
+        banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
+        banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
+        banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
+        banner.style.pointerEvents = "none";
+        dynamicGroup.appendChild(banner);
+    }
+
+    // 4. منطق الفلترة المجلدات والملفات (كما هو في كودك)
+    const folderPrefix = currentFolder ? currentFolder + '/' : '';
+    const itemsMap = new Map();
+    // ... بقية منطق الـ globalFileTree والـ filteredData كما في كودك الأصلي ...
 }
-
-        const dynamicGroup = document.getElementById('dynamic-links-group');
-        if (!dynamicGroup) return;
-        dynamicGroup.innerHTML = ''; 
-        await fetchGlobalTree();
-
-        if (currentFolder === "") {
-            backBtnText.textContent = "➡️ إلى الخريطة";
-        } else {
-            const pathParts = currentFolder.split('/');
-            const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-            backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
-        }
-
-        if (currentFolder === "") {
-            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
-            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-            banner.style.pointerEvents = "none";
-            dynamicGroup.appendChild(banner);
-        }
-
-        const folderPrefix = currentFolder ? currentFolder + '/' : '';
-        const itemsMap = new Map();
 
         globalFileTree.forEach(item => {
             if (item.path.startsWith(folderPrefix)) {
