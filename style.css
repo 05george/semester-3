@@ -13,10 +13,9 @@
 
 :root {
   color-scheme: only light !important;
-  -webkit-text-size-adjust: 100%; /* منع تكبير النصوص في سامسونج و iOS */
+  -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 
-  /* الألوان المركزية الخاصة بك */
   --color-q: #ff4d4d;
   --color-v: #4da6ff;
   --color-i: #ffffff;
@@ -34,12 +33,10 @@ html, body {
   background-color: black !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   filter: none !important;
-  /* توحيد الرؤية */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
-/* ضمان عدم تأثر الـ SVG وإضافات التكبير */
 #main-svg, .rect-label, .label-bg {
   color-scheme: light !important;
 }
@@ -72,7 +69,6 @@ html, body {
   cursor: pointer;
 }
 
-/* ربط ألوان الخريطة */
 .q { stroke: var(--color-q); }
 .v { stroke: var(--color-v); }
 .i { stroke: var(--color-i); }
@@ -80,51 +76,178 @@ html, body {
 .s { stroke: var(--color-s); }
 .l { stroke: var(--color-l); }
 
+/* ===== شاشة اختيار الجروب ===== */
+#group-selection-screen {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity .5s ease-out, transform .5s ease-out;
+}
+
+#group-selection-screen.hidden {
+  opacity: 0;
+  transform: scale(0.9);
+  pointer-events: none;
+}
+
+#group-selection-content {
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+}
+
+#main-logo {
+  width: 300px;
+  max-width: 80vw;
+  height: auto;
+  margin-bottom: 30px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#group-selection-content h1 {
+  color: #ffcc00;
+  font-size: 2rem;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+#group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 0 20px;
+}
+
+.group-btn {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 30px 20px;
+  cursor: pointer;
+  transition: all .3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.group-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, transparent, rgba(255, 204, 0, 0.1));
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+.group-btn:hover::before,
+.group-btn:active::before {
+  opacity: 1;
+}
+
+.group-btn:hover {
+  border-color: #ffcc00;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+}
+
+.group-btn:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.group-letter {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffcc00;
+  text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
+}
+
+.group-label {
+  font-size: 1.1rem;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 480px) {
+  #group-buttons {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .group-btn {
+    padding: 25px 15px;
+  }
+  
+  .group-letter {
+    font-size: 2.5rem;
+  }
+  
+  #main-logo {
+    width: 200px;
+    margin-bottom: 20px;
+  }
+  
+  #group-selection-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+  }
+}
+
 /* تنسيق عارض PDF المنبثق */
 #pdf-overlay {
   transition: transform .35s ease, opacity .35s ease;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    z-index: 20000; /* أعلى من كل شيء */
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
 }
 
 #pdf-overlay.hidden {
-    transform: translateY(100%); /* إخفاء للأسفل */
-    pointer-events: none;
+  transform: translateY(100%);
+  pointer-events: none;
 }
 
 #toolbar {
-    height: 50px;
-    background: #333;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 10px;
-    border-bottom: 1px solid #555;
+  height: 50px;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #555;
 }
 
 #pdfFrame {
-    flex: 1;
-    width: 100%;
-    border: none;
-    background: #fff;
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
 }
 
 .toolbar-btn {
-    background: #555;
-    color: white;
-    border: 1px solid #777;
-    padding: 5px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
+  background: #555;
+  color: white;
+  border: 1px solid #777;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 /* ===== Loading Overlay ===== */
@@ -137,6 +260,13 @@ html, body {
   justify-content: center;
   z-index: 9999;
   transition: opacity .5s ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading-overlay.active {
+  opacity: 1;
+  pointer-events: all;
 }
 
 #loading-content {
@@ -206,19 +336,17 @@ html, body {
 }
 
 #back-btn-text {
-    pointer-events: none;
-    user-select: none;
-    /* يمنع التداخل ويحسن الوضوح */
-    font-family: 'Arial', sans-serif;
-    dominant-baseline: middle;
-    paint-order: stroke fill;
-    text-shadow: 0px 0px 2px rgba(0,0,0,1);
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Arial', sans-serif;
+  dominant-baseline: middle;
+  paint-order: stroke fill;
+  text-shadow: 0px 0px 2px rgba(0,0,0,1);
 }
 
 #back-btn {
-    transition: all 0.3s ease;
-    /* يضيف تأثير احترافي عند الدخول للمجلدات */
-    filter: brightness(1.1);
+  transition: all 0.3s ease;
+  filter: brightness(1.1);
 }
 
 .legend-item {
@@ -248,35 +376,34 @@ html, body {
 
 /* ===== Toggle & Search UI ===== */
 #js-toggle-container {
-    transform: translateZ(0); 
-    will-change: transform;
-    position: fixed;
-    right: 20px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* توسيط العناصر داخلياً */
-    gap: 12px;
-    color: white;
-    background-color: rgba(0, 0, 0, 0.85); /* تغميق الخلفية قليلاً للوضوح */
-    backdrop-filter: blur(8px);
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    width: auto; /* يخلي الحاوية تتمدد حسب المحتوى */
-    min-width: 160px;
-    max-width: 90vw;
+  transform: translateZ(0); 
+  will-change: transform;
+  position: fixed;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: auto;
+  min-width: 160px;
+  max-width: 90vw;
 }
 
 .controls-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* توزيع الأيقونة والزر على الأطراف */
-    width: 100%;
-    border-top: 1px solid rgba(255,255,255,0.1); /* فاصل بسيط */
-    padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 10px;
 }
-
 
 #js-toggle-container.top { top: 20px; }
 #js-toggle-container.bottom { bottom: 20px; }
@@ -289,7 +416,7 @@ html, body {
 }
 
 #search-input {
-  padding: 8px 10px 8px 45px !important; /* مساحة للسهم */
+  padding: 8px 10px 8px 45px !important;
   border: 1px solid #444;
   border-radius: 5px;
   width: 100%;
@@ -299,7 +426,6 @@ html, body {
   font-size: 14px;
 }
 
-/* السهم 🔙 داخل مربع البحث */
 .clickable-area {
   position: absolute;
   left: 2px;
@@ -323,26 +449,17 @@ html, body {
 }
 
 #move-toggle {
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    padding: 5px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 5px;
 }
 
 #move-toggle:active {
-    opacity: 0.6;
-    transform: scale(1.1);
+  opacity: 0.6;
+  transform: scale(1.1);
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  justify-content: space-between;
-}
-
-/* وضع الهاتف الموحد */
 @media (max-width: 480px) {
   #js-toggle-container {
     right: 10px;
@@ -391,12 +508,16 @@ input:checked + .slider:before { transform: translateX(20px); }
   100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.2); transform: scale(1); }
 }
 
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 .label-bg { rx: 3; ry: 3; opacity: 0.9; }
 .rect-label { font-weight: bold; pointer-events: none; }
 
-/* منع ظهور علامة التحديد الزرقاء ومنع القائمة في بعض المتصفحات */
 img, image, svg, rect {
-    -webkit-touch-callout: none; /* يمنع القائمة المنبثقة في iOS */
-    -webkit-user-select: none;   /* يمنع تحديد النص/الصور */
-    user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
