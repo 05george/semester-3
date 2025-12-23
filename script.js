@@ -38,6 +38,7 @@ const backButtonGroup = document.getElementById('back-button-group');
 const backBtnText = document.getElementById('back-btn-text');
 const changeGroupBtn = document.getElementById('change-group-btn');
 const groupSelectionScreen = document.getElementById('group-selection-screen');
+const filesListContainer = document.getElementById('files-list-container');
 
 // تحديث حالة التفاعل
 if (jsToggle) {
@@ -178,9 +179,12 @@ async function loadGroupSVG(groupLetter) {
 
 function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
+
+    // ✅ حذف اللوجو القديم فقط
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
 
+    // ✅ إضافة اللوجو الجديد فقط في الصفحة الرئيسية
     if (currentFolder !== "") return;
 
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
@@ -498,11 +502,12 @@ async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     if (!dynamicGroup || !backBtnText) return;
 
-    // ✅ حذف القوائم فقط والحفاظ على الصورة
+    // ✅ حذف القوائم فقط - صورة wood.webp محمية في files-list-container
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
 
     await fetchGlobalTree();
 
+    // ✅ تحديث نص الزر
     if (currentFolder === "") {
         backBtnText.textContent = "➡️ إلى الخريطة";
     } else {
@@ -511,7 +516,7 @@ async function updateWoodInterface() {
         backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
     }
 
-    // ✅ تحديث الصورة فقط عند الصفحة الرئيسية
+    // ✅ تحديث اللوجو الديناميكي فقط عند الصفحة الرئيسية
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
     }
@@ -545,7 +550,7 @@ async function updateWoodInterface() {
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
         g.style.cursor = "pointer";
-        
+
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         r.setAttribute("x", x); 
         r.setAttribute("y", y); 
@@ -555,7 +560,7 @@ async function updateWoodInterface() {
         r.setAttribute("class", "list-item"); // ✅ الكلاس المهم
         r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
         r.style.stroke = "#fff";
-        
+
         const cleanName = item.name.replace(/\.[^/.]+$/, "");
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
         t.setAttribute("x", x + 175); 
@@ -565,7 +570,7 @@ async function updateWoodInterface() {
         t.style.fontWeight = "bold"; 
         t.style.fontSize = "17px";
         t.setAttribute("data-search-name", cleanName.toLowerCase());
-        
+
         if (item.type === 'dir') {
             const count = globalFileTree.filter(f => 
                 f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
@@ -574,7 +579,7 @@ async function updateWoodInterface() {
         } else {
             t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
         }
-        
+
         g.appendChild(r); 
         g.appendChild(t);
         g.onclick = (e) => {
@@ -610,13 +615,13 @@ function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     if (r.classList.contains('w')) r.setAttribute('width', '113.5');
     if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
-    
+
     const href = r.getAttribute('data-href') || '';
     const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
     const x = parseFloat(r.getAttribute('x')); 
     const y = parseFloat(r.getAttribute('y'));
-    
+
     if (name && name.trim() !== '') {
         const fs = Math.max(8, Math.min(12, w * 0.11));
         const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -632,7 +637,7 @@ function processRect(r) {
         txt.style.dominantBaseline = 'hanging';
         r.parentNode.appendChild(txt); 
         wrapText(txt, w);
-        
+
         const bbox = txt.getBBox();
         const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         bg.setAttribute('x', x); 
@@ -645,12 +650,12 @@ function processRect(r) {
         bg.style.pointerEvents = 'none';
         r.parentNode.insertBefore(bg, txt);
     }
-    
+
     if (!isTouchDevice) { 
         r.addEventListener('mouseover', startHover); 
         r.addEventListener('mouseout', cleanupHover); 
     }
-    
+
     r.onclick = () => { 
         if (href && href !== '#') window.open(href, '_blank'); 
     };
@@ -690,6 +695,12 @@ window.scan = scan;
 function loadImages() {
     if (!mainSvg) return;
 
+    // ✅ إضافة صورة الخلفية الخشبية
+    const woodBackground = filesListContainer?.querySelector('image[data-src="image/wood.webp"]');
+    if (woodBackground && !imageUrlsToLoad.includes('image/wood.webp')) {
+        imageUrlsToLoad.unshift('image/wood.webp');
+    }
+
     console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
 
     if (imageUrlsToLoad.length === 0) {
@@ -698,35 +709,39 @@ function loadImages() {
         return;
     }
 
+    // ✅ إعادة حساب الحجم الإجمالي
+    calculateTotalSize();
+
     let imagesCompleted = 0;
 
     imageUrlsToLoad.forEach((url) => {
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
+
                 const contentLength = response.headers.get('content-length');
                 const actualSize = contentLength ? parseInt(contentLength, 10) : estimateFileSize(url);
-                
+
                 console.log(`📦 ${url.split('/').pop()}: ${(actualSize/1024).toFixed(1)}KB`);
-                
+
                 return response.blob().then(blob => ({ blob, actualSize }));
             })
             .then(({ blob, actualSize }) => {
                 loadedBytes += actualSize;
                 updateLoadProgress();
-                
+
                 const objectUrl = URL.createObjectURL(blob);
-                
+
+                // ✅ تحديث جميع الصور التي لها نفس data-src
                 mainSvg.querySelectorAll('image').forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
                         si.setAttribute('href', objectUrl);
                     }
                 });
-                
+
                 imagesCompleted++;
-                
+
                 if (imagesCompleted === imageUrlsToLoad.length) {
                     console.log('✅ اكتمل تحميل جميع الصور');
                     finishLoading();
@@ -734,13 +749,13 @@ function loadImages() {
             })
             .catch(error => {
                 console.error(`❌ خطأ في تحميل ${url}:`, error);
-                
+
                 const estimatedSize = estimateFileSize(url);
                 loadedBytes += estimatedSize;
                 updateLoadProgress();
-                
+
                 imagesCompleted++;
-                
+
                 if (imagesCompleted === imageUrlsToLoad.length) {
                     finishLoading();
                 }
@@ -756,6 +771,7 @@ function finishLoading() {
     updateWoodInterface();
     window.goToWood();
 
+    // ✅ التأكد من إضاءة جميع المصابيح
     loadedBytes = totalBytes;
     updateLoadProgress();
 
@@ -795,6 +811,8 @@ if (searchInput) {
         if (!mainSvg) return;
 
         const query = e.target.value.toLowerCase().trim();
+
+        // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
                           (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
