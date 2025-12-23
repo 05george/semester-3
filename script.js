@@ -269,10 +269,6 @@ const goToMapEnd = () => {
 };
 window.goToMapEnd = goToMapEnd;
 
-
-    searchIcon.onclick = handleGoToWood;
-    searchIcon.addEventListener('touchend', handleGoToWood);
-
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
