@@ -89,16 +89,25 @@ html, body {
   transition: opacity .5s ease-out, transform .5s ease-out;
 }
 
+/* منع أي سحب أفقي */
+body {
+  overflow-x: hidden;
+}
+
 #group-selection-screen.hidden {
   opacity: 0;
   transform: scale(0.9);
   pointer-events: none;
 }
 
+/* ===== هنا الحل الأساسي ===== */
 #group-selection-content {
   text-align: center;
   width: 90%;
   max-width: 600px;
+  box-sizing: border-box;
+
+  zoom: 0.85;
 }
 
 #main-logo {
@@ -113,11 +122,15 @@ html, body {
 
 #group-selection-content h1 {
   color: #ffcc00;
-  font-size: 2rem;
+  font-size: clamp(1.2rem, 4vw, 2rem);
   margin-bottom: 40px;
   text-transform: uppercase;
   letter-spacing: 3px;
   text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #group-buttons {
@@ -125,6 +138,7 @@ html, body {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .group-btn {
@@ -174,10 +188,22 @@ html, body {
 }
 
 .group-label {
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 3vw, 1.1rem);
   color: #ccc;
   text-transform: uppercase;
   letter-spacing: 2px;
+
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* ===== موبايل صغير جدًا ===== */
+@media (max-height: 700px) {
+  #group-selection-content {
+    zoom: 0.78;
+  }
 }
 
 @media (max-width: 480px) {
@@ -185,23 +211,27 @@ html, body {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .group-btn {
     padding: 25px 15px;
   }
-  
+
   .group-letter {
     font-size: 2.5rem;
   }
-  
+
   #main-logo {
     width: 200px;
     margin-bottom: 20px;
   }
-  
+
   #group-selection-content h1 {
-    font-size: 1.5rem;
     margin-bottom: 25px;
+    letter-spacing: 1px;
+  }
+
+  .group-label {
+    letter-spacing: 1px;
   }
 }
 
@@ -322,9 +352,33 @@ html, body {
   transition: all .4s ease;
 }
 
-.light-bulb.on {
-  background-color: #ffcc00;
-  box-shadow: 0 0 15px #ffcc00, 0 0 30px #ff9900;
+/* ===== 🎨 ألوان المصابيح المختلفة ===== */
+
+/* المصباح الأول (الأخضر) - يضيء عند 100% */
+#bulb-1.on {
+  background-color: #4dff88;
+  box-shadow: 0 0 15px #4dff88, 0 0 30px #00ff66;
+  border-color: #fff;
+}
+
+/* المصباح الثاني (الأصفر) - يضيء عند 75% */
+#bulb-2.on {
+  background-color: #ffff4d;
+  box-shadow: 0 0 15px #ffff4d, 0 0 30px #ffff00;
+  border-color: #fff;
+}
+
+/* المصباح الثالث (البرتقالي) - يضيء عند 50% */
+#bulb-3.on {
+  background-color: #ffaa00;
+  box-shadow: 0 0 15px #ffaa00, 0 0 30px #ff8800;
+  border-color: #fff;
+}
+
+/* المصباح الرابع (الأحمر) - يضيء عند 25% */
+#bulb-4.on {
+  background-color: #ff4d4d;
+  box-shadow: 0 0 15px #ff4d4d, 0 0 30px #ff0000;
   border-color: #fff;
 }
 
