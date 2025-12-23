@@ -1,15 +1,15 @@
-/* --- 1. الإعدادات والمتغيرات العالمية (بكامل التعقيد) --- */
+/* --- 1. الإعدادات والمتغيرات العالمية --- */
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
 
-// المتغيرات العالمية المبنية على اسم المستودع
 const NEW_API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents`;
 const TREE_API_URL = `https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/git/trees/main?recursive=1`;
 const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/`;
 
 let globalFileTree = []; 
+let currentGroup = null; // المجموعة المختارة حالياً
 
-// 2. دالة جلب البيانات (التي تجعل الموقع يعمل أوفلاين لاحقاً)
+// 2. دالة جلب البيانات
 async function fetchGlobalTree() {
     if (globalFileTree.length > 0) return; 
     try {
@@ -22,7 +22,130 @@ async function fetchGlobalTree() {
     }
 }
 
-// زر الإغلاق (كما هو)
+// دالة حفظ واستعادة المجموعة المختارة
+function saveSelectedGroup(group) {
+    localStorage.setItem('selectedGroup', group);
+    currentGroup = group;
+}
+
+function loadSelectedGroup() {
+    const saved = localStorage.getItem('selectedGroup');
+    if (saved) {
+        currentGroup = saved;
+        return true;
+    }
+    return false;
+}
+
+// دالة عرض شاشة التحميل مع صورة الجروب
+function showLoadingScreen(groupLetter) {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const splashImage = document.getElementById('splash-image');
+    
+    // تغيير الصورة حسب الجروب
+    splashImage.src = `image/logo-${groupLetter}.webp`;
+    
+    // إظهار شاشة التحميل
+    loadingOverlay.classList.add('active');
+    
+    // إعادة تعيين الأضواء
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
+}
+
+// دالة إخفاء شاشة التحميل
+function hideLoadingScreen() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    setTimeout(() => {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => { 
+            loadingOverlay.classList.remove('active');
+            loadingOverlay.style.opacity = '1';
+        }, 500);
+    }, 600);
+}
+
+// دالة تحميل SVG الخاص بالجروب
+async function loadGroupSVG(groupLetter) {
+    const groupContainer = document.getElementById('group-specific-content');
+    groupContainer.innerHTML = ''; // مسح المحتوى السابق
+    
+    try {
+        const response = await fetch(`groups/group-${groupLetter}.svg`);
+        if (!response.ok) {
+            console.warn(`ملف SVG للمجموعة ${groupLetter} غير موجود`);
+            return;
+        }
+        
+        const svgText = await response.text();
+        
+        // استخراج محتوى الـ SVG (كل ما بداخل <svg>)
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+        const svgContent = svgDoc.querySelector('svg');
+        
+        if (svgContent) {
+            // نسخ جميع العناصر الداخلية
+            Array.from(svgContent.children).forEach(child => {
+                const imported = document.importNode(child, true);
+                groupContainer.appendChild(imported);
+            });
+            console.log(`تم تحميل SVG للمجموعة ${groupLetter}`);
+        }
+    } catch (err) {
+        console.error(`خطأ في تحميل SVG للمجموعة ${groupLetter}:`, err);
+    }
+}
+
+// دالة تحديث صورة الـ Logo على الخشب
+function updateWoodLogo(groupLetter) {
+    const dynamicGroup = document.getElementById('dynamic-links-group');
+    
+    // إزالة أي banner قديم
+    const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
+    if (oldBanner) oldBanner.remove();
+    
+    // إضافة البانر الجديد
+    const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`); 
+    banner.setAttribute("x", "186.86");
+    banner.setAttribute("y", "1517.43"); 
+    banner.setAttribute("width", "648.41");
+    banner.setAttribute("height", "276.04"); 
+    banner.style.mixBlendMode = "multiply";
+    banner.style.opacity = "0.9";
+    banner.style.pointerEvents = "none";
+    dynamicGroup.appendChild(banner);
+}
+
+// دالة تهيئة المجموعة المختارة
+async function initializeGroup(groupLetter, isInitialLoad = false) {
+    saveSelectedGroup(groupLetter);
+    
+    // إخفاء شاشة اختيار الجروب
+    document.getElementById('group-selection-screen').classList.add('hidden');
+    
+    // عرض شاشة التحميل
+    showLoadingScreen(groupLetter);
+    
+    // تحميل الملفات
+    await fetchGlobalTree();
+    await loadGroupSVG(groupLetter);
+    
+    if (isInitialLoad) {
+        // إذا كان تحميل أولي، ننتظر تحميل الصور
+        loadImages();
+    } else {
+        // إذا كان تغيير مجموعة، نخفي التحميل فوراً
+        hideLoadingScreen();
+        const mainSvg = document.getElementById('main-svg');
+        mainSvg.style.opacity = '1';
+        scan();
+        updateWoodInterface();
+        goToMapEnd();
+    }
+}
+
+// زر الإغلاق
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -41,7 +164,7 @@ document.getElementById("downloadBtn").onclick = () => {
         const fileUrl = decodeURIComponent(match[1]);
         const a = document.createElement("a");
         a.href = fileUrl;
-        a.download = fileUrl.split("/").pop(); // اسم الملف
+        a.download = fileUrl.split("/").pop();
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -57,7 +180,6 @@ document.getElementById("shareBtn").onclick = () => {
     const match = src.match(/file=(.+)$/);
     if (match && match[1]) {
         const fileUrl = decodeURIComponent(match[1]);
-
         navigator.clipboard.writeText(fileUrl)
             .then(() => alert("رابط الملف تم نسخه إلى الحافظة!"))
             .catch(() => alert("فشل نسخ الرابط."));
@@ -85,6 +207,8 @@ window.onload = function() {
     const toggleContainer = document.getElementById('js-toggle-container');
     const backButtonGroup = document.getElementById('back-button-group');
     const backBtnText = document.getElementById('back-btn-text');
+    const changeGroupBtn = document.getElementById('change-group-btn');
+    const groupSelectionScreen = document.getElementById('group-selection-screen');
 
     let activeState = {
         rect: null, zoomPart: null, zoomText: null, zoomBg: null,
@@ -97,7 +221,24 @@ window.onload = function() {
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
     const TAP_THRESHOLD_MS = 300;
 
-    // --- وظيفة الفتح الذكي المخصصة ---
+    // ربط أزرار اختيار المجموعة
+    document.querySelectorAll('.group-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const group = this.getAttribute('data-group');
+            initializeGroup(group, true);
+        });
+    });
+
+    // زر تغيير المجموعة
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // إظهار شاشة اختيار المجموعة
+        groupSelectionScreen.classList.remove('hidden');
+        // العودة للخريطة
+        goToMapEnd();
+    });
+
+    // --- وظيفة الفتح الذكي ---
     function smartOpen(item) {
         if(!item || !item.path) return;
         const url = `${RAW_CONTENT_BASE}${item.path}`;
@@ -105,7 +246,6 @@ window.onload = function() {
             const overlay = document.getElementById("pdf-overlay");
             const pdfViewer = document.getElementById("pdfFrame");
             overlay.classList.remove("hidden");
-
             pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                             encodeURIComponent(url) + "#zoom=page-width"; 
         } else {
@@ -113,7 +253,7 @@ window.onload = function() {
         }
     }
 
-    // --- وظائف الحركة بنظام RTL (إعادة للأصل) ---
+    // --- وظائف الحركة ---
     const goToWood = () => {
         scrollContainer.scrollTo({ 
             left: -scrollContainer.scrollWidth, 
@@ -128,7 +268,6 @@ window.onload = function() {
         });
     };
 
-    // --- ربط الأحداث ---
     const handleGoToWood = (e) => {
         e.preventDefault();
         goToWood();
@@ -155,7 +294,9 @@ window.onload = function() {
 
     backButtonGroup.onclick = () => { 
         if (currentFolder !== "") { 
-            let parts = currentFolder.split('/'); parts.pop(); currentFolder = parts.join('/'); 
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/'); 
             updateWoodInterface(); 
         } else { 
             goToMapEnd(); 
@@ -165,7 +306,8 @@ window.onload = function() {
     function debounce(func, delay) {
         let timeoutId;
         return function() {
-            const context = this; const args = arguments;
+            const context = this;
+            const args = arguments;
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(context, args), delay);
         }
@@ -347,14 +489,8 @@ window.onload = function() {
             backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
         }
 
-        if (currentFolder === "") {
-            const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-            banner.setAttribute("href", "image/logo-wood.webp"); 
-            banner.setAttribute("x", "186.86"); banner.setAttribute("y", "1517.43"); 
-            banner.setAttribute("width", "648.41"); banner.setAttribute("height", "276.04"); 
-            banner.style.mixBlendMode = "multiply"; banner.style.opacity = "0.9";
-            banner.style.pointerEvents = "none";
-            dynamicGroup.appendChild(banner);
+        if (currentFolder === "" && currentGroup) {
+            updateWoodLogo(currentGroup);
         }
 
         const folderPrefix = currentFolder ? currentFolder + '/' : '';
@@ -370,7 +506,7 @@ window.onload = function() {
                     const isDir = pathParts.length > 1 || item.type === 'tree';
                     const isPdf = item.path.toLowerCase().endsWith('.pdf');
 
-         if (isDir && name !== 'image' && name !== 'groups') {
+                    if (isDir && name !== 'image' && name !== 'groups') {
                         itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
                     } else if (isPdf && pathParts.length === 1) {
                         itemsMap.set(name, { name: name, type: 'file', path: item.path });
@@ -461,60 +597,11 @@ window.onload = function() {
         r.setAttribute('data-processed', 'true');
     }
 
-    function scan() { mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); }
+    function scan() { 
+        mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m').forEach(r => processRect(r)); 
+    }
 
-    const urls = Array.from(mainSvg.querySelectorAll('image'))
-                  .map(img => img.getAttribute('data-src'))
-                  .filter(src => src !== null && src !== "");
+    window.scan = scan; // جعلها متاحة عالمياً
 
-    urls.forEach((u, index) => {
-        const img = new Image();
-        img.onload = img.onerror = () => {
-            loadedCount++;
-            const p = (loadedCount / urls.length) * 100;
-            if(p >= 25) document.getElementById('bulb-4')?.classList.add('on');
-            if(p >= 50) document.getElementById('bulb-3')?.classList.add('on');
-            if(p >= 75) document.getElementById('bulb-2')?.classList.add('on');
-            if(loadedCount === urls.length) {
-                document.getElementById('bulb-1')?.classList.add('on');
-                mainSvg.querySelectorAll('image').forEach(si => {
-                    const actualSrc = si.getAttribute('data-src');
-                    if(actualSrc) si.setAttribute('href', actualSrc);
-                });
-                setTimeout(() => {
-                    if(loadingOverlay) {
-                        loadingOverlay.style.opacity = '0';
-                        setTimeout(() => { 
-                            loadingOverlay.style.display = 'none'; 
-                            mainSvg.style.opacity = '1'; 
-                            scan(); updateWoodInterface(); goToMapEnd(); 
-                        }, 500);
-                    }
-                }, 600);
-            }
-        };
-        img.src = u;
-    });
-
-    searchInput.addEventListener('input', debounce(function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if(label) label.style.display = rect.style.display; 
-            if(bg) bg.style.display = rect.style.display;
-        });
-        applyWoodSearchFilter();
-    }, 150));
-
-    jsToggle.addEventListener('change', function() { 
-        interactionEnabled = this.checked; if(!interactionEnabled) cleanupHover(); 
-    });
-// منع القائمة عند الضغط المطول على أي صورة داخل الـ SVG
-document.getElementById('main-svg').addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-}, false);
-
-};
+    function loadImages() {
+        const urls = Array.from(mainSvg.querySelectorAll('image'))
