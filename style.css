@@ -1,280 +1,123 @@
-/* --- 1. الجذر والمتغيرات المركزية (Global Variables) --- */
-:root {
-  /* منع تكبير النصوص التلقائي وضمان عرض Light Mode */
-  color-scheme: only light !important;
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-
-  /* الألوان السداسية الأصلية (لا تقم بتغيير المسميات لضمان الربط) */
-  --color-q: #ff4d4d; /* أسئلة */
-  --color-v: #4da6ff; /* فيديو */
-  --color-i: #ffffff; /* مواد أخرى */
-  --color-a: #b366ff; /* إجابات */
-  --color-s: #4dff88; /* عملي */
-  --color-l: #ffff4d; /* محاضرات */
-
-  /* نظام الألوان للواجهة (UI Glassmorphism) */
-  --ui-glass-bg: rgba(15, 15, 15, 0.85);
-  --ui-glass-border: rgba(255, 255, 255, 0.15);
-  --gold-main: #ffcc00;
-  --black-solid: #000000;
-}
-
-/* --- 2. ريست شامل وتحسينات الأداء (Reset & Performance) --- */
-*, *::before, *::after {
-  box-sizing: border-box !important;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  height: 100svh; /* توافق مع شاشات الموبايل الحديثة */
-  width: 100vw;
-  overflow: hidden;
-  background-color: var(--black-solid) !important;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  touch-action: none; /* تحكم يدوي كامل في الإيماءات */
-}
-
-/* --- 3. حاوية التمرير والماب (The Matrix Scroll) --- */
-#scroll-container {
-  width: 100vw;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  display: block;
-  white-space: nowrap;
-  position: relative;
-  direction: ltr; /* التمرير من اليسار لليمين برمجياً */
-  scroll-behavior: smooth;
-  background-color: var(--black-solid);
-  /* تحسينات Firefox الخاصة بالتمرير */
-  scrollbar-width: thin;
-  scrollbar-color: #444 var(--black-solid);
-  -webkit-overflow-scrolling: touch;
-}
-
-#main-svg {
-  height: 100%;
-  width: auto;
-  display: inline-block;
-  vertical-align: top;
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-  /* منع التشوه (Blur) في الصور عند التكبير في موزيلا وكروم */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-}
-
-/* --- 4. العناصر التفاعلية (SVG Shapes) --- */
-.m {
-  fill: transparent;
-  stroke: transparent;
-  stroke-width: 2.5px;
-  /* يحافظ على سمك الخط ثابتاً مهما كان مستوى الزووم */
-  vector-effect: non-scaling-stroke; 
-  transition: filter 0.3s ease, stroke 0.3s ease;
-  cursor: pointer;
-}
-
-/* ربط الفئات السداسية بالألوان */
-.q { stroke: var(--color-q); }
-.v { stroke: var(--color-v); }
-.i { stroke: var(--color-i); }
-.a { stroke: var(--color-a); }
-.s { stroke: var(--color-s); }
-.l { stroke: var(--color-l); }
-
-/* --- 5. شاشة اختيار المجموعة (Group Selection) --- */
+/* ===== شاشة اختيار الجروب (تنسيق الشاشة الواحدة) ===== */
 #group-selection-screen {
+  height: 100svh; /* ملء الشاشة تماماً */
+  width: 100vw;
   position: fixed;
   inset: 0;
-  z-index: 100000;
-  background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(15px);
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-
-#group-selection-screen.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  z-index: 10000;
+  overflow: hidden; /* منع التمرير نهائياً */
 }
 
 #group-selection-content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  height: 95svh; /* ترك مساحة بسيطة للهوامش */
   width: 90%;
   max-width: 500px;
+}
+
+#main-logo {
+  height: auto ;
+  width: calc50%;
+  margin-bottom: 2vh;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+  animation: logo-pulse 2s infinite ease-in-out;
+}
+
+#group-selection-content h1 {
+  color: #ffcc00;
+  font-size: clamp(1.2rem, 4svh, 2rem); /* حجم خط مرن */
+  margin: 0 0 3svh 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
 }
 
 #group-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 15px;
   width: 100%;
 }
 
 .group-btn {
-  background: linear-gradient(145deg, #2a2a2a, #151515);
-  border: 1px solid var(--ui-glass-border);
-  border-radius: 20px;
-  padding: 25px 15px;
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 2svh 10px; /* التباعد الداخلي يعتمد على ارتفاع الشاشة */
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  gap: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* المزايا البصرية (التحويم والاكشن) */
+.group-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, transparent, rgba(255, 204, 0, 0.15));
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .group-btn:hover {
-  border-color: var(--gold-main);
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(255, 204, 0, 0.2);
+  border-color: #ffcc00;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(255, 204, 0, 0.25);
+}
+
+.group-btn:hover::before {
+  opacity: 1;
+}
+
+.group-btn:active {
+  transform: scale(0.95);
+  background: #333;
 }
 
 .group-letter {
-  font-size: 3rem;
-  font-weight: 900;
-  color: var(--gold-main);
-  text-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
-}
-
-/* --- 6. نظام البحث والتحكم (Control UI) --- */
-#js-toggle-container {
-  position: fixed;
-  right: 20px;
-  z-index: 10000;
-  padding: 15px;
-  background: var(--ui-glass-bg);
-  border: 1px solid var(--ui-glass-border);
-  border-radius: 15px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-}
-
-#js-toggle-container.top { top: 20px; }
-#js-toggle-container.bottom { bottom: 20px; }
-
-#search-input {
-  width: 100%;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
-  padding: 10px 10px 10px 38px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-/* --- 7. عارض ملفات PDF (The Vault) --- */
-#pdf-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200000;
-  background: var(--black-solid);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#pdf-overlay.hidden {
-  transform: translateY(100%);
-}
-
-#toolbar {
-  height: 60px;
-  background: #111;
-  border-bottom: 1px solid #222;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-}
-
-/* --- 8. شاشة التحميل (Cyber Loading) --- */
-#loading-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: var(--black-solid);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.5s ease;
-}
-
-#splash-image {
-  width: 300px;
-  max-width: 80vw;
-  border-radius: 20px;
-  animation: logo-glow 2.5s infinite ease-in-out;
-}
-
-.light-bulb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #1a1a1a;
-  margin: 0 10px;
-  transition: all 0.4s ease;
-}
-
-.light-bulb.on {
-  background: var(--gold-main);
-  box-shadow: 0 0 15px var(--gold-main), 0 0 30px #ff9900;
-}
-
-/* --- 9. نصوص وخلفيات الـ SVG الديناميكية --- */
-.label-bg {
-  rx: 4; ry: 4;
-  fill: var(--black-solid);
-  fill-opacity: 0.9;
-}
-
-.rect-label {
+  font-size: 5svh; /* حجم الحرف مرن بناءً على الشاشة */
   font-weight: bold;
-  fill: #ffffff;
-  pointer-events: none;
-  /* تحسين تموضع النص في Firefox */
-  dominant-baseline: central; 
+  color: #ffcc00;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
 }
 
-/* --- 10. توافق الهواتف ومنع التحديد --- */
-@media (max-width: 480px) {
-  #js-toggle-container {
-    width: 155px;
-    right: 12px;
-    padding: 10px;
-  }
-  .group-letter { font-size: 2.2rem; }
-  #splash-image { width: 220px; }
+.group-label {
+  font-size: 1.5svh;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* منع التحديد العشوائي والقوائم المنبثقة للصور */
-img, image, svg, rect, text {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+/* التلميح السفلي */
+.group-selection-content p {
+  font-size: 1.5svh;
+  margin-top: 3svh;
+  color: #666;
 }
 
-/* أنيميشن التوهج */
-@keyframes logo-glow {
-  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 204, 0, 0.2)); }
-  50% { filter: brightness(1.1) drop-shadow(0 0 25px rgba(255, 204, 0, 0.5)); }
+/* الأنميشن الخاص باللوجو */
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.2); }
 }
+
+/* تعديل خاص للشاشات العريضة جداً والقيرة (مثل الـ Tablets في وضع العرض) */
+@media (max-height: 500px) {
+  #main-logo { height: 15svh; }
+  #group-buttons { gap: 10px; }
+  .group-btn { padding: 1svh 5px; }
+}
+/*=====================================*/
