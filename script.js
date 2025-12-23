@@ -573,4 +573,3 @@ async function loadNewGroupSVG(svgPath) {
         console.error("فشل تحميل ملف المجموعة:", err);
     }
 }
-};
