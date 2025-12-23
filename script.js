@@ -72,6 +72,12 @@ if ('serviceWorker' in navigator) {
 }
 
 window.onload = function() {
+const groups = [
+    { id: "A", name: "المجموعة A", folder: "group-A", logo: "logo-A.webp", woodLogo: "logo-wood-A.webp", svg: "groups/group-A.svg" },
+    { id: "B", name: "المجموعة B", folder: "group-B", logo: "logo-B.webp", woodLogo: "logo-wood-B.webp", svg: "groups/group-B.svg" },
+    { id: "C", name: "المجموعة C", folder: "group-C", logo: "logo-C.webp", woodLogo: "logo-wood-C.webp", svg: "groups/group-C.svg" }
+];
+let currentGroupIndex = 0;
 let currentRootFolder = "";
     const changeGroupBtn = document.getElementById('change-group-btn');
     const groupBtnText = document.getElementById('group-btn-text');
