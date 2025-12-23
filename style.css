@@ -199,6 +199,16 @@ body {
   text-align: center;
 }
 
+/* إجبار حاوية الأزرار على الترتيب من اليسار لليمين */
+#group-selection-screen .groups-container {
+    display: flex;
+    flex-direction: row; /* التأكد من أن الترتيب أفقي */
+    direction: ltr;      /* إجبار الاتجاه من اليسار لليمين */
+    justify-content: center;
+    gap: 20px;           /* المسافة بين الأزرار */
+    margin-bottom: 20px;
+}
+
 /* ===== موبايل صغير جدًا ===== */
 @media (max-height: 700px) {
   #group-selection-content {
