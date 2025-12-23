@@ -264,21 +264,30 @@ html, body {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100svh; /* استخدام svh لضمان تغطية الشاشة بالكامل */
-  background: #000;
-  z-index: 20000; /* يجب أن يكون أعلى من كل شيء */
+  height: 100svh; 
+  background: #000; /* خلفية سوداء لعدم رؤية ما خلفه */
+  z-index: 999999; /* رقم مرتفع جداً ليكون فوق الخريطة والـ UI */
   display: flex;
   flex-direction: column;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  opacity: 1;
-  visibility: visible;
-}
-
-/* الحالة الافتراضية: مخفي تماماً */
-#pdf-overlay.hidden {
+  transition: opacity 0.3s ease;
   opacity: 0;
   visibility: hidden;
-  pointer-events: none; /* لمنع التفاعل معه وهو مخفي */
+  pointer-events: none;
+}
+
+/* الحالة النشطة عند فتح ملف */
+#pdf-overlay:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+#pdfFrame {
+  flex: 1;
+  width: 100%;
+  height: calc(100svh - 50px);
+  border: none;
+  background: #fff;
 }
 
 #toolbar {
@@ -289,23 +298,6 @@ html, body {
   justify-content: space-between;
   padding: 0 10px;
   border-bottom: 1px solid #555;
-}
-
-#pdfFrame {
-  flex: 1;
-  width: 100%;
-  border: none;
-  background: #fff;
-}
-
-.toolbar-btn {
-  background: #555;
-  color: white;
-  border: 1px solid #777;
-  padding: 5px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
 }
 
 /* ===== Loading Overlay ===== */
