@@ -521,3 +521,16 @@ document.getElementById('main-svg').addEventListener('contextmenu', function(e) 
 }, false);
 
 };
+changeGroupBtn.onclick = () => {
+    // تبديل بين المجلد الرئيسي ومجلد محدد (مثلاً مجلد اسمه 'practical')
+    if (currentRootFolder === "") {
+        currentRootFolder = "practical"; 
+        currentFolder = "practical"; // ننتقل فوراً لداخل المجلد
+        groupBtnText.textContent = "🏠 العودة للرئيسي";
+    } else {
+        currentRootFolder = "";
+        currentFolder = "";
+        groupBtnText.textContent = "📂 عرض العملي";
+    }
+    updateWoodInterface(); // إعادة بناء الواجهة بناءً على المجلد الجديد
+};
