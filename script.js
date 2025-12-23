@@ -46,15 +46,9 @@ function showLoadingScreen(groupLetter) {
 
 function hideLoadingScreen() {
     const loadingOverlay = document.getElementById('loading-overlay');
-    setTimeout(() => {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => { 
-            loadingOverlay.classList.remove('active');
-            loadingOverlay.style.opacity = '1';
-        }, 500);
-    }, 600);
+    loadingOverlay.classList.remove('active');
+    loadingOverlay.style.opacity = '1';
 }
-
 // ===== التعديل الأساسي: دالة تحميل SVG محسّنة =====
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
