@@ -251,12 +251,25 @@ window.onload = function() {
         }
     }
 
-    const goToWood = () => {
-        scrollContainer.scrollTo({ 
-            left: -scrollContainer.scrollWidth, 
-            behavior: 'smooth' 
-        });
-    };
+// الذهاب للنهاية (أقصى اليمين)
+const goToMapEnd = () => {
+    const scrollContainer = document.getElementById('scroll-container');
+    const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+
+    scrollContainer.scrollTo({ 
+        left: maxScroll, 
+        behavior: 'smooth' 
+    });
+};
+
+const goToWood = () => {
+    const scrollContainer = document.getElementById('scroll-container');
+
+    scrollContainer.scrollTo({ 
+        left: 0,
+        behavior: 'smooth' 
+    });
+};
 
 const goToMapEnd = () => {
     const scrollContainer = document.getElementById('scroll-container');
@@ -267,7 +280,6 @@ const goToMapEnd = () => {
         behavior: 'smooth' 
     });
 };
-window.goToMapEnd = goToMapEnd;
 
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
