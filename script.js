@@ -1,3 +1,4 @@
+
 /* --- 1. الإعدادات والمتغيرات العالمية --- */
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
@@ -8,6 +9,7 @@ const RAW_CONTENT_BASE = `https://raw.githubusercontent.com/${GITHUB_USER}/${REP
 
 let globalFileTree = []; 
 let currentGroup = null;
+let loadedCount = 0;
 let currentFolder = ""; 
 let interactionEnabled = true;
 const isTouchDevice = window.matchMedia('(hover: none)').matches;
@@ -17,78 +19,6 @@ let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
     baseText: null, baseBg: null, animationId: null, clipPathId: null,
     touchStartTime: 0, initialScrollLeft: 0
-};
-
-// ===== نظام المراقبة الشامل للتحميل =====
-const loadingMonitor = {
-    total: 0,
-    loaded: 0,
-    resources: new Map(),
-    
-    init() {
-        this.total = 0;
-        this.loaded = 0;
-        this.resources.clear();
-        this.resetBulbs();
-    },
-    
-    resetBulbs() {
-        document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
-    },
-    
-    addResource(id, type) {
-        if (!this.resources.has(id)) {
-            this.resources.set(id, { type, loaded: false });
-            this.total++;
-            console.log(`📦 تم تسجيل مورد: ${id} (${type}) - الإجمالي: ${this.total}`);
-        }
-    },
-    
-    markLoaded(id) {
-        const resource = this.resources.get(id);
-        if (resource && !resource.loaded) {
-            resource.loaded = true;
-            this.loaded++;
-            this.updateProgress();
-        }
-    },
-    
-    updateProgress() {
-        if (this.total === 0) return;
-        
-        const progress = (this.loaded / this.total) * 100;
-        console.log(`📊 التقدم: ${this.loaded}/${this.total} = ${progress.toFixed(1)}%`);
-        
-        // إضاءة المصابيح تدريجياً
-        if (progress >= 25) {
-            document.getElementById('bulb-4')?.classList.add('on');
-        }
-        if (progress >= 50) {
-            document.getElementById('bulb-3')?.classList.add('on');
-        }
-        if (progress >= 75) {
-            document.getElementById('bulb-2')?.classList.add('on');
-        }
-        if (progress >= 90) {
-            document.getElementById('bulb-1')?.classList.add('on');
-        }
-        
-        // اكتمال التحميل
-        if (this.loaded === this.total) {
-            console.log('✅ اكتمل تحميل جميع الموارد (100%)');
-            setTimeout(() => this.finishLoading(), 300);
-        }
-    },
-    
-    finishLoading() {
-        hideLoadingScreen();
-        if (mainSvg) mainSvg.style.opacity = '1';
-        window.updateDynamicSizes();
-        scan();
-        updateWoodInterface();
-        window.goToMapEnd();
-        console.log('🎉 تم عرض الموقع بالكامل');
-    }
 };
 
 // الحصول على العناصر فورًا
@@ -113,19 +43,14 @@ if (jsToggle) {
 
 // 2. دالة جلب البيانات
 async function fetchGlobalTree() {
-    if (globalFileTree.length > 0) return;
-    
-    loadingMonitor.addResource('github-tree', 'api');
-    
+    if (globalFileTree.length > 0) return; 
     try {
         const response = await fetch(TREE_API_URL);
         const data = await response.json();
         globalFileTree = data.tree || [];
-        console.log("✓ تم تحميل شجرة الملفات:", globalFileTree.length);
-        loadingMonitor.markLoaded('github-tree');
+        console.log("تم تحميل شجرة الملفات بنجاح:", globalFileTree.length);
     } catch (err) {
-        console.error("❌ خطأ في الاتصال بـ GitHub:", err);
-        loadingMonitor.markLoaded('github-tree');
+        console.error("خطأ في الاتصال بـ GitHub:", err);
     }
 }
 
@@ -151,14 +76,21 @@ function showLoadingScreen(groupLetter) {
         splashImage.src = `image/logo-${groupLetter}.webp`;
     }
 
-    loadingMonitor.init();
+    // إعادة تعيين المصابيح
+    document.querySelectorAll('.light-bulb').forEach(bulb => bulb.classList.remove('on'));
+
+    // إظهار فوري
     loadingOverlay.classList.add('active');
-    console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);
+
+    console.log(`🔦 تم تفعيل شاشة التحميل للمجموعة ${groupLetter}`);
 }
 
 function hideLoadingScreen() {
     if (!loadingOverlay) return;
+
+    // إخفاء فوري بدون أي تأخير
     loadingOverlay.classList.remove('active');
+
     console.log('✅ تم إخفاء شاشة التحميل');
 }
 
@@ -166,50 +98,42 @@ function hideLoadingScreen() {
 async function loadGroupSVG(groupLetter) {
     const groupContainer = document.getElementById('group-specific-content');
     groupContainer.innerHTML = '';
-    
-    const svgId = `svg-group-${groupLetter}`;
-    loadingMonitor.addResource(svgId, 'svg');
 
     try {
-        console.log(`🔄 تحميل: groups/group-${groupLetter}.svg`);
+        console.log(`🔄 محاولة تحميل: groups/group-${groupLetter}.svg`);
         const response = await fetch(`groups/group-${groupLetter}.svg`);
 
         if (!response.ok) {
             console.warn(`⚠️ ملف SVG للمجموعة ${groupLetter} غير موجود`);
-            loadingMonitor.markLoaded(svgId);
             return;
         }
 
         const svgText = await response.text();
+        console.log(`✓ تم جلب SVG بنجاح (${svgText.length} حرف)`);
+
         const match = svgText.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
 
         if (match && match[1]) {
             groupContainer.innerHTML = match[1];
-            console.log(`✓ تم حقن SVG: ${groupContainer.children.length} عنصر`);
+            console.log(`✓ تم حقن المحتوى: ${groupContainer.children.length} عنصر`);
 
-            // تسجيل الصور داخل SVG
+            // **تفعيل الصور المحقونة**
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
-            injectedImages.forEach((img, idx) => {
+            console.log(`🖼️ عدد الصور في SVG المحقون: ${injectedImages.length}`);
+
+            injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 if (src) {
-                    const imgId = `svg-img-${groupLetter}-${idx}`;
-                    loadingMonitor.addResource(imgId, 'svg-image');
-                    
-                    const tempImg = new Image();
-                    tempImg.onload = () => {
-                        img.setAttribute('href', src);
-                        loadingMonitor.markLoaded(imgId);
-                    };
-                    tempImg.onerror = () => loadingMonitor.markLoaded(imgId);
-                    tempImg.src = src;
+                    img.setAttribute('href', src);
+                    console.log(`  ↳ تم تفعيل: ${src}`);
                 }
             });
+
+        } else {
+            console.error('❌ فشل استخراج محتوى SVG');
         }
-        
-        loadingMonitor.markLoaded(svgId);
     } catch (err) {
         console.error(`❌ خطأ في loadGroupSVG:`, err);
-        loadingMonitor.markLoaded(svgId);
     }
 }
 
@@ -218,12 +142,8 @@ function updateWoodLogo(groupLetter) {
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
 
-    const logoId = `logo-wood-${groupLetter}`;
-    loadingMonitor.addResource(logoId, 'logo');
-
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    const logoSrc = `image/logo-wood-${groupLetter}.webp`;
-    
+    banner.setAttribute("href", `image/logo-wood-${groupLetter}.webp`); 
     banner.setAttribute("x", "186.86");
     banner.setAttribute("y", "1517.43"); 
     banner.setAttribute("width", "648.41");
@@ -231,16 +151,6 @@ function updateWoodLogo(groupLetter) {
     banner.style.mixBlendMode = "multiply";
     banner.style.opacity = "0.9";
     banner.style.pointerEvents = "none";
-    
-    // تحميل اللوجو
-    const tempImg = new Image();
-    tempImg.onload = () => {
-        banner.setAttribute("href", logoSrc);
-        loadingMonitor.markLoaded(logoId);
-    };
-    tempImg.onerror = () => loadingMonitor.markLoaded(logoId);
-    tempImg.src = logoSrc;
-    
     dynamicGroup.appendChild(banner);
 }
 
@@ -248,69 +158,33 @@ function updateWoodLogo(groupLetter) {
 async function initializeGroup(groupLetter, isInitialLoad = false) {
     console.log('========================================');
     console.log(`🚀 بدء تهيئة المجموعة: ${groupLetter}`);
+    console.log(`📌 تحميل أولي: ${isInitialLoad}`);
     console.log('========================================');
 
     saveSelectedGroup(groupLetter);
 
     if (toggleContainer) toggleContainer.style.display = 'flex';
     if (scrollContainer) scrollContainer.style.display = 'block';
+
     if (groupSelectionScreen) groupSelectionScreen.classList.add('hidden');
-    
     showLoadingScreen(groupLetter);
 
     await fetchGlobalTree();
     await loadGroupSVG(groupLetter);
-    
+
+    // **إعادة حساب الأحجام بعد الحقن**
     window.updateDynamicSizes();
 
     if (isInitialLoad) {
-        window.loadAllResources();
+        window.loadImages();
     } else {
-        loadingMonitor.finishLoading();
+        hideLoadingScreen();
+        if (mainSvg) mainSvg.style.opacity = '1';
+        window.scan();
+        window.updateWoodInterface();
+        window.goToMapEnd();
     }
 }
-
-// ===== دالة تحميل جميع الموارد =====
-function loadAllResources() {
-    if (!mainSvg) return;
-
-    // 1. جمع جميع الصور في الـ SVG الرئيسي
-    const mainImages = Array.from(mainSvg.querySelectorAll('image[data-src]'));
-    
-    console.log(`📦 بدء تحميل ${mainImages.length} صورة رئيسية...`);
-
-    mainImages.forEach((svgImg, idx) => {
-        const src = svgImg.getAttribute('data-src');
-        if (!src) return;
-
-        const imgId = `main-img-${idx}`;
-        loadingMonitor.addResource(imgId, 'main-image');
-
-        const img = new Image();
-        img.onload = () => {
-            svgImg.setAttribute('href', src);
-            loadingMonitor.markLoaded(imgId);
-        };
-        img.onerror = () => {
-            console.warn(`⚠️ فشل تحميل: ${src}`);
-            loadingMonitor.markLoaded(imgId);
-        };
-        img.src = src;
-    });
-
-    // 2. تسجيل أكواد JavaScript و CSS (تم تحميلها بالفعل)
-    loadingMonitor.addResource('main-js', 'script');
-    loadingMonitor.addResource('main-css', 'style');
-    loadingMonitor.markLoaded('main-js');
-    loadingMonitor.markLoaded('main-css');
-
-    // 3. إذا لم يكن هناك موارد إضافية، إنهاء التحميل
-    if (mainImages.length === 0 && loadingMonitor.total === 2) {
-        console.log('⚠️ لا توجد موارد إضافية للتحميل');
-        loadingMonitor.finishLoading();
-    }
-}
-window.loadAllResources = loadAllResources;
 
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
@@ -384,6 +258,7 @@ window.goToWood = () => {
 window.goToMapEnd = () => {
     if (!scrollContainer) return;
     const maxScrollRight = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+
     scrollContainer.scrollTo({ 
         left: maxScrollRight, 
         behavior: 'smooth' 
@@ -400,11 +275,12 @@ function debounce(func, delay) {
     }
 }
 
+// ===== دالة تحديث الأحجام محسّنة =====
 function updateDynamicSizes() {
     if (!mainSvg) return;
 
     const allImages = mainSvg.querySelectorAll('image[width="1024"][height="2454"]');
-    console.log(`📏 إعادة حساب viewBox: ${allImages.length} صورة`);
+    console.log(`📏 إعادة حساب viewBox: وجدنا ${allImages.length} صورة`);
 
     if (allImages.length === 0) {
         console.warn('⚠️ لم يتم العثور على أي صور!');
@@ -416,7 +292,7 @@ function updateDynamicSizes() {
     const totalWidth = allImages.length * imgW;
 
     mainSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${imgH}`);
-    console.log(`✓ viewBox: 0 0 ${totalWidth} ${imgH}`);
+    console.log(`✓ تم تعيين viewBox: 0 0 ${totalWidth} ${imgH}`);
 }
 window.updateDynamicSizes = updateDynamicSizes;
 
@@ -639,4 +515,256 @@ async function updateWoodInterface() {
                 f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
             ).length;
             t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+        } else {
+            t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
         }
+        g.appendChild(r); g.appendChild(t);
+        g.onclick = (e) => {
+            e.stopPropagation();
+            if (item.type === 'dir') { currentFolder = item.path; updateWoodInterface(); } 
+            else { smartOpen(item); }
+        };
+        dynamicGroup.appendChild(g);
+    }
+    applyWoodSearchFilter();
+}
+window.updateWoodInterface = updateWoodInterface;
+
+function applyWoodSearchFilter() {
+    if (!searchInput || !mainSvg) return;
+
+    const query = searchInput.value.toLowerCase().trim();
+    mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
+        const name = group.querySelector('text').getAttribute('data-search-name') || "";
+        group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
+    });
+    mainSvg.querySelectorAll('.wood-folder-group').forEach(group => { group.style.display = 'inline'; });
+}
+
+function processRect(r) {
+    if (r.hasAttribute('data-processed')) return;
+    if(r.classList.contains('w')) r.setAttribute('width', '113.5');
+    if(r.classList.contains('hw')) r.setAttribute('width', '56.75');
+    const href = r.getAttribute('data-href') || '';
+    const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
+    const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
+    const x = parseFloat(r.getAttribute('x')); const y = parseFloat(r.getAttribute('y'));
+    if (name && name.trim() !== '') {
+        const fs = Math.max(8, Math.min(12, w * 0.11));
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x + w / 2); txt.setAttribute('y', y + 2);
+        txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('class', 'rect-label');
+        txt.setAttribute('data-original-text', name); txt.setAttribute('data-original-for', href);
+        txt.style.fontSize = fs + 'px'; txt.style.fill = 'white'; txt.style.pointerEvents = 'none'; txt.style.dominantBaseline = 'hanging';
+        r.parentNode.appendChild(txt); wrapText(txt, w);
+        const bbox = txt.getBBox();
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bg.setAttribute('x', x); bg.setAttribute('y', y); bg.setAttribute('width', w); bg.setAttribute('height', bbox.height + 8);
+        bg.setAttribute('class', 'label-bg'); bg.setAttribute('data-original-for', href);
+        bg.style.fill = 'black'; bg.style.pointerEvents = 'none';
+        r.parentNode.insertBefore(bg, txt);
+    }
+    if (!isTouchDevice) { 
+        r.addEventListener('mouseover', startHover); 
+        r.addEventListener('mouseout', cleanupHover); 
+    }
+    r.onclick = () => { if (href && href !== '#') window.open(href, '_blank'); };
+
+    if (scrollContainer) {
+        r.addEventListener('touchstart', function(e) { 
+            if(!interactionEnabled) return; 
+            activeState.touchStartTime = Date.now(); 
+            activeState.initialScrollLeft = scrollContainer.scrollLeft; 
+            startHover.call(this); 
+        });
+        r.addEventListener('touchend', function(e) { 
+            if (!interactionEnabled) return;
+            if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
+                if (href && href !== '#') window.open(href, '_blank');
+            }
+            cleanupHover();
+        });
+    }
+
+    r.setAttribute('data-processed', 'true');
+}
+
+function scan() { 
+    if (!mainSvg) return;
+
+    console.log('🔍 تشغيل scan()...');
+    const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
+    console.log(`✓ تم اكتشاف ${rects.length} مستطيل`);
+    rects.forEach(r => processRect(r)); 
+}
+window.scan = scan;
+
+function loadImages() {
+    if (!mainSvg) return;
+
+    const urls = Array.from(mainSvg.querySelectorAll('image'))
+                  .map(img => img.getAttribute('data-src'))
+                  .filter(src => src !== null && src !== "");
+
+    console.log(`🖼️ بدء تحميل ${urls.length} صورة...`);
+
+    if (urls.length === 0) {
+        console.warn('⚠️ لا توجد صور للتحميل!');
+        finishLoading();
+        return;
+    }
+
+    // إعادة تعيين العداد
+    loadedCount = 0;
+
+    urls.forEach((u) => {
+        const img = new Image();
+
+        const onImageLoad = () => {
+            loadedCount++;
+            const progress = (loadedCount / urls.length) * 100;
+
+            // توزيع المصابيح: كل مصباح يمثل 25% من التقدم
+            if (progress >= 25) document.getElementById('bulb-4')?.classList.add('on');
+            if (progress >= 50) document.getElementById('bulb-3')?.classList.add('on');
+            if (progress >= 75) document.getElementById('bulb-2')?.classList.add('on');
+
+            // المصباح الأخير يضيء عند الاكتمال التام
+            if (loadedCount === urls.length) {
+                document.getElementById('bulb-1')?.classList.add('on');
+                console.log('✓ اكتمل تحميل جميع الصور');
+
+                // تحديث الصور في الـ SVG
+                mainSvg.querySelectorAll('image').forEach(si => {
+                    const actualSrc = si.getAttribute('data-src');
+                    if(actualSrc) si.setAttribute('href', actualSrc);
+                });
+
+                // إنهاء التحميل فورًا
+                finishLoading();
+            }
+        };
+
+        img.onload = onImageLoad;
+        img.onerror = onImageLoad; 
+        img.src = u;
+    });
+}
+
+// دالة مساعدة لإنهاء التحميل وعرض المحتوى
+function finishLoading() {
+    hideLoadingScreen();
+
+    if (mainSvg) mainSvg.style.opacity = '1';
+
+    window.updateDynamicSizes();
+    scan();
+    updateWoodInterface();
+    window.goToMapEnd();
+
+    console.log('🎉 اكتمل التحميل والعرض');
+}
+window.loadImages = loadImages;
+
+// ===== تهيئة مستمعي الأحداث =====
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const group = this.getAttribute('data-group');
+        console.log('👆 تم اختيار المجموعة:', group);
+        initializeGroup(group, true);
+    });
+});
+
+if (changeGroupBtn) {
+    changeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToMapEnd();
+    });
+}
+
+if (searchInput) {
+    searchInput.onkeydown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            window.goToWood();
+        }
+    };
+
+    searchInput.addEventListener('input', debounce(function(e) {
+        if (!mainSvg) return;
+
+        const query = e.target.value.toLowerCase().trim();
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if(label) label.style.display = rect.style.display; 
+            if(bg) bg.style.display = rect.style.display;
+        });
+        applyWoodSearchFilter();
+    }, 150));
+}
+
+if (moveToggle) {
+    moveToggle.onclick = (e) => {
+        e.preventDefault();
+        if (toggleContainer && toggleContainer.classList.contains('top')) {
+            toggleContainer.classList.replace('top', 'bottom');
+        } else if (toggleContainer) {
+            toggleContainer.classList.replace('bottom', 'top');
+        }
+    };
+}
+
+if (searchIcon) {
+    searchIcon.onclick = (e) => {
+        e.preventDefault();
+        window.goToWood();
+    };
+}
+
+if (backButtonGroup) {
+    backButtonGroup.onclick = () => { 
+        if (currentFolder !== "") { 
+            let parts = currentFolder.split('/');
+            parts.pop();
+            currentFolder = parts.join('/'); 
+            window.updateWoodInterface(); 
+        } else { 
+            console.log("العودة إلى أقصى يمين الخريطة...");
+            window.goToMapEnd(); 
+        } 
+    };
+}
+
+if (jsToggle) {
+    jsToggle.addEventListener('change', function() { 
+        interactionEnabled = this.checked; 
+        if(!interactionEnabled) cleanupHover(); 
+    });
+}
+
+if (mainSvg) {
+    mainSvg.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+}
+
+// ===== البدء الفوري =====
+const hasSavedGroup = loadSelectedGroup();
+
+if (hasSavedGroup) {
+    console.log('📂 تحميل المجموعة المحفوظة:', currentGroup);
+    initializeGroup(currentGroup, true);
+} else {
+    console.log('❓ لا توجد مجموعة محفوظة');
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('active');
+        loadingOverlay.style.display = 'none';
+    }
+    if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+    if (toggleContainer) toggleContainer.style.display = 'none';
+    if (scrollContainer) scrollContainer.style.display = 'none';
+}
