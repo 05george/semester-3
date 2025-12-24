@@ -25,11 +25,15 @@
     // اذهب إلى موقع webhook.site وانسخ الرابط الخاص بك وضعه مكان الرابط بالأسفل
     const myEndpoint = "https://formspree.io/f/xzdpqrnj"; 
 
-    fetch(myEndpoint, {
+       fetch(myEndpoint, {
         method: "POST",
-        mode: "no-cors", 
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            console.log("تم تسجيل بيانات الزيارة بنجاح.");
+        }
     });
-
-    console.log("تم تسجيل بيانات الزيارة بنجاح.");
-})();
