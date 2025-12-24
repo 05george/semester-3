@@ -292,10 +292,15 @@ if ('serviceWorker' in navigator) {
 }
 
 function smartOpen(item) {
-    if (!item || !item.path) return;
-    
-    // 💡 إرسال حدث مخصص عند فتح ملف
+    // حفظ في السجل المحلي أولاً
+    let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
+    history.push(item.path);
+    localStorage.setItem('openedFilesHistory', JSON.stringify(history));
+
+    // إرسال حدث للمتابعة اللحظية (اختياري)
     window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
+function smartOpen(item) {
+    if (!item || !item.path) return;
     
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     if (url.endsWith('.pdf')) {
