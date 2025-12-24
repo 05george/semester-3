@@ -532,7 +532,7 @@ function getDisplayName() {
     if (realName && realName.trim()) {
         return realName.trim();
     }
-
+    
     // إذا لم يكن موجوداً، استخدم الـ ID
     const visitorId = localStorage.getItem('visitor_id');
     return visitorId || 'زائر';
@@ -822,7 +822,7 @@ function scan() {
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
     rects.forEach(r => {
         processRect(r);
-
+        
         // ✅ إخفاء العناصر ذات href="#" من البداية
         const href = r.getAttribute('data-href') || '';
         if (href === '#') {
