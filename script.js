@@ -926,3 +926,11 @@ if (hasSavedGroup) {
     if (toggleContainer) toggleContainer.style.display = 'none';
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
+<!-- الكود المعتاد - 99% من المواقع المصرية تستخدمه هكذا -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
