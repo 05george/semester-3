@@ -937,48 +937,49 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. تتبع الأحداث وإرسال البيانات (النسخة النهائية المستقرة) --- */
+/* --- 18. تتبع الأحداث وإرسال البيانات (الشامل) --- */
 
-// 1. تسجيل الملفات عند فتحها في ذاكرة المتصفح (عشان الـ Refresh)
+// 1. تسجيل الملفات عند فتحها
 window.addEventListener('fileOpened', (e) => {
     try {
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
-        
-        // إضافة الملف فقط إذا لم يكن موجوداً مسبقاً في القائمة
         if (!history.includes(e.detail)) {
             history.push(e.detail);
             localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-            console.log("📌 تمت إضافة الملف للسجل:", e.detail);
         }
-    } catch (err) {
-        console.error("❌ خطأ في تحديث سجل التتبع:", err);
-    }
+    } catch (err) { console.error(err); }
 });
 
-// 2. إرسال البيانات المجمعة عند إغلاق التبويب أو إعادة تحميل الصفحة
+// 2. إرسال التقرير الشامل عند الخروج أو التحديث
 window.addEventListener('beforeunload', () => {
     const rawHistory = localStorage.getItem('openedFilesHistory');
     
-    // التحقق من وجود بيانات قبل الإرسال
     if (rawHistory && rawHistory !== "[]") {
         const historyArray = JSON.parse(rawHistory);
-        
-        // تحويل المصفوفة لشكل قائمة جمالية للقراءة في الإيميل
         const readableHistory = historyArray.map(item => "📄 " + item).join('\n');
 
-        const formData = new FormData();
-        formData.append("Time", new Date().toLocaleString('ar-EG'));
-        formData.append("Device", navigator.userAgent);
-        formData.append("Group", localStorage.getItem('selectedGroup') || "None");
-        formData.append("Files_Report", "\n" + readableHistory); 
+        // تجهيز البيانات "القديمة" التي افتقدتها
+        const ua = navigator.userAgent;
+        let deviceModel = "Windows PC";
+        if (/android/i.test(ua)) deviceModel = "Android Device";
+        else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Device";
 
-        // إرسال البيانات باستخدام تقنية Beacon (الأكثر ضماناً عند الإغلاق)
+        const formData = new FormData();
+        // البيانات الأساسية (التي كانت موجودة سابقاً)
+        formData.append("Device", deviceModel);
+        formData.append("Screen_Size", `${window.screen.width}x${window.screen.height}`);
+        formData.append("Group", localStorage.getItem('selectedGroup') || "None");
+        formData.append("Time", new Date().toLocaleString('ar-EG'));
+        
+        // البيانات الجديدة (قائمة الملفات)
+        formData.append("Action", "Session Summary");
+        formData.append("Files_Opened_List", "\n" + readableHistory);
+
+        // إرسال الكل في رسالة واحدة
         const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
 
         if (sent) {
-            // ✅ تصفير السجل بعد الإرسال لضمان عدم تكرار الملفات في الإيميل القادم
             localStorage.removeItem('openedFilesHistory');
-            console.log("✅ تم إرسال تقرير الملفات المفتوحة بنجاح.");
         }
     }
 });
