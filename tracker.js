@@ -1,6 +1,12 @@
 const UserTracker = {
     // دالة للحصول على اسم العرض (نفس المنطق المستخدم في script.js)
     getDisplayName() {
+        // 🔥 التأكد من وجود ID أولاً قبل أي شيء
+        if (!localStorage.getItem('visitor_id')) {
+            const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem('visitor_id', newId);
+        }
+
         // محاولة الحصول على الاسم الحقيقي
         const realName = localStorage.getItem('user_real_name');
         if (realName && realName.trim()) {
@@ -9,7 +15,7 @@ const UserTracker = {
         
         // إذا لم يكن موجوداً، استخدم الـ ID
         const visitorId = localStorage.getItem('visitor_id');
-        return visitorId || 'زائر';
+        return visitorId; // لن يكون null أبداً لأننا أنشأناه فوق
     },
 
     // إرسال البيانات
