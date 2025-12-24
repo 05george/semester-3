@@ -97,7 +97,7 @@ function showLoadingScreen(groupLetter) {
 
     loadingOverlay.classList.add('active');
     console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);
-    
+
     // تحديث رسالة الترحيب في شاشة التحميل
     updateWelcomeMessages();
 }
@@ -526,37 +526,47 @@ function wrapText(el, maxW) {
 }
 
 /* --- 12. دوال الترحيب والأسماء --- */
+function getDisplayName() {
+    // محاولة الحصول على الاسم الحقيقي
+    const realName = localStorage.getItem('user_real_name');
+    if (realName && realName.trim()) {
+        return realName.trim();
+    }
+    
+    // إذا لم يكن موجوداً، استخدم الـ ID
+    const visitorId = localStorage.getItem('visitor_id');
+    return visitorId || 'زائر';
+}
+
 function updateWelcomeMessages() {
     const displayName = getDisplayName();
 
     // 1. تحديث الترحيب في شاشة اختيار المجموعات
     const groupScreen = document.getElementById('group-selection-screen');
     if (groupScreen) {
-        // نبحث عن عنصر الترحيب أو ننشئه
         let welcomeText = document.getElementById('welcome-user-msg');
         if (!welcomeText) {
             welcomeText = document.createElement('h2');
             welcomeText.id = 'welcome-user-msg';
-            welcomeText.style.color = "white";
-            welcomeText.style.textAlign = "center";
-            welcomeText.style.marginBottom = "20px";
-            // نضعه في بداية شاشة الاختيار
+            welcomeText.style.cssText = "color: white; text-align: center; margin-bottom: 20px; font-size: 1.8rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);";
             groupScreen.insertBefore(welcomeText, groupScreen.firstChild);
         }
-        welcomeText.textContent = `مرحباً بك يا ${displayName}`;
+        
+        // عرض الرسالة المناسبة
+        welcomeText.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span><br><span style="font-size: 1.5rem;">إختر جروبك</span>`;
     }
 
-    // 2. تحديث الترحيب في شاشة التحميل (Loading Overlay)
+    // 2. تحديث الترحيب في شاشة التحميل
     const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) {
+    if (loadingOverlay && currentGroup) {
         let loadMsg = document.getElementById('loading-welcome-msg');
         if (!loadMsg) {
             loadMsg = document.createElement('div');
             loadMsg.id = 'loading-welcome-msg';
-            loadMsg.style.cssText = "color: #ffca28; font-weight: bold; margin-top: 10px; font-size: 1.2rem; text-align: center;";
+            loadMsg.style.cssText = "color: white; font-weight: bold; margin-top: 20px; font-size: 1.5rem; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);";
             loadingOverlay.appendChild(loadMsg);
         }
-        loadMsg.textContent = `جاري التحميل... انتظر لحظة يا ${displayName}`;
+        loadMsg.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span><br>في <span style="color: #4fc3f7;">INTERACTIVE COLLEGE MAP</span>`;
     }
 }
 
@@ -591,7 +601,7 @@ function renderNameInput() {
     label.setAttribute("fill", "white");
     label.style.fontSize = "18px";
     label.style.fontWeight = "bold";
-    
+
     // عرض الاسم الحالي أو رسالة الترحيب
     const currentName = localStorage.getItem('user_real_name');
     label.textContent = currentName ? `مرحباً ${currentName} - اضغط للتعديل` : "اضغط هنا لإدخال اسمك";
@@ -605,12 +615,9 @@ function renderNameInput() {
         const currentName = localStorage.getItem('user_real_name');
         const promptMessage = currentName ? `الاسم الحالي: ${currentName}\nأدخل اسم جديد أو اترك فارغاً للإلغاء:` : "ما اسمك؟";
         const name = prompt(promptMessage, currentName || "");
-        
+
         if (name !== null && name.trim()) {
             localStorage.setItem('user_real_name', name.trim());
-            if (typeof UserTracker !== 'undefined') {
-                UserTracker.send("تسجيل اسم", { name: name.trim() });
-            }
             updateWelcomeMessages();
             updateWoodInterface(); // تحديث الواجهة لإظهار الاسم الجديد
             alert("أهلاً بك يا " + name.trim());
@@ -1041,5 +1048,7 @@ const hasSavedGroup = loadSelectedGroup();
 if (hasSavedGroup) {
     initializeGroup(currentGroup, true);
 } else {
-    // إظهار شاشة الاختيار...
+    if (groupSelectionScreen) {
+        groupSelectionScreen.classList.remove('hidden');
+    }
 }
