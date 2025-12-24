@@ -820,7 +820,19 @@ function scan() {
     console.log('🔍 تشغيل scan()...');
     const rects = mainSvg.querySelectorAll('rect.image-mapper-shape, rect.m');
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
-    rects.forEach(r => processRect(r));
+    rects.forEach(r => {
+        processRect(r);
+        
+        // ✅ إخفاء العناصر ذات href="#" من البداية
+        const href = r.getAttribute('data-href') || '';
+        if (href === '#') {
+            r.style.display = 'none';
+            const label = r.parentNode.querySelector(`.rect-label[data-original-for='${r.dataset.href}']`);
+            const bg = r.parentNode.querySelector(`.label-bg[data-original-for='${r.dataset.href}']`);
+            if (label) label.style.display = 'none';
+            if (bg) bg.style.display = 'none';
+        }
+    });
 }
 window.scan = scan;
 
@@ -946,24 +958,30 @@ if (searchInput) {
         // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = rect.getAttribute('data-href') || '';
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
 
-            // ✅ إخفاء المستطيلات بـ data-href="#" دائماً
+            // ✅ إخفاء المستطيلات بـ data-href="#" دائماً (حتى لو البحث فارغ)
             if (href === '#') {
                 rect.style.display = 'none';
-                const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-                const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
                 if (label) label.style.display = 'none';
                 if (bg) bg.style.display = 'none';
                 return;
             }
 
-            const isMatch = href.toLowerCase().includes(query) || 
-                          (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if (label) label.style.display = rect.style.display; 
-            if (bg) bg.style.display = rect.style.display;
+            // ✅ منطق البحث العادي للعناصر الأخرى
+            if (query.length > 0) {
+                const isMatch = href.toLowerCase().includes(query) || 
+                              (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+                rect.style.display = isMatch ? '' : 'none';
+                if (label) label.style.display = rect.style.display; 
+                if (bg) bg.style.display = rect.style.display;
+            } else {
+                // ✅ عند البحث الفارغ: إظهار كل شيء ماعدا "#"
+                rect.style.display = '';
+                if (label) label.style.display = ''; 
+                if (bg) bg.style.display = '';
+            }
         });
 
         // ✅ تحديث واجهة القوائم الخشبية مع الأرقام الذكية
