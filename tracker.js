@@ -1,35 +1,47 @@
-// ملف يجمع بيانات الجهاز التقنية بشكل تلقائي
 (function() {
-    // 1. استخراج معلومات نظام التشغيل والمتصفح
+    // 1. جمع البيانات
     const ua = navigator.userAgent;
     let deviceModel = "Unknown Device";
 
-    // محاولة تحديد نوع الجهاز من خلال الـ User Agent
     if (/android/i.test(ua)) deviceModel = "Android Device";
     else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) deviceModel = "Apple iOS Device";
     else if (/Windows NT/i.test(ua)) deviceModel = "Windows PC";
     else if (/Macintosh/i.test(ua)) deviceModel = "Mac PC";
 
     const data = {
-        deviceType: deviceModel, // نوع الجهاز
-        platform: navigator.platform, // المنصة
-        browser: navigator.appName, // المتصفح
-        screenWidth: window.screen.width, // عرض الشاشة
-        screenHeight: window.screen.height, // طول الشاشة
-        language: navigator.language, // لغة الجهاز
-        time: new Date().toLocaleString('ar-EG'), // وقت الدخول بتوقيت مصر
-        referrer: document.referrer || "Direct Link" // المصدر (من أين أتى)
+        deviceType: deviceModel,
+        platform: navigator.platform,
+        browser: navigator.appName,
+        screenSize: `${window.screen.width}x${window.screen.height}`,
+        language: navigator.language,
+        time: new Date().toLocaleString('ar-EG'),
+        referrer: document.referrer || "Direct Link",
+        pageUrl: window.location.href
     };
 
-    // 2. إرسال البيانات إليك (باستخدام Webhook مجاني)
-    // اذهب إلى موقع webhook.site وانسخ الرابط الخاص بك وضعه مكان الرابط بالأسفل
+    // 2. تحويل البيانات لـ FormData لضمان قبولها بدون أخطاء CORS أو 405
+    const formData = new FormData();
+    for (const key in data) {
+        formData.append(key, data[key]);
+    }
+
+    // 3. الإرسال
     const myEndpoint = "https://formspree.io/f/xzdpqrnj"; 
 
-fetch(myEndpoint, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
-})
+    fetch(myEndpoint, {
+        method: "POST",
+        body: formData, // استخدام FormData بدلاً من JSON.stringify
+        headers: {
+            'Accept': 'application/json'
+            // ملاحظة: لا تضع Content-Type يدوياً عند استخدام FormData
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log("✅ Device info tracked successfully.");
+        }
+    })
+    .catch(() => {
+        // فشل التتبع لا يجب أن يزعج المستخدم أو يظهر كخطأ ضخم
+    });
+})();
