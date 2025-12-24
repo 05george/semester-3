@@ -600,7 +600,7 @@ function renderNameInput() {
     // النص التوضيحي
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
     label.setAttribute("x", "510");
-    label.setAttribute("y", "180");
+    label.setAttribute("y", "1262");
     label.setAttribute("text-anchor", "middle");
     label.setAttribute("fill", "white");
     label.style.fontSize = "18px";
