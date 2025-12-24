@@ -937,49 +937,48 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. تتبع الأحداث وإرسال البيانات (محسّن) --- */
+/* --- 18. تتبع الأحداث وإرسال البيانات (النسخة النهائية المستقرة) --- */
 
-// 💡 دالة لتخزين الملفات المفتوحة في localStorage لضمان عدم ضياعها مع Refresh
+// 1. تسجيل الملفات عند فتحها في ذاكرة المتصفح (عشان الـ Refresh)
 window.addEventListener('fileOpened', (e) => {
-    let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
-    
-    // إضافة الملف فقط إذا لم يكن موجوداً مسبقاً
-    if (!history.includes(e.detail)) {
-        history.push(e.detail);
-        localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-        console.log("📌 تمت إضافة الملف للسجل:", e.detail);
+    try {
+        let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
+        
+        // إضافة الملف فقط إذا لم يكن موجوداً مسبقاً في القائمة
+        if (!history.includes(e.detail)) {
+            history.push(e.detail);
+            localStorage.setItem('openedFilesHistory', JSON.stringify(history));
+            console.log("📌 تمت إضافة الملف للسجل:", e.detail);
+        }
+    } catch (err) {
+        console.error("❌ خطأ في تحديث سجل التتبع:", err);
     }
 });
 
-// 💡 مستمع تغيير المجموعة (اختياري للتتبع المحلي)
-window.addEventListener('groupChanged', (e) => {
-    console.log('🔔 حدث: تم تغيير المجموعة إلى:', e.detail);
-});
-
-// 💡 إرسال البيانات فقط عند إغلاق المتصفح فعلياً
+// 2. إرسال البيانات المجمعة عند إغلاق التبويب أو إعادة تحميل الصفحة
 window.addEventListener('beforeunload', () => {
-    const history = localStorage.getItem('openedFilesHistory');
+    const rawHistory = localStorage.getItem('openedFilesHistory');
     
-    if (history && history !== "[]") {
-        console.log("📤 إرسال سجل الملفات المفتوحة");
+    // التحقق من وجود بيانات قبل الإرسال
+    if (rawHistory && rawHistory !== "[]") {
+        const historyArray = JSON.parse(rawHistory);
+        
+        // تحويل المصفوفة لشكل قائمة جمالية للقراءة في الإيميل
+        const readableHistory = historyArray.map(item => "📄 " + item).join('\n');
 
-        // تجهيز البيانات
         const formData = new FormData();
+        formData.append("Time", new Date().toLocaleString('ar-EG'));
         formData.append("Device", navigator.userAgent);
         formData.append("Group", localStorage.getItem('selectedGroup') || "None");
-        formData.append("Opened_Files", history);
-        
-        // إرسال البيانات باستخدام sendBeacon
+        formData.append("Files_Report", "\n" + readableHistory); 
+
+        // إرسال البيانات باستخدام تقنية Beacon (الأكثر ضماناً عند الإغلاق)
         const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
-        
+
         if (sent) {
-            console.log("✅ تم إرسال البيانات بنجاح");
-            
-            // 💡 اختياري: مسح السجل بعد الإرسال
-            // إذا كنت تريد لكل "جلسة" إيميل منفصل، أزل التعليق عن السطر التالي:
-            // localStorage.removeItem('openedFilesHistory');
-        } else {
-            console.warn("⚠️ فشل إرسال البيانات");
+            // ✅ تصفير السجل بعد الإرسال لضمان عدم تكرار الملفات في الإيميل القادم
+            localStorage.removeItem('openedFilesHistory');
+            console.log("✅ تم إرسال تقرير الملفات المفتوحة بنجاح.");
         }
     }
 });
