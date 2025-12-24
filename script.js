@@ -524,6 +524,8 @@ function wrapText(el, maxW) {
 
 /* --- 12. تحديث واجهة القوائم --- */
 async function updateWoodInterface() {
+    renderNameInput(); // <--- أضف هذا السطر هنا
+    const dynamicGroup = document.getElementById('dynamic-links-group');
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
 
@@ -941,98 +943,4 @@ if (hasSavedGroup) {
     if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
     if (toggleContainer) toggleContainer.style.display = 'none';
     if (scrollContainer) scrollContainer.style.display = 'none';
-}
-
-/* --- 18. التقرير الختامي الشامل (رسالة واحدة لكل مستخدم) --- */
-
-const sessionStartTime = Date.now();
-let searchHistory = new Set();
-
-// تتبع عمليات البحث
-if (searchInput) {
-    searchInput.addEventListener('input', debounce((e) => {
-        const val = e.target.value.trim();
-        if (val.length > 2) searchHistory.add(val);
-    }, 1000));
-}
-
-// الدالة الأهم: تجمع كل شيء وترسله عند الخروج
-window.addEventListener('beforeunload', async () => {
-    // 1. حساب مدة الجلسة
-    const durationMin = ((Date.now() - sessionStartTime) / 60000).toFixed(2);
-
-    // 2. تجهيز سجل الملفات المفتوحة من localStorage
-    const rawHistory = localStorage.getItem('openedFilesHistory') || "[]";
-    const historyArray = JSON.parse(rawHistory);
-
-    // 3. محاولة جلب الـ IP والموقع (سريع جداً)
-    let ipData = { ip: "N/A", city: "N/A", org: "N/A" };
-
-    const formData = new FormData();
-
-    // --- [بيانات الهوية والنشاط] ---
-    formData.append("Report_Type", "Final Session Summary");
-    formData.append("Group", localStorage.getItem('selectedGroup') || "None");
-    formData.append("Duration", `${durationMin} Minutes`);
-    formData.append("Files_Opened", historyArray.length > 0 ? historyArray.join(' | ') : "No files");
-    formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "None");
-
-    // --- [بيانات الجهاز المتقدمة] ---
-    formData.append("Device_Type", /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC");
-    formData.append("Platform", navigator.platform);
-    formData.append("OS_Language", navigator.language);
-    formData.append("Screen_Res", `${window.screen.width}x${window.screen.height}`);
-    formData.append("Window_Size", `${window.innerWidth}x${window.innerHeight}`);
-    formData.append("RAM_Estimate", navigator.deviceMemory || "Unknown");
-    formData.append("CPU_Cores", navigator.hardwareConcurrency || "Unknown");
-
-    // --- [بيانات المتصفح بدقة] ---
-    const ua = navigator.userAgent;
-    formData.append("Browser_Full", ua);
-
-    // --- [بيانات المصدر والوقت] ---
-    formData.append("Entry_URL", window.location.href);
-    formData.append("Referrer", document.referrer || "Direct Visit");
-    formData.append("Time_Local", new Date().toLocaleString('ar-EG'));
-
-    // 4. الإرسال باستخدام sendBeacon (الأفضل لضمان الوصول عند إغلاق الصفحة)
-    navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
-
-    // تنظيف السجل
-    localStorage.removeItem('openedFilesHistory');
-});
-function renderNameInput() {
-    if (document.getElementById('user-name-field')) return;
-
-    const input = document.createElement('input');
-    input.id = 'user-name-field';
-    input.type = 'text';
-    input.placeholder = 'اكتب اسمك هنا...';
-    input.value = localStorage.getItem('user_real_name') || "";
-    
-    // تنسيق الحقل ليظهر فوق اللوجو الخشبي
-    Object.assign(input.style, {
-        position: 'fixed',
-        bottom: '80px', // يظهر فوق الأزرار السفلية
-        left: '50%',
-        transform: 'translateX(-50%)',
-        padding: '10px',
-        borderRadius: '10px',
-        border: '2px solid #5d4037',
-        zIndex: '2000',
-        textAlign: 'center',
-        width: '180px',
-        boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-    });
-
-    document.body.appendChild(input);
-
-    input.onchange = () => {
-        const name = input.value.trim();
-        if (name) {
-            localStorage.setItem('user_real_name', name);
-            UserTracker.send("تسجيل اسم", { name: name });
-            alert("تم حفظ الاسم بنجاح!");
-        }
-    };
 }
