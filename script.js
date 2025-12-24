@@ -18,9 +18,6 @@ let totalBytes = 0;
 let loadedBytes = 0;
 let imageUrlsToLoad = [];
 
-// 💡 مصفوفة لتخزين الملفات التي فتحها المستخدم خلال الجلسة
-let sessionOpenedFiles = [];
-
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
     baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -219,7 +216,7 @@ function updateWoodLogo(groupLetter) {
 }
 
 /* --- 5. تهيئة المجموعة --- */
-async function initializeGroup(groupLetter, isInitialLoad = false) {
+async function initializeGroup(groupLetter) {
     console.log(`🚀 تهيئة المجموعة: ${groupLetter}`);
 
     saveSelectedGroup(groupLetter);
@@ -235,15 +232,8 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
 
     window.updateDynamicSizes();
 
-    if (isInitialLoad) {
-        window.loadImages();
-    } else {
-        hideLoadingScreen();
-        if (mainSvg) mainSvg.style.opacity = '1';
-        window.scan();
-        window.updateWoodInterface();
-        window.goToWood();
-    }
+    // تحميل فوري بدون تأخير
+    window.loadImages();
 }
 
 /* --- 6. عارض PDF --- */
@@ -305,16 +295,19 @@ function smartOpen(item) {
     // إرسال حدث للمتابعة
     window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
 
-    const url = `${RAW_CONTENT_BASE}${item.path}`;
-    if (url.endsWith('.pdf')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        overlay.classList.remove("hidden");
-        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                        encodeURIComponent(url) + "#zoom=page-width"; 
-    } else {
-        window.open(url, '_blank');
+    // 🔴 تتبع فتح الملف عبر tracker.js
+    if (typeof trackSvgOpen === 'function') {
+        trackSvgOpen(item.path);
     }
+
+    const url = `${RAW_CONTENT_BASE}${item.path}`;
+    
+    // استخدام Mozilla PDF.js لجميع أنواع الملفات
+    const overlay = document.getElementById("pdf-overlay");
+    const pdfViewer = document.getElementById("pdfFrame");
+    overlay.classList.remove("hidden");
+    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                    encodeURIComponent(url) + "#zoom=page-width";
 }
 
 /* --- 8. التنقل --- */
@@ -532,7 +525,7 @@ function getDisplayName() {
     if (realName && realName.trim()) {
         return realName.trim();
     }
-    
+
     // إذا لم يكن موجوداً، استخدم الـ ID
     const visitorId = localStorage.getItem('visitor_id');
     return visitorId || 'زائر';
@@ -602,6 +595,12 @@ function renderNameInput() {
 
         if (name !== null && name.trim()) {
             localStorage.setItem('user_real_name', name.trim());
+            
+            // 🔴 تتبع تغيير الاسم عبر tracker.js
+            if (typeof trackNameChange === 'function') {
+                trackNameChange(name.trim());
+            }
+            
             updateWelcomeMessages();
             updateWoodInterface(); // تحديث الواجهة لإظهار الاسم الجديد
             alert("أهلاً بك يا " + name.trim());
@@ -790,7 +789,19 @@ function processRect(r) {
     }
 
     r.onclick = () => { 
-        if (href && href !== '#') window.open(href, '_blank'); 
+        if (href && href !== '#') {
+            // استخدام Mozilla PDF.js لجميع الروابط
+            const overlay = document.getElementById("pdf-overlay");
+            const pdfViewer = document.getElementById("pdfFrame");
+            overlay.classList.remove("hidden");
+            pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                            encodeURIComponent(href) + "#zoom=page-width";
+            
+            // 🔴 تتبع فتح الملف
+            if (typeof trackSvgOpen === 'function') {
+                trackSvgOpen(href);
+            }
+        }
     };
 
     if (scrollContainer) {
@@ -804,7 +815,19 @@ function processRect(r) {
             if (!interactionEnabled) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && 
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if (href && href !== '#') window.open(href, '_blank');
+                if (href && href !== '#') {
+                    // استخدام Mozilla PDF.js للمس أيضاً
+                    const overlay = document.getElementById("pdf-overlay");
+                    const pdfViewer = document.getElementById("pdfFrame");
+                    overlay.classList.remove("hidden");
+                    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                                    encodeURIComponent(href) + "#zoom=page-width";
+                    
+                    // 🔴 تتبع فتح الملف
+                    if (typeof trackSvgOpen === 'function') {
+                        trackSvgOpen(href);
+                    }
+                }
             }
             cleanupHover();
         });
@@ -822,7 +845,7 @@ function scan() {
     console.log(`✅ تم اكتشاف ${rects.length} مستطيل`);
     rects.forEach(r => {
         processRect(r);
-        
+
         // ✅ إخفاء العناصر ذات href="#" من البداية
         const href = r.getAttribute('data-href') || '';
         if (href === '#') {
@@ -930,7 +953,7 @@ document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const group = this.getAttribute('data-group');
         console.log('👆 تم اختيار المجموعة:', group);
-        initializeGroup(group, true);
+        initializeGroup(group);
     });
 });
 
@@ -946,6 +969,12 @@ if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
+            
+            // 🔴 تتبع البحث
+            if (typeof trackSearch === 'function') {
+                trackSearch(searchInput.value);
+            }
+            
             window.goToWood();
         }
     };
@@ -1048,7 +1077,7 @@ updateWelcomeMessages();
 // 3. بقية الكود الخاص بتشغيل المجموعة المحفوظة
 const hasSavedGroup = loadSelectedGroup();
 if (hasSavedGroup) {
-    initializeGroup(currentGroup, true);
+    initializeGroup(currentGroup);
 } else {
     if (groupSelectionScreen) {
         groupSelectionScreen.classList.remove('hidden');
