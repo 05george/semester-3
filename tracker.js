@@ -1,5 +1,5 @@
 const UserTracker = {
-    activities: [],
+    activities: [], // لتخزين الأنشطة حتى لحظة الخروج
 
     getDisplayName() {
         const realName = localStorage.getItem('user_real_name');
@@ -10,10 +10,10 @@ const UserTracker = {
             const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('visitor_id', newId);
         }
-        return localStorage.getItem('user_real_name') || localStorage.getItem('visitor_id');
+        const cleanRealName = localStorage.getItem('user_real_name');
+        return (cleanRealName && cleanRealName.trim()) ? cleanRealName.trim() : localStorage.getItem('visitor_id');
     },
 
-    // استعادة دالتك الأصلية بدقتها الكاملة (بدون أي تغيير)
     getBrowserName() {
         const ua = navigator.userAgent;
         if (ua.includes("Samsung")) return "Samsung Internet";
@@ -25,7 +25,6 @@ const UserTracker = {
         return "Unknown Browser";
     },
 
-    // استعادة دالتك الأصلية لنظام التشغيل
     getOS() {
         const ua = navigator.userAgent;
         if (ua.includes("Android")) return "Android";
@@ -41,43 +40,60 @@ const UserTracker = {
         return conn ? `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)` : "Unknown";
     },
 
-    trackAction(action, extra = {}) {
+    // دالة لتسجيل النشاط داخلياً ليتم إرساله عند الخروج
+    logActivity(type, details = {}) {
         this.activities.push({
             time: new Date().toLocaleTimeString('ar-EG'),
-            action: action,
-            details: extra
+            type: type,
+            details: details
         });
     },
 
-    sendFinalReport() {
-        if (this.activities.length === 0) return;
-
+    // إرسال البيانات (دخول أو تقرير نهائي)
+    send(action, isFinal = false) {
         const data = new FormData();
-        // الترتيب الرقمي الذي يظهر بشكل سليم في Formspree
         data.append("01-User", this.getDisplayName());
         data.append("02-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
-        data.append("03-Activities_Log", JSON.stringify(this.activities, null, 2));
-        data.append("04-Browser", this.getBrowserName()); // الآن سيعيد الاسم الصريح كما كان
-        data.append("05-OS", this.getOS()); // سيعيد النظام الصريح كما كان
-        data.append("06-Viewport", `${window.innerWidth}x${window.innerHeight}`);
-        data.append("07-Screen", `${screen.width}x${screen.height}`);
-        data.append("08-PixelRatio", window.devicePixelRatio || 1);
-        data.append("09-Connection", this.getConnectionInfo());
-        data.append("10-Language", navigator.language || 'Unknown');
-        data.append("11-Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
-        data.append("12-Full_User_Agent", navigator.userAgent); // لزيادة التأكيد
-        data.append("13-Session_End_Time", new Date().toLocaleString('ar-EG'));
+        data.append("03-Action", action);
+        
+        if (isFinal) {
+            data.append("04-Activities_Summary", JSON.stringify(this.activities, null, 2));
+        }
+
+        data.append("05-Browser", this.getBrowserName());
+        data.append("06-OS", this.getOS());
+        data.append("07-Viewport", `${window.innerWidth}x${window.innerHeight}`);
+        data.append("08-Screen", `${screen.width}x${screen.height}`);
+        data.append("09-PixelRatio", window.devicePixelRatio || 1);
+        data.append("10-Connection", this.getConnectionInfo());
+        data.append("11-Language", navigator.language || 'Unknown');
+        data.append("12-Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
+        data.append("13-Time", new Date().toLocaleString('ar-EG'));
 
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
-        this.activities = []; 
     }
 };
 
-// الأحداث
-window.addEventListener('load', () => UserTracker.trackAction("دخول الموقع"));
-window.addEventListener('groupChanged', (e) => UserTracker.trackAction("تغيير المجموعة", { newGroup: e.detail }));
-
-window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') UserTracker.sendFinalReport();
+// 1. عند فتح الموقع: إرسال الرسالة الأولى فوراً
+window.addEventListener('load', () => {
+    UserTracker.send("دخول الموقع");
 });
-window.addEventListener('pagehide', () => UserTracker.sendFinalReport());
+
+// 2. تسجيل الأنشطة (لا ترسل رسائل، فقط تخزنها)
+// تتبع تغيير الجروب
+window.addEventListener('groupChanged', (e) => {
+    UserTracker.logActivity("تغيير جروب", { newGroup: e.detail });
+});
+
+// وظائف يمكنك استدعاؤها يدوياً في كودك:
+function trackSearch(query) { UserTracker.logActivity("بحث", { query: query }); }
+function trackSvgOpen(name) { UserTracker.logActivity("فتح ملف SVG", { file: name }); }
+function trackApiOpen(endpoint) { UserTracker.logActivity("فتح API", { api: endpoint }); }
+function trackNameChange(newName) { UserTracker.logActivity("تغيير اسم", { name: newName }); }
+
+// 3. عند الغلق: إرسال الرسالة الثانية (التقرير النهائي)
+window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        UserTracker.send("تقرير النشاط قبل الخروج", true);
+    }
+});
