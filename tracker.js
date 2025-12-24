@@ -1,47 +1,49 @@
 (function() {
-    // 1. جمع البيانات
-    const ua = navigator.userAgent;
-    let deviceModel = "Unknown Device";
+    // دالة الإرسال الموحدة
+    function sendTrackingData(extraInfo = {}) {
+        const ua = navigator.userAgent;
+        let deviceModel = "Unknown Device";
+        if (/android/i.test(ua)) deviceModel = "Android Device";
+        else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Device";
+        else if (/Windows/i.test(ua)) deviceModel = "Windows PC";
 
-    if (/android/i.test(ua)) deviceModel = "Android Device";
-    else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) deviceModel = "Apple iOS Device";
-    else if (/Windows NT/i.test(ua)) deviceModel = "Windows PC";
-    else if (/Macintosh/i.test(ua)) deviceModel = "Mac PC";
+        // تجهيز البيانات الأساسية
+        const data = {
+            device: deviceModel,
+            group: localStorage.getItem('selectedGroup') || "None",
+            screen: `${window.screen.width}x${window.screen.height}`,
+            time: new Date().toLocaleString('ar-EG'),
+            // المعلومات الإضافية (Action & Target)
+            action: extraInfo.action || "Initial Visit",
+            target: extraInfo.target || "Home Page",
+            ...extraInfo
+        };
 
-    const data = {
-        deviceType: deviceModel,
-        platform: navigator.platform,
-        browser: navigator.appName,
-        screenSize: `${window.screen.width}x${window.screen.height}`,
-        language: navigator.language,
-        time: new Date().toLocaleString('ar-EG'),
-        referrer: document.referrer || "Direct Link",
-        pageUrl: window.location.href
-    };
+        // تحويل لـ FormData لضمان عملها مع Formspree بدون أخطاء
+        const formData = new FormData();
+        for (const key in data) {
+            formData.append(key, data[key]);
+        }
 
-    // 2. تحويل البيانات لـ FormData لضمان قبولها بدون أخطاء CORS أو 405
-    const formData = new FormData();
-    for (const key in data) {
-        formData.append(key, data[key]);
+        fetch("https://formspree.io/f/xzdpqrnj", {
+            method: "POST",
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(() => console.log(`✅ Tracked: ${data.action} -> ${data.target}`))
+        .catch(() => {}); // صمت تام في حالة الخطأ
     }
 
-    // 3. الإرسال
-    const myEndpoint = "https://formspree.io/f/xzdpqrnj"; 
+    // 1. تتبع أول ما الصفحة تفتح
+    sendTrackingData({ action: "Page Load" });
 
-    fetch(myEndpoint, {
-        method: "POST",
-        body: formData, // استخدام FormData بدلاً من JSON.stringify
-        headers: {
-            'Accept': 'application/json'
-            // ملاحظة: لا تضع Content-Type يدوياً عند استخدام FormData
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            console.log("✅ Device info tracked successfully.");
-        }
-    })
-    .catch(() => {
-        // فشل التتبع لا يجب أن يزعج المستخدم أو يظهر كخطأ ضخم
+    // 2. مستمع لاختيار المجموعة (بيشتغل لما script.js يبعت الحدث)
+    window.addEventListener('groupChanged', (e) => {
+        sendTrackingData({ action: "Select Group", target: e.detail });
+    });
+
+    // 3. مستمع لفتح الملفات (بيشتغل لما دالة smartOpen تبعت الحدث)
+    window.addEventListener('fileOpened', (e) => {
+        sendTrackingData({ action: "Open File", target: e.detail });
     });
 })();
