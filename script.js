@@ -937,9 +937,22 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. تتبع الأحداث وإرسال البيانات (الشامل) --- */
+/* --- 18.تتبع الأحداث وإرسال البيانات --- */
 
-// 1. تسجيل الملفات عند فتحها
+// 1. تسجيل وقت الدخول لحساب مدة الجلسة
+const sessionStartTime = Date.now();
+
+// 2. تسجيل عمليات البحث التي قام بها المستخدم
+let searchHistory = new Set();
+if (searchInput) {
+    searchInput.addEventListener('input', debounce((e) => {
+        if (e.target.value.trim().length > 2) {
+            searchHistory.add(e.target.value.trim());
+        }
+    }, 1000));
+}
+
+// 3. تسجيل الملفات عند فتحها
 window.addEventListener('fileOpened', (e) => {
     try {
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
@@ -947,35 +960,44 @@ window.addEventListener('fileOpened', (e) => {
             history.push(e.detail);
             localStorage.setItem('openedFilesHistory', JSON.stringify(history));
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Tracking Error:", err); }
 });
 
-// 2. إرسال التقرير الشامل عند الخروج أو التحديث
+// 4. إرسال التقرير النهائي الشامل
 window.addEventListener('beforeunload', () => {
     const rawHistory = localStorage.getItem('openedFilesHistory');
     
+    // نرسل التقرير إذا فتح ملفات أو قضى وقتاً طويلاً
     if (rawHistory && rawHistory !== "[]") {
         const historyArray = JSON.parse(rawHistory);
         const readableHistory = historyArray.map(item => "📄 " + item).join('\n');
+        
+        // حساب مدة البقاء في الموقع (بالدقائق)
+        const sessionDuration = Math.round((Date.now() - sessionStartTime) / 60000);
 
-        // تجهيز البيانات "القديمة" التي افتقدتها
         const ua = navigator.userAgent;
         let deviceModel = "Windows PC";
         if (/android/i.test(ua)) deviceModel = "Android Device";
         else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Device";
 
         const formData = new FormData();
-        // البيانات الأساسية (التي كانت موجودة سابقاً)
-        formData.append("Device", deviceModel);
-        formData.append("Screen_Size", `${window.screen.width}x${window.screen.height}`);
-        formData.append("Group", localStorage.getItem('selectedGroup') || "None");
-        formData.append("Time", new Date().toLocaleString('ar-EG'));
         
-        // البيانات الجديدة (قائمة الملفات)
-        formData.append("Action", "Session Summary");
-        formData.append("Files_Opened_List", "\n" + readableHistory);
+        // --- القسم الأول: بيانات المستخدم والتقنية ---
+        formData.append("Device", deviceModel);
+        formData.append("Browser_Lang", navigator.language);
+        formData.append("Screen", `${window.screen.width}x${window.screen.height}`);
+        formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
+        
+        // --- القسم الثاني: إحصائيات الجلسة (الإضافات الجديدة) ---
+        formData.append("Duration_Minutes", sessionDuration + " min"); // كم دقيقة قضاها
+        formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "No Search"); // ماذا بحث
+        formData.append("Came_From", document.referrer || "Direct Visit"); // دخل للموقع من فين (فيسبوك مثلاً)
+        
+        // --- القسم الثالث: سجل الملفات ---
+        formData.append("Files_List", "\n" + readableHistory);
+        formData.append("Total_Files", historyArray.length);
 
-        // إرسال الكل في رسالة واحدة
+        // إرسال الكل باستخدام Beacon
         const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
 
         if (sent) {
