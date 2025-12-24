@@ -528,10 +528,17 @@ function wrapText(el, maxW) {
 /* --- 12. دوال الترحيب والأسماء --- */
 function getDisplayName() {
     const savedName = localStorage.getItem('user_real_name');
-    const visitorId = localStorage.getItem('visitor_id') || "Guest";
-    // إذا وجد اسماً يعرضه، وإذا لم يجد يعرض الـ ID
-    return savedName ? savedName : `الزائر (${visitorId})`;
+    const visitorId = localStorage.getItem('visitor_id');
+    
+    // إذا وجد اسماً مسجلاً يعرضه، وإذا لم يجد يعرض الـ ID فقط
+    // إذا لم يتوفر الـ ID لسبب ما، يعرض كلمة "مجهول" كاحتياط
+    if (savedName) {
+        return savedName;
+    } else {
+        return visitorId ? visitorId : "Unknown ID";
+    }
 }
+
 
 function updateWelcomeMessages() {
     const displayName = getDisplayName();
