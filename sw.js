@@ -6,8 +6,6 @@ const ASSETS_TO_CACHE = [
   './script.js',
   './image/wood.webp',
   './image/0.png',
-   
-  // أضف أي صور أساسية أخرى هنا
 ];
 
 // 1. تثبيت وحفظ الملفات الأساسية
@@ -21,6 +19,12 @@ self.addEventListener('install', (event) => {
 
 // 2. استراتيجية "Network First": يحاول التحديث، وإذا فشل (أوفلاين) يستخدم المخزن
 self.addEventListener('fetch', (event) => {
+  // ✅ تجاهل طلبات POST والطلبات غير GET
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
