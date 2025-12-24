@@ -1,77 +1,35 @@
-/* --- نظام التتبع المطور - Gemini Enhanced Tracking --- */
-const TrackingSystem = (function() {
-    let cachedTechData = null;
+const SmartTracker = {
+    data: {
+        startTime: new Date().toISOString(),
+        group: 'None',
+        openedFiles: [],
+        searchCount: 0
+    },
 
-    // 1. دالة جلب البيانات التقنية العميقة
-    async function getTechnicalInfo() {
-        if (cachedTechData) return cachedTechData;
+    // تحديث المجموعة المختارة
+    setGroup(groupName) {
+        this.data.group = groupName;
+    },
 
-        let ipInfo = { ip: "Checking...", city: "Unknown", org: "Unknown" };
-        try {
-            // جلب الـ IP والموقع الجغرافي (خدمة سريعة ومجانية)
-            const res = await fetch('https://ipapi.co/json/');
-            if (res.ok) ipInfo = await res.json();
-        } catch (e) { console.log("IP Tracking skipped or blocked"); }
-
-        cachedTechData = {
-            ip: ipInfo.ip,
-            city: ipInfo.city,
-            isp: ipInfo.org,
-            browser: navigator.userAgentData?.brands?.map(b => b.brand).join(', ') || navigator.userAgent,
-            platform: navigator.platform,
-            language: navigator.language,
-            cores: navigator.hardwareConcurrency || "N/A",
-            memory: navigator.deviceMemory || "N/A",
-            screen: `${window.screen.width}x${window.screen.height}`,
-            viewport: `${window.innerWidth}x${window.innerHeight}`,
-            pixelRatio: window.devicePixelRatio,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        };
-        return cachedTechData;
-    }
-
-    // 2. دالة الإرسال الرئيسية
-    async function sendTrackingData(extraInfo = {}) {
-        const isInitial = extraInfo.action === "Page Load";
-        const tech = isInitial ? await getTechnicalInfo() : { ip: "cached", screen: "cached" };
-
-        const data = {
-            time: new Date().toLocaleString('ar-EG'),
-            group: localStorage.getItem('selectedGroup') || "None",
-            action: extraInfo.action || "Interaction",
-            target: extraInfo.target || "Unknown",
-            ...tech,
-            ...extraInfo
-        };
-
-        const formData = new FormData();
-        for (const key in data) {
-            formData.append(key, typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]);
+    // تسجيل فتح ملف (بدون تكرار)
+    logFile(fileName) {
+        if (!this.data.openedFiles.includes(fileName)) {
+            this.data.openedFiles.push(fileName);
         }
+    },
 
-        fetch("https://formspree.io/f/xzdpqrnj", {
-            method: "POST",
-            body: formData,
-            headers: { 'Accept': 'application/json' }
-        })
-        .then(() => console.log(`🚀 Sent: ${data.action} -> ${data.target}`))
-        .catch(() => {});
+    // إرسال البيانات النهائية عند الخروج
+    sendFinalReport() {
+        const report = new FormData();
+        report.append("Duration_Sec", Math.round((new Date() - new Date(this.data.startTime)) / 1000));
+        report.append("Selected_Group", this.data.group);
+        report.append("Files_Count", this.data.openedFiles.length);
+        report.append("Files_List", this.data.openedFiles.slice(0, 10).join(', ')); // أهم 10 ملفات فقط
+
+        // استخدام sendBeacon لأنه لا يعطل المتصفح ويضمن وصول البيانات عند الإغلاق
+        navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", report);
     }
+};
 
-    return { send: sendTrackingData };
-})();
-
-// --- تفعيل المستمعات بناءً على النظام الجديد ---
-
-// 1. تتبع أول ما الصفحة تفتح (مع كامل البيانات التقنية والـ IP)
-TrackingSystem.send({ action: "Page Load", target: "Main Entry" });
-
-// 2. مستمع لاختيار المجموعة
-window.addEventListener('groupChanged', (e) => {
-    TrackingSystem.send({ action: "Select Group", target: e.detail });
-});
-
-// 3. مستمع لفتح الملفات
-window.addEventListener('fileOpened', (e) => {
-    TrackingSystem.send({ action: "Open File", target: e.detail });
-});
+// تشغيل الإرسال عند إغلاق الصفحة فقط
+window.addEventListener('beforeunload', () => SmartTracker.sendFinalReport());
