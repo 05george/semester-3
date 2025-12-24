@@ -1,49 +1,82 @@
-(function() {
-    // دالة الإرسال الموحدة
-    function sendTrackingData(extraInfo = {}) {
-        const ua = navigator.userAgent;
-        let deviceModel = "Unknown Device";
-        if (/android/i.test(ua)) deviceModel = "Android Device";
-        else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Device";
-        else if (/Windows/i.test(ua)) deviceModel = "Windows PC";
+/* --- نظام التتبع المطور - Gemini Enhanced Tracking --- */
+const TrackingSystem = (function() {
+    let cachedTechData = null;
 
-        // تجهيز البيانات الأساسية
-        const data = {
-            device: deviceModel,
-            group: localStorage.getItem('selectedGroup') || "None",
+    // 1. دالة جلب البيانات التقنية العميقة
+    async function getTechnicalInfo() {
+        if (cachedTechData) return cachedTechData;
+
+        let ipInfo = { ip: "Checking...", city: "Unknown", org: "Unknown" };
+        try {
+            // جلب الـ IP والموقع الجغرافي (خدمة سريعة ومجانية)
+            const res = await fetch('https://ipapi.co/json/');
+            if (res.ok) ipInfo = await res.json();
+        } catch (e) { console.log("IP Tracking skiped or blocked"); }
+
+        cachedTechData = {
+            ip: ipInfo.ip,
+            city: ipInfo.city,
+            isp: ipInfo.org, // شركة الإنترنت
+            browser: navigator.userAgentData?.brands?.map(b => b.brand).join(', ') || navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            cores: navigator.hardwareConcurrency || "N/A", // عدد أنوية المعالج
+            memory: navigator.deviceMemory || "N/A", // الرامات بالجيجا
             screen: `${window.screen.width}x${window.screen.height}`,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            pixelRatio: window.devicePixelRatio,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+        return cachedTechData;
+    }
+
+    // 2. دالة الإرسال الرئيسية
+    async function sendTrackingData(extraInfo = {}) {
+        // إذا كان الحدث هو "تحميل الصفحة" نجلب البيانات التقنية بالكامل
+        // أما إذا كان "فتح ملف" نرسل البيانات الأساسية فقط لتوفير السرعة
+        const isInitial = extraInfo.action === "Page Load";
+        const tech = isInitial ? await getTechnicalInfo() : { ip: "cached", screen: "cached" };
+
+        const data = {
             time: new Date().toLocaleString('ar-EG'),
-            // المعلومات الإضافية (Action & Target)
-            action: extraInfo.action || "Initial Visit",
-            target: extraInfo.target || "Home Page",
+            group: localStorage.getItem('selectedGroup') || "None",
+            action: extraInfo.action || "Interaction",
+            target: extraInfo.target || "Unknown",
+            ...tech,
             ...extraInfo
         };
 
-        // تحويل لـ FormData لضمان عملها مع Formspree بدون أخطاء
         const formData = new FormData();
         for (const key in data) {
-            formData.append(key, data[key]);
+            // تحويل أي كائنات معقدة لنصوص لضمان وصولها لـ Formspree
+            formData.append(key, typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]);
         }
 
+        // استخدام fetch للإرسال العادي
         fetch("https://formspree.io/f/xzdpqrnj", {
             method: "POST",
             body: formData,
             headers: { 'Accept': 'application/json' }
         })
-        .then(() => console.log(`✅ Tracked: ${data.action} -> ${data.target}`))
-        .catch(() => {}); // صمت تام في حالة الخطأ
+        .then(() => console.log(`🚀 Sent: ${data.action} -> ${data.target}`))
+        .catch(() => {});
     }
 
-    // 1. تتبع أول ما الصفحة تفتح
-    sendTrackingData({ action: "Page Load" });
-
-    // 2. مستمع لاختيار المجموعة (بيشتغل لما script.js يبعت الحدث)
-    window.addEventListener('groupChanged', (e) => {
-        sendTrackingData({ action: "Select Group", target: e.detail });
-    });
-
-    // 3. مستمع لفتح الملفات (بيشتغل لما دالة smartOpen تبعت الحدث)
-    window.addEventListener('fileOpened', (e) => {
-        sendTrackingData({ action: "Open File", target: e.detail });
-    });
+    return { send: sendTrackingData };
 })();
+
+// --- تفعيل المستمعات بناءً على النظام الجديد ---
+
+// 1. تتبع أول ما الصفحة تفتح (مع كامل البيانات التقنية والـ IP)
+TrackingSystem.send({ action: "Page Load", target: "Main Entry" });
+
+// 2. مستمع لاختيار المجموعة
+window.addEventListener('groupChanged', (e) => {
+    TrackingSystem.send({ action: "Select Group", target: e.detail });
+});
+
+// 3. مستمع لفتح الملفات
+window.addEventListener('fileOpened', (e) => {
+    TrackingSystem.send({ action: "Open File", target: e.detail });
+});
+/* --- نهاية نظام التتبع --- */
