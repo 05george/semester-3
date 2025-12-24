@@ -6,6 +6,7 @@ const ASSETS_TO_CACHE = [
   './script.js',
   './image/wood.webp',
   './image/0.png',
+  './tracker.js',
 ];
 
 // 1. تثبيت وحفظ الملفات الأساسية
