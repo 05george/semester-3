@@ -1,38 +1,52 @@
-/* الإعدادات الأساسية للصورة */
+/* الحالة العادية */
 .wood-banner-animation {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* حركة Elastic لتعزيز شعور الـ 3D */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   transform-box: fill-box;
   transform-origin: center;
-  /* نبض هادئ جداً في الحالة العادية */
+  /* الأنيميشن العادي وهو ثابت */
   animation: wood-pulse-soft 3s infinite ease-in-out;
   will-change: transform, filter;
+  transform: scale(1) translateY(0); /* نقطة البداية الصفرية */
 }
 
-/* تأثير الـ 3D والزوم الاحترافي عند الـ Hover */
+/* حالة الـ Hover: تلغي كل ما سبق وتبدأ الزوم الجديد */
 .wood-banner-animation:hover {
-  animation-play-state: paused; /* إيقاف النبض */
+  /* 1. إلغاء أي أنيميشن نبض قديم فوراً وبقوة */
+  animation: none !important; 
   
-  /* الزوم الـ 3D: رفع (Translate) + تكبير (Scale) */
-  /* نستخدم scale أكبر ليعطي إيحاء القرب من العين */
-  transform: translateY(-15px) scale(1.15); 
+  /* 2. تصفير أي مفعول قديم وتطبيق الزوم الـ 3D الجديد */
+  /* نحدد الـ scale بناءً على الحجم الأصلي 1.0 */
+  transform: translateY(-15px) scale(1.15) !important; 
   
-  /* التوهج المحيطي (Glow) أكنه ضوء خلفي */
-  filter: brightness(1.2) 
-          drop-shadow(0 15px 25px rgba(255, 204, 0, 0.6)) 
-          drop-shadow(0 5px 10px rgba(255, 255, 255, 0.3));
+  /* 3. تطبيق أنيميشن التوهج المتأرجح الجديد فقط */
+  animation: glow-oscillation 1.5s infinite ease-in-out !important;
+  filter: brightness(1.2);
+  z-index: 100; /* لضمان ظهوره فوق أي عنصر آخر */
 }
 
-/* عند الضغط: العودة لأسفل وكأن الزر ينضغط للداخل */
-.wood-banner-animation:active {
-  transform: translateY(-4px) scale(1.05);
-  transition: all 0.1s ease;
+/* أنيميشن تأرجح التوهج (بدون التأثير على الحجم ليبقى الزوم ثابتاً) */
+@keyframes glow-oscillation {
+  0%, 100% {
+    filter: brightness(1.1) drop-shadow(0 10px 20px rgba(255, 204, 0, 0.4));
+  }
+  50% {
+    filter: brightness(1.3) 
+            drop-shadow(0 15px 40px rgba(255, 204, 0, 0.8)) 
+            drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+  }
 }
 
-/* أنيميشن نبض خفيف جداً لا يؤثر على مكان الصورة */
+/* أنيميشن النبض العادي للحالة الثابتة */
 @keyframes wood-pulse-soft {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.03); opacity: 1; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* عند الضغط */
+.wood-banner-animation:active {
+  transform: translateY(-4px) scale(1.05) !important;
+  animation: none !important;
 }
 
 /* تنسيق العناصر في قائمة الخشب  */
