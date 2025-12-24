@@ -177,14 +177,13 @@ async function loadGroupSVG(groupLetter) {
     }
 }
 
-function updateWoodLogo(groupLetter) {
+ function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
 
-    // ✅ حذف اللوجو القديم فقط
+    // حذف اللوجو القديم
     const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
     if (oldBanner) oldBanner.remove();
 
-    // ✅ إضافة اللوجو الجديد فقط في الصفحة الرئيسية
     if (currentFolder !== "") return;
 
     const banner = document.createElementNS("http://www.w3.org/2000/svg", "image");
@@ -195,7 +194,19 @@ function updateWoodLogo(groupLetter) {
     banner.setAttribute("height", "276.04"); 
     banner.style.mixBlendMode = "multiply";
     banner.style.opacity = "0.9";
-    banner.style.pointerEvents = "none";
+    
+    // --- التعديلات الجديدة هنا ---
+    banner.style.cursor = "pointer"; // تغيير شكل الماوس ليد
+    banner.style.pointerEvents = "auto"; // تفعيل التفاعل (كانت none سابقا)
+    
+    banner.onclick = (e) => {
+        e.stopPropagation();
+        // فتح شاشة اختيار المجموعات
+        if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
+        window.goToWood();
+    };
+    // ----------------------------
+
     dynamicGroup.appendChild(banner);
 }
 
