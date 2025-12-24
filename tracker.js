@@ -41,48 +41,69 @@ const UserTracker = {
         return `${window.innerWidth}x${window.innerHeight}`;
     },
 
+    // دالة للحصول على حجم الشاشة الفعلي
+    getScreenSize() {
+        return `${screen.width}x${screen.height}`;
+    },
+
+    // دالة للحصول على نسبة البكسل
+    getPixelRatio() {
+        return window.devicePixelRatio || 1;
+    },
+
+    // دالة للحصول على نظام التشغيل
+    getOS() {
+        const ua = navigator.userAgent;
+        if (ua.includes("Android")) return "Android";
+        if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
+        if (ua.includes("Win")) return "Windows";
+        if (ua.includes("Mac")) return "macOS";
+        if (ua.includes("Linux")) return "Linux";
+        return "Unknown OS";
+    },
+
+    // دالة للحصول على معلومات الاتصال
+    getConnectionInfo() {
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+            return `${conn.effectiveType || 'Unknown'} (${conn.downlink || '?'}Mbps)`;
+        }
+        return "Unknown";
+    },
+
     // دالة للحصول على المجموعة الحالية
     getCurrentGroup() {
         return localStorage.getItem('selectedGroup') || 'لم يختر بعد';
     },
 
-    // دالة لطلب الموقع الجغرافي (اختيارية)
-    async getLocation() {
-        return new Promise((resolve) => {
-            if (!navigator.geolocation) {
-                resolve("غير مدعوم");
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude.toFixed(4);
-                    const lon = position.coords.longitude.toFixed(4);
-                    resolve(`${lat}, ${lon}`);
-                },
-                () => {
-                    resolve("تم الرفض");
-                },
-                { timeout: 5000 }
-            );
-        });
+    // دالة للحصول على اللغة
+    getLanguage() {
+        return navigator.language || navigator.userLanguage || 'Unknown';
     },
 
     // إرسال البيانات
-    async send(action, extra = {}) {
+    send(action, extra = {}) {
         const displayName = this.getDisplayName();
         const browserName = this.getBrowserName();
         const viewport = this.getViewport();
+        const screenSize = this.getScreenSize();
+        const pixelRatio = this.getPixelRatio();
+        const os = this.getOS();
+        const connection = this.getConnectionInfo();
         const group = this.getCurrentGroup();
-        const location = await this.getLocation();
+        const language = this.getLanguage();
 
         const data = new FormData();
         data.append("User", displayName);
         data.append("Group", group);
         data.append("Action", action);
         data.append("Browser", browserName);
+        data.append("OS", os);
         data.append("Viewport", viewport);
-        data.append("Location", location);
+        data.append("Screen", screenSize);
+        data.append("PixelRatio", pixelRatio);
+        data.append("Connection", connection);
+        data.append("Language", language);
         data.append("Details", typeof extra === 'object' ? JSON.stringify(extra) : extra);
         data.append("Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
         data.append("Time", new Date().toLocaleString('ar-EG'));
