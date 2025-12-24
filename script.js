@@ -162,21 +162,23 @@ async function loadGroupSVG(groupLetter) {
             groupContainer.innerHTML = match[1];
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
 
-            // ✅ فلترة الصور حسب المجموعة المختارة فقط
+            // ✅ جمع جميع الصور من SVG المحمّل
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
-            console.log(`🖼️ عدد الصور: ${injectedImages.length}`);
+            console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
 
             imageUrlsToLoad = [];
+            
+            // ✅ إضافة صورة الخلفية الخشبية أولاً (مشتركة بين كل المجموعات)
+            imageUrlsToLoad.push('image/wood.webp');
+            
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
                 
                 // ✅ تحميل فقط الصور التي تتبع المجموعة المختارة
                 if (src && !imageUrlsToLoad.includes(src)) {
-                    // تحقق من أن الصورة تنتمي للمجموعة الصحيحة
                     const isGroupImage = src.includes(`image/${groupLetter}/`) || 
                                        src.includes(`logo-${groupLetter}`) || 
-                                       src.includes(`logo-wood-${groupLetter}`) ||
-                                       src === 'image/wood.webp'; // الخلفية الخشبية
+                                       src.includes(`logo-wood-${groupLetter}`);
                     
                     if (isGroupImage) {
                         imageUrlsToLoad.push(src);
@@ -184,6 +186,7 @@ async function loadGroupSVG(groupLetter) {
                 }
             });
 
+            console.log(`📋 قائمة الصور للتحميل:`, imageUrlsToLoad);
             calculateTotalSize();
         } else {
             console.error('❌ فشل استخراج محتوى SVG');
@@ -949,11 +952,17 @@ function loadImages() {
 
                 const objectUrl = URL.createObjectURL(blob);
 
-                // ✅ تحديث جميع الصور التي لها نفس data-src
-                mainSvg.querySelectorAll('image').forEach(si => {
+                // ✅ تحديث جميع الصور في mainSvg و filesListContainer
+                const allImages = [
+                    ...mainSvg.querySelectorAll('image'),
+                    ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])
+                ];
+
+                allImages.forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
                         si.setAttribute('href', objectUrl);
+                        console.log(`✅ تم تحديث الصورة: ${url}`);
                     }
                 });
 
