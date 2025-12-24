@@ -162,14 +162,25 @@ async function loadGroupSVG(groupLetter) {
             groupContainer.innerHTML = match[1];
             console.log(`✅ تم حقن ${groupContainer.children.length} عنصر`);
 
+            // ✅ فلترة الصور حسب المجموعة المختارة فقط
             const injectedImages = groupContainer.querySelectorAll('image[data-src]');
             console.log(`🖼️ عدد الصور: ${injectedImages.length}`);
 
             imageUrlsToLoad = [];
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
+                
+                // ✅ تحميل فقط الصور التي تتبع المجموعة المختارة
                 if (src && !imageUrlsToLoad.includes(src)) {
-                    imageUrlsToLoad.push(src);
+                    // تحقق من أن الصورة تنتمي للمجموعة الصحيحة
+                    const isGroupImage = src.includes(`image/${groupLetter}/`) || 
+                                       src.includes(`logo-${groupLetter}`) || 
+                                       src.includes(`logo-wood-${groupLetter}`) ||
+                                       src === 'image/wood.webp'; // الخلفية الخشبية
+                    
+                    if (isGroupImage) {
+                        imageUrlsToLoad.push(src);
+                    }
                 }
             });
 
@@ -284,30 +295,45 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-function smartOpen(item) {
+async function smartOpen(item) {
     if (!item || !item.path) return;
-
-    // حفظ في السجل المحلي
-    let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
-    history.push(item.path);
-    localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-
-    // إرسال حدث للمتابعة
-    window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
-
-    // 🔴 تتبع فتح الملف عبر tracker.js
-    if (typeof trackSvgOpen === 'function') {
-        trackSvgOpen(item.path);
-    }
 
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     
-    // استخدام Mozilla PDF.js لجميع أنواع الملفات
-    const overlay = document.getElementById("pdf-overlay");
-    const pdfViewer = document.getElementById("pdfFrame");
-    overlay.classList.remove("hidden");
-    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                    encodeURIComponent(url) + "#zoom=page-width";
+    // ✅ التحقق من وجود الملف أولاً
+    try {
+        const response = await fetch(url, { method: 'HEAD' });
+        
+        if (!response.ok) {
+            alert(`❌ الملف غير موجود: ${item.path.split('/').pop()}`);
+            console.warn(`⚠️ الملف غير موجود: ${url}`);
+            return;
+        }
+
+        // حفظ في السجل المحلي
+        let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
+        history.push(item.path);
+        localStorage.setItem('openedFilesHistory', JSON.stringify(history));
+
+        // إرسال حدث للمتابعة
+        window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
+
+        // 🔴 تتبع فتح الملف عبر tracker.js
+        if (typeof trackSvgOpen === 'function') {
+            trackSvgOpen(item.path);
+        }
+
+        // استخدام Mozilla PDF.js لجميع أنواع الملفات
+        const overlay = document.getElementById("pdf-overlay");
+        const pdfViewer = document.getElementById("pdfFrame");
+        overlay.classList.remove("hidden");
+        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                        encodeURIComponent(url) + "#zoom=page-width";
+        
+    } catch (error) {
+        alert(`❌ خطأ في الاتصال بالملف: ${item.path.split('/').pop()}`);
+        console.error(`❌ خطأ في التحقق من الملف:`, error);
+    }
 }
 
 /* --- 8. التنقل --- */
@@ -788,18 +814,32 @@ function processRect(r) {
         r.addEventListener('mouseout', cleanupHover); 
     }
 
-    r.onclick = () => { 
+    r.onclick = async () => { 
         if (href && href !== '#') {
-            // استخدام Mozilla PDF.js لجميع الروابط
-            const overlay = document.getElementById("pdf-overlay");
-            const pdfViewer = document.getElementById("pdfFrame");
-            overlay.classList.remove("hidden");
-            pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                            encodeURIComponent(href) + "#zoom=page-width";
-            
-            // 🔴 تتبع فتح الملف
-            if (typeof trackSvgOpen === 'function') {
-                trackSvgOpen(href);
+            // ✅ التحقق من وجود الملف أولاً
+            try {
+                const response = await fetch(href, { method: 'HEAD' });
+                
+                if (!response.ok) {
+                    alert(`❌ الملف غير موجود: ${href.split('/').pop()}`);
+                    console.warn(`⚠️ الملف غير موجود: ${href}`);
+                    return;
+                }
+
+                // استخدام Mozilla PDF.js لجميع الروابط
+                const overlay = document.getElementById("pdf-overlay");
+                const pdfViewer = document.getElementById("pdfFrame");
+                overlay.classList.remove("hidden");
+                pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                                encodeURIComponent(href) + "#zoom=page-width";
+                
+                // 🔴 تتبع فتح الملف
+                if (typeof trackSvgOpen === 'function') {
+                    trackSvgOpen(href);
+                }
+            } catch (error) {
+                alert(`❌ خطأ في الاتصال بالملف: ${href.split('/').pop()}`);
+                console.error(`❌ خطأ في التحقق من الملف:`, error);
             }
         }
     };
@@ -811,21 +851,36 @@ function processRect(r) {
             activeState.initialScrollLeft = scrollContainer.scrollLeft; 
             startHover.call(this); 
         });
-        r.addEventListener('touchend', function(e) { 
+        r.addEventListener('touchend', async function(e) { 
             if (!interactionEnabled) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && 
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
                 if (href && href !== '#') {
-                    // استخدام Mozilla PDF.js للمس أيضاً
-                    const overlay = document.getElementById("pdf-overlay");
-                    const pdfViewer = document.getElementById("pdfFrame");
-                    overlay.classList.remove("hidden");
-                    pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
-                                    encodeURIComponent(href) + "#zoom=page-width";
-                    
-                    // 🔴 تتبع فتح الملف
-                    if (typeof trackSvgOpen === 'function') {
-                        trackSvgOpen(href);
+                    // ✅ التحقق من وجود الملف أولاً
+                    try {
+                        const response = await fetch(href, { method: 'HEAD' });
+                        
+                        if (!response.ok) {
+                            alert(`❌ الملف غير موجود: ${href.split('/').pop()}`);
+                            console.warn(`⚠️ الملف غير موجود: ${href}`);
+                            cleanupHover();
+                            return;
+                        }
+
+                        // استخدام Mozilla PDF.js للمس أيضاً
+                        const overlay = document.getElementById("pdf-overlay");
+                        const pdfViewer = document.getElementById("pdfFrame");
+                        overlay.classList.remove("hidden");
+                        pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
+                                        encodeURIComponent(href) + "#zoom=page-width";
+                        
+                        // 🔴 تتبع فتح الملف
+                        if (typeof trackSvgOpen === 'function') {
+                            trackSvgOpen(href);
+                        }
+                    } catch (error) {
+                        alert(`❌ خطأ في الاتصال بالملف: ${href.split('/').pop()}`);
+                        console.error(`❌ خطأ في التحقق من الملف:`, error);
                     }
                 }
             }
@@ -862,12 +917,6 @@ window.scan = scan;
 /* --- 16. تحميل الصور مع تتبع التقدم --- */
 function loadImages() {
     if (!mainSvg) return;
-
-    // ✅ إضافة صورة الخلفية الخشبية
-    const woodBackground = filesListContainer?.querySelector('image[data-src="image/wood.webp"]');
-    if (woodBackground && !imageUrlsToLoad.includes('image/wood.webp')) {
-        imageUrlsToLoad.unshift('image/wood.webp');
-    }
 
     console.log(`🖼️ بدء تحميل ${imageUrlsToLoad.length} صورة...`);
 
