@@ -1,18 +1,32 @@
-/* أنيميشن النبض الثابت */
+/* 1. تأثير النبض الثابت (يكبر ويصغر حول مركزه فقط) */
 .wood-banner-animation {
-  animation: logo-pulse 2s infinite ease-in-out;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* حركة ناعمة جداً */
   cursor: pointer;
+  transform-box: fill-box; /* لضمان أن يكون المركز هو منتصف الصورة داخل الـ SVG */
+  transform-origin: center;
+  animation: wood-pulse 2s infinite ease-in-out;
 }
 
-/* تأثير التفاعل عند مرور الماوس (مثل أزرار الجروبات) */
+/* 2. حالة الـ Hover: يثبت مكانه (يتوقف الأنيميشن) ويتحول لزرار */
 .wood-banner-animation:hover {
-  filter: brightness(1.2) drop-shadow(0 0 15px rgba(255, 204, 0, 0.7));
-  transform: scale(1.05);
+  animation-play-state: paused; /* يوقف النبض فوراً عند وضع الماوس */
+  transform: translateY(-8px) scale(1.03); /* يرتفع للأعلى قليلاً ويكبر */
+  filter: brightness(1.1) drop-shadow(0 10px 15px rgba(255, 204, 0, 0.5)); /* ظل سفلي يعطي إيحاء الارتفاع */
 }
 
+/* 3. تأثير الضغط (مثل زرار حقيقي) */
 .wood-banner-animation:active {
-  transform: scale(0.98);
+  transform: translateY(-2px) scale(0.98);
+}
+
+/* الأنيميشن الخاص بالنبض (تكبير وتصغير فقط) */
+@keyframes wood-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05); /* يكبر 5% فقط ويرجع */
+  }
 }
 
 /* تنسيق العناصر في قائمة الخشب  */
