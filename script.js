@@ -246,7 +246,7 @@ async function initializeGroup(groupLetter, isInitialLoad = false) {
     }
 }
 
-/* --- 6. عارض PDF و SVG المحسّن --- */
+/* --- 6. عارض PDF --- */
 document.getElementById("closePdfBtn").onclick = () => {
     const overlay = document.getElementById("pdf-overlay");
     const pdfViewer = document.getElementById("pdfFrame");
@@ -259,22 +259,12 @@ document.getElementById("downloadBtn").onclick = () => {
     let src = iframe.src;
     if (!src) return;
 
-    // التعامل مع PDF
     const match = src.match(/file=(.+)$/);
     if (match && match[1]) {
         const fileUrl = decodeURIComponent(match[1]);
         const a = document.createElement("a");
         a.href = fileUrl;
         a.download = fileUrl.split("/").pop();
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    } 
-    // التعامل مع SVG وملفات أخرى
-    else if (src.startsWith('http')) {
-        const a = document.createElement("a");
-        a.href = src;
-        a.download = src.split("/").pop();
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -286,17 +276,13 @@ document.getElementById("shareBtn").onclick = () => {
     let src = iframe.src;
     if (!src) return;
 
-    // التعامل مع PDF
     const match = src.match(/file=(.+)$/);
-    let urlToShare = src;
-    
     if (match && match[1]) {
-        urlToShare = decodeURIComponent(match[1]);
+        const fileUrl = decodeURIComponent(match[1]);
+        navigator.clipboard.writeText(fileUrl)
+            .then(() => alert("✅ تم نسخ الرابط"))
+            .catch(() => alert("❌ فشل النسخ"));
     }
-    
-    navigator.clipboard.writeText(urlToShare)
-        .then(() => alert("✅ تم نسخ الرابط"))
-        .catch(() => alert("❌ فشل النسخ"));
 };
 
 /* --- 7. Service Worker --- */
@@ -316,37 +302,17 @@ function smartOpen(item) {
     history.push(item.path);
     localStorage.setItem('openedFilesHistory', JSON.stringify(history));
 
-    // إرسال حدث للمتابعة للتتبع
-    const fileName = item.path.split('/').pop();
-    if (item.path.toLowerCase().endsWith('.svg')) {
-        trackSvgOpen(fileName);
-    } else if (item.path.toLowerCase().endsWith('.pdf')) {
-        // يمكنك إضافة تتبع للـ PDF هنا إذا أردت
-        trackSvgOpen(fileName); // استخدام نفس الدالة مؤقتاً
-    }
+    // إرسال حدث للمتابعة
     window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
 
     const url = `${RAW_CONTENT_BASE}${item.path}`;
-    const lowerPath = item.path.toLowerCase();
-    
-    // فتح PDF في العارض المدمج
-    if (lowerPath.endsWith('.pdf')) {
+    if (url.endsWith('.pdf')) {
         const overlay = document.getElementById("pdf-overlay");
         const pdfViewer = document.getElementById("pdfFrame");
         overlay.classList.remove("hidden");
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                         encodeURIComponent(url) + "#zoom=page-width"; 
-    } 
-    // فتح SVG في العارض المدمج (نفس عارض PDF)
-    else if (lowerPath.endsWith('.svg')) {
-        const overlay = document.getElementById("pdf-overlay");
-        const pdfViewer = document.getElementById("pdfFrame");
-        overlay.classList.remove("hidden");
-        // SVG يمكن فتحه مباشرة في iframe
-        pdfViewer.src = url;
-    } 
-    // باقي الملفات تفتح في نافذة جديدة
-    else {
+    } else {
         window.open(url, '_blank');
     }
 }
@@ -636,7 +602,6 @@ function renderNameInput() {
 
         if (name !== null && name.trim()) {
             localStorage.setItem('user_real_name', name.trim());
-            trackNameChange(name.trim()); // تتبع تغيير الاسم
             updateWelcomeMessages();
             updateWoodInterface(); // تحديث الواجهة لإظهار الاسم الجديد
             alert("أهلاً بك يا " + name.trim());
@@ -674,10 +639,10 @@ async function updateWoodInterface() {
         // حساب الملفات داخل المجلد الحالي التي تطابق البحث
         const countInCurrent = globalFileTree.filter(f => {
             const isInside = f.path.startsWith(currentFolder + '/');
-            const isPdfOrSvg = f.path.toLowerCase().endsWith('.pdf') || f.path.toLowerCase().endsWith('.svg');
-            if (query === "") return isInside && isPdfOrSvg;
+            const isPdf = f.path.toLowerCase().endsWith('.pdf');
+            if (query === "") return isInside && isPdf;
             const fileName = f.path.split('/').pop().toLowerCase();
-            return isInside && isPdfOrSvg && fileName.includes(query);
+            return isInside && isPdf && fileName.includes(query);
         }).length;
 
         const pathParts = currentFolder.split('/');
@@ -706,11 +671,11 @@ async function updateWoodInterface() {
 
             if (!itemsMap.has(name)) {
                 const isDir = pathParts.length > 1 || item.type === 'tree';
-                const isPdfOrSvg = item.path.toLowerCase().endsWith('.pdf') || item.path.toLowerCase().endsWith('.svg');
+                const isPdf = item.path.toLowerCase().endsWith('.pdf');
 
                 if (isDir && name !== 'image' && name !== 'groups') {
                     itemsMap.set(name, { name: name, type: 'dir', path: folderPrefix + name });
-                } else if (isPdfOrSvg && pathParts.length === 1) {
+                } else if (isPdf && pathParts.length === 1) {
                     itemsMap.set(name, { name: name, type: 'file', path: item.path });
                 }
             }
@@ -745,10 +710,10 @@ async function updateWoodInterface() {
         if (item.type === 'dir') {
             const filteredCount = globalFileTree.filter(f => {
                 const isInsideFolder = f.path.startsWith(item.path + '/');
-                const isPdfOrSvg = f.path.toLowerCase().endsWith('.pdf') || f.path.toLowerCase().endsWith('.svg');
-                if (query === "") return isInsideFolder && isPdfOrSvg;
+                const isPdf = f.path.toLowerCase().endsWith('.pdf');
+                if (query === "") return isInsideFolder && isPdf;
                 const fileName = f.path.split('/').pop().toLowerCase();
-                return isInsideFolder && isPdfOrSvg && fileName.includes(query);
+                return isInsideFolder && isPdf && fileName.includes(query);
             }).length;
 
             t.textContent = `📁 (${filteredCount}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
@@ -756,9 +721,7 @@ async function updateWoodInterface() {
             // إخفاء المجلد إذا لم يحتوي على نتائج تطابق البحث
             if (query !== "" && filteredCount === 0) g.style.display = 'none';
         } else {
-            // تحديد الأيقونة بناءً على نوع الملف
-            const fileIcon = item.path.toLowerCase().endsWith('.svg') ? "🖼️" : "📄";
-            t.textContent = `${fileIcon} ` + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
             // إخفاء الملف إذا لم يطابق البحث
             if (query !== "" && !cleanName.toLowerCase().includes(query)) g.style.display = 'none';
         }
@@ -827,11 +790,7 @@ function processRect(r) {
     }
 
     r.onclick = () => { 
-        if (href && href !== '#') {
-            // فتح الرابط باستخدام smartOpen للتعامل مع جميع أنواع الملفات
-            const fileName = href.split('/').pop();
-            smartOpen({ path: href, name: fileName });
-        }
+        if (href && href !== '#') window.open(href, '_blank'); 
     };
 
     if (scrollContainer) {
@@ -845,10 +804,7 @@ function processRect(r) {
             if (!interactionEnabled) return;
             if (Math.abs(scrollContainer.scrollLeft - activeState.initialScrollLeft) < 10 && 
                 (Date.now() - activeState.touchStartTime) < TAP_THRESHOLD_MS) {
-                if (href && href !== '#') {
-                    const fileName = href.split('/').pop();
-                    smartOpen({ path: href, name: fileName });
-                }
+                if (href && href !== '#') window.open(href, '_blank');
             }
             cleanupHover();
         });
