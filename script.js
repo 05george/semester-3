@@ -1026,21 +1026,20 @@ if (mainSvg) {
 }
 
 /* --- 18. البدء التلقائي --- */
-// استدعاء أولي عند فتح الموقع
+
+// 1. تأكد أن الـ ID موجود أولاً قبل أي شيء
+if (!localStorage.getItem('visitor_id')) {
+    const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('visitor_id', newId);
+}
+
+// 2. الآن حدث الرسائل (ستجد الـ ID جاهزاً ولن تظهر Unknown ID)
 updateWelcomeMessages();
 
+// 3. بقية الكود الخاص بتشغيل المجموعة المحفوظة
 const hasSavedGroup = loadSelectedGroup();
-
 if (hasSavedGroup) {
-    console.log('📂 تحميل المجموعة المحفوظة:', currentGroup);
     initializeGroup(currentGroup, true);
 } else {
-    console.log('❓ لا توجد مجموعة محفوظة - عرض شاشة الاختيار');
-    if (loadingOverlay) {
-        loadingOverlay.classList.remove('active');
-        loadingOverlay.style.display = 'none';
-    }
-    if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
-    if (toggleContainer) toggleContainer.style.display = 'none';
-    if (scrollContainer) scrollContainer.style.display = 'none';
+    // إظهار شاشة الاختيار...
 }
