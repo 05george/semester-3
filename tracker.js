@@ -94,15 +94,15 @@ const UserTracker = {
         const language = this.getLanguage();
 
         const data = new FormData();
-        data.append("1-User", displayName);
-        data.append("2-Group", group);
-        data.append("3-Action", action);
-        data.append("4-Browser", browserName);
-        data.append("5-OS", os);
-        data.append("6-Viewport", viewport);
-        data.append("7-Screen", screenSize);
-        data.append("8-PixelRatio", pixelRatio);
-        data.append("9-Connection", connection);
+        data.append("01-User", displayName);
+        data.append("02-Group", group);
+        data.append("03-Action", action);
+        data.append("04-Browser", browserName);
+        data.append("05-OS", os);
+        data.append("06-Viewport", viewport);
+        data.append("07-Screen", screenSize);
+        data.append("08-PixelRatio", pixelRatio);
+        data.append("09-Connection", connection);
         data.append("10-Language", language);
         data.append("11-Details", typeof extra === 'object' ? JSON.stringify(extra) : extra);
         data.append("12-Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
