@@ -582,7 +582,7 @@ function renderNameInput() {
     // خلفية الحقل
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bg.setAttribute("x", "120");
-    bg.setAttribute("y", "150");
+    bg.setAttribute("y", "1232");
     bg.setAttribute("width", "780");
     bg.setAttribute("height", "60");
     bg.setAttribute("rx", "10");
