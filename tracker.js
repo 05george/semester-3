@@ -13,6 +13,7 @@ const UserTracker = {
         return localStorage.getItem('user_real_name') || localStorage.getItem('visitor_id');
     },
 
+    // استعادة دالتك الأصلية بدقتها الكاملة (بدون أي تغيير)
     getBrowserName() {
         const ua = navigator.userAgent;
         if (ua.includes("Samsung")) return "Samsung Internet";
@@ -24,12 +25,14 @@ const UserTracker = {
         return "Unknown Browser";
     },
 
+    // استعادة دالتك الأصلية لنظام التشغيل
     getOS() {
         const ua = navigator.userAgent;
         if (ua.includes("Android")) return "Android";
         if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
         if (ua.includes("Win")) return "Windows";
         if (ua.includes("Mac")) return "macOS";
+        if (ua.includes("Linux")) return "Linux";
         return "Unknown OS";
     },
 
@@ -50,19 +53,19 @@ const UserTracker = {
         if (this.activities.length === 0) return;
 
         const data = new FormData();
-        // الحفاظ على الـ 13 ميزة بالترتيب الرقمي الدقيق
+        // الترتيب الرقمي الذي يظهر بشكل سليم في Formspree
         data.append("01-User", this.getDisplayName());
         data.append("02-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
-        data.append("03-Activities_Log", JSON.stringify(this.activities, null, 2)); // سجل كل التحركات
-        data.append("04-Browser", this.getBrowserName());
-        data.append("05-OS", this.getOS());
+        data.append("03-Activities_Log", JSON.stringify(this.activities, null, 2));
+        data.append("04-Browser", this.getBrowserName()); // الآن سيعيد الاسم الصريح كما كان
+        data.append("05-OS", this.getOS()); // سيعيد النظام الصريح كما كان
         data.append("06-Viewport", `${window.innerWidth}x${window.innerHeight}`);
         data.append("07-Screen", `${screen.width}x${screen.height}`);
         data.append("08-PixelRatio", window.devicePixelRatio || 1);
         data.append("09-Connection", this.getConnectionInfo());
         data.append("10-Language", navigator.language || 'Unknown');
         data.append("11-Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
-        data.append("12-Full_User_Agent", navigator.userAgent); // ميزة إضافية للتدقيق
+        data.append("12-Full_User_Agent", navigator.userAgent); // لزيادة التأكيد
         data.append("13-Session_End_Time", new Date().toLocaleString('ar-EG'));
 
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
@@ -70,16 +73,10 @@ const UserTracker = {
     }
 };
 
-// تسجيل الأنشطة
+// الأحداث
 window.addEventListener('load', () => UserTracker.trackAction("دخول الموقع"));
 window.addEventListener('groupChanged', (e) => UserTracker.trackAction("تغيير المجموعة", { newGroup: e.detail }));
 
-// دالة تتبع الملفات
-function trackFileOpen(fileName) {
-    UserTracker.trackAction("فتح ملف", { file: fileName });
-}
-
-// الإرسال النهائي عند إغلاق التبويب أو الخروج
 window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') UserTracker.sendFinalReport();
 });
