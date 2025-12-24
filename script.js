@@ -523,7 +523,7 @@ async function updateWoodInterface() {
 
     // ✅ تحديث نص الزر
     if (currentFolder === "") {
-        backBtnText.textContent = "➡️ إلى الخريطة";
+        backBtnText.textContent = "➡️ إلى الخريطة ➡️";
     } else {
         const pathParts = currentFolder.split('/');
         const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
