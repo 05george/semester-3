@@ -1,10 +1,23 @@
 const UserTracker = {
+    // دالة للحصول على اسم العرض (نفس المنطق المستخدم في script.js)
+    getDisplayName() {
+        // محاولة الحصول على الاسم الحقيقي
+        const realName = localStorage.getItem('user_real_name');
+        if (realName && realName.trim()) {
+            return realName.trim();
+        }
+        
+        // إذا لم يكن موجوداً، استخدم الـ ID
+        const visitorId = localStorage.getItem('visitor_id');
+        return visitorId || 'زائر';
+    },
+
     // إرسال البيانات
     send(action, extra = {}) {
-        const savedName = localStorage.getItem('user_real_name') || "زائر مجهول";
-        
+        const displayName = this.getDisplayName();
+
         const data = new FormData();
-        data.append("User", savedName);
+        data.append("User", displayName);
         data.append("Action", action);
         data.append("Details", typeof extra === 'object' ? JSON.stringify(extra) : extra);
         data.append("Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
