@@ -1,3 +1,20 @@
+/* أنيميشن النبض الثابت */
+.wood-banner-animation {
+  animation: logo-pulse 2s infinite ease-in-out;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* تأثير التفاعل عند مرور الماوس (مثل أزرار الجروبات) */
+.wood-banner-animation:hover {
+  filter: brightness(1.2) drop-shadow(0 0 15px rgba(255, 204, 0, 0.7));
+  transform: scale(1.05);
+}
+
+.wood-banner-animation:active {
+  transform: scale(0.98);
+}
+
 /* تنسيق العناصر في قائمة الخشب  */
 .list-item {
     stroke-width: 1px !important;
