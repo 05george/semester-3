@@ -937,13 +937,12 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. تتبع الأحداث وإرسال البيانات  --- */
+/* --- 18. التتبع الشامل لجميع بيانات الصورة --- */
 
-// 1. وقت الدخول (لحساب مدة الجلسة)
 const sessionStartTime = Date.now();
-
-// 2. سجل البحث (Set لضمان عدم التكرار)
 let searchHistory = new Set();
+
+// 1. تسجيل عمليات البحث الفريدة
 if (searchInput) {
     searchInput.addEventListener('input', debounce((e) => {
         const val = e.target.value.trim();
@@ -951,70 +950,41 @@ if (searchInput) {
     }, 1000));
 }
 
-// 3. مستمع فتح الملفات (لحفظها في localStorage)
-window.addEventListener('fileOpened', (e) => {
-    try {
-        let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
-        if (!history.includes(e.detail)) {
-            history.push(e.detail);
-            localStorage.setItem('openedFilesHistory', JSON.stringify(history));
-        }
-    } catch (err) { console.error("History Error:", err); }
-});
-
-// 4. الدالة الشاملة للإرسال عند الخروج (تجمع كل المعلومات الضائعة)
+// 2. دالة إرسال التقرير النهائي عند مغادرة الصفحة
 window.addEventListener('beforeunload', () => {
-    const rawHistory = localStorage.getItem('openedFilesHistory');
+    const rawHistory = localStorage.getItem('openedFilesHistory') || "[]";
+    const historyArray = JSON.parse(rawHistory);
     
-    // نرسل التقرير فقط إذا كان هناك نشاط (ملفات مفتوحة)
-    if (rawHistory && rawHistory !== "[]") {
-        const historyArray = JSON.parse(rawHistory);
-        const readableHistory = historyArray.map(item => "📄 " + item).join('\n');
-        
-        // حساب المدة بالدقائق والثواني
-        const durationSec = Math.round((Date.now() - sessionStartTime) / 1000);
-        const durationFormatted = `${Math.floor(durationSec / 60)} min ${durationSec % 60} sec`;
+    // حساب مدة الجلسة بالدقائق
+    const durationMin = ((Date.now() - sessionStartTime) / 60000).toFixed(2);
+    const ua = navigator.userAgent;
 
-        const ua = navigator.userAgent;
-        
-        // تحديد المتصفح بدقة (بدلاً من Netscape)
-        let browser = "Other";
-        if (ua.includes("Chrome")) browser = "Google Chrome";
-        else if (ua.includes("Firefox")) browser = "Mozilla Firefox";
-        else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-        else if (ua.includes("Edge")) browser = "Microsoft Edge";
+    const formData = new FormData();
 
-        // تحديد الجهاز
-        let device = "PC / Desktop";
-        if (/android/i.test(ua)) device = "Android Device";
-        else if (/iPad|iPhone|iPod/.test(ua)) device = "iOS Device";
+    // --- البيانات السلوكية (Activity) ---
+    formData.append("action", "Session Summary"); 
+    formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
+    formData.append("Duration_Minutes", durationMin);
+    formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "None");
+    formData.append("Files_List", historyArray.join(', ') || "No files");
+    formData.append("Total_Files", historyArray.length);
 
-        const formData = new FormData();
-        
-        // --- القسم 1: المعلومات التقنية (التي ضاعت منك) ---
-        formData.append("deviceType", device);
-        formData.append("platform", navigator.platform); // مثل Win32 أو Linux
-        formData.append("browser", browser);
-        formData.append("screenSize", `${window.screen.width}x${window.screen.height}`);
-        formData.append("language", navigator.language);
-        formData.append("time", new Date().toLocaleString('ar-EG'));
-        formData.append("referrer", document.referrer || "Direct Link");
-        formData.append("pageUrl", window.location.href);
+    // --- البيانات التقنية (Technical) ---
+    formData.append("deviceType", /Mobi|Android/i.test(ua) ? "Mobile" : "Desktop");
+    formData.append("platform", navigator.platform);
+    formData.append("browser", ua.match(/(chrome|safari|firefox|edge|opera)/i)?.[0] || "Unknown");
+    formData.append("Browser_Lang", navigator.language);
+    formData.append("screenSize", `${window.screen.width}x${window.screen.height}`);
+    
+    // --- بيانات المصدر والوقت (Navigation) ---
+    formData.append("pageUrl", window.location.href);
+    formData.append("referrer", document.referrer || "Direct Visit");
+    formData.append("time", new Date().toLocaleString('ar-EG'));
+    formData.append("_status", "Completed");
 
-        // --- القسم 2: إحصائيات النشاط (المزايا الجديدة) ---
-        formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
-        formData.append("Stay_Duration", durationFormatted);
-        formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "No Search");
-        
-        // --- القسم 3: سجل الملفات ---
-        formData.append("Files_Report", "\n" + readableHistory);
-        formData.append("Total_Files_Opened", historyArray.length);
-
-        // الإرسال النهائي
-        const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
-
-        if (sent) {
-            localStorage.removeItem('openedFilesHistory');
-        }
-    }
+    // إرسال البيانات فوراً قبل إغلاق المتصفح
+    navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
+    
+    // تنظيف السجل بعد الإرسال
+    localStorage.removeItem('openedFilesHistory');
 });
