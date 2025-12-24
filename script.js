@@ -507,51 +507,49 @@ function wrapText(el, maxW) {
     });
 }
 
-/* --- 12. تحديث واجهة القوائم --- */
+/* --- 12. تحديث واجهة القوائم  --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
-    const groupBtnText = document.getElementById('group-btn-text'); // العنصر الجديد
+    const groupBtnText = document.getElementById('group-btn-text');
 
     if (!dynamicGroup || !backBtnText) return;
 
+    // تحديث نص زر تغيير المجموعة
     if (groupBtnText && currentGroup) {
         groupBtnText.textContent = `Change Group 🔄 ${currentGroup}`;
     }
+    
+    // تنظيف القائمة القديمة قبل إعادة البناء
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
 
     await fetchGlobalTree();
 
-// ✅ تحديث نص الزر مع إضافة عدد الملفات
-if (currentFolder === "") {
-    backBtnText.textContent = "➡️ إلى الخريطة ➡️";
-} else {
-    // 1. استخراج اسم المجلد الحالي (الأخير في المسار)
-    const folderName = currentFolder.split('/').pop();
-    
-    // 2. حساب عدد الملفات داخل المجلد الحالي فقط (مع مراعاة البحث إذا وُجد)
     const query = searchInput.value.toLowerCase().trim();
-    const countInCurrent = globalFileTree.filter(f => {
-        const isInside = f.path.startsWith(currentFolder + '/');
-        const isPdf = f.path.toLowerCase().endsWith('.pdf');
-        if (query === "") return isInside && isPdf;
-        return isInside && isPdf && f.path.toLowerCase().includes(query);
-    }).length;
 
-    // 3. تجهيز نص المسار المختصر
-    const pathParts = currentFolder.split('/');
-    const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-    
-    // 4. دمج العدد مع النص
-    const displayLabel = ` (${countInCurrent}) ملف`;
-    if (breadcrumb.length > 30) {
-        backBtnText.textContent = `🔙 ... > ${folderName} ${displayLabel}`;
+    // 1️⃣ تحديث زر الرجوع (Breadcrumb) مع عدد الملفات المفلترة
+    if (currentFolder === "") {
+        backBtnText.textContent = "➡️ إلى الخريطة ➡️";
     } else {
-        backBtnText.textContent = `🔙 ${breadcrumb} ${displayLabel}`;
+        const folderName = currentFolder.split('/').pop();
+        // حساب الملفات داخل المجلد الحالي التي تطابق البحث
+        const countInCurrent = globalFileTree.filter(f => {
+            const isInside = f.path.startsWith(currentFolder + '/');
+            const isPdf = f.path.toLowerCase().endsWith('.pdf');
+            if (query === "") return isInside && isPdf;
+            const fileName = f.path.split('/').pop().toLowerCase();
+            return isInside && isPdf && fileName.includes(query);
+        }).length;
+
+        const pathParts = currentFolder.split('/');
+        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+        const displayLabel = ` (${countInCurrent}) ملف`;
+        
+        backBtnText.textContent = breadcrumb.length > 30 ? 
+            `🔙 ... > ${folderName} ${displayLabel}` : 
+            `🔙 ${breadcrumb} ${displayLabel}`;
     }
-}
 
-
-    // ✅ تحديث اللوجو الديناميكي فقط عند الصفحة الرئيسية
+    // إظهار اللوجو في الصفحة الرئيسية فقط
     if (currentFolder === "" && currentGroup) {
         updateWoodLogo(currentGroup);
     }
@@ -559,6 +557,7 @@ if (currentFolder === "") {
     const folderPrefix = currentFolder ? currentFolder + '/' : '';
     const itemsMap = new Map();
 
+    // تنظيم الملفات والمجلدات في خريطة (Map)
     globalFileTree.forEach(item => {
         if (item.path.startsWith(folderPrefix)) {
             const relativePath = item.path.substring(folderPrefix.length);
@@ -578,45 +577,53 @@ if (currentFolder === "") {
         }
     });
 
+    // 2️⃣ بناء عناصر الـ SVG للقائمة
     const filteredData = Array.from(itemsMap.values());
     for (let [index, item] of filteredData.entries()) {
         const x = (index % 2 === 0) ? 120 : 550;
         const y = 250 + (Math.floor(index / 2) * 90);
+        
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
         g.style.cursor = "pointer";
 
         const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-        r.setAttribute("x", x); 
-        r.setAttribute("y", y); 
-        r.setAttribute("width", "350"); 
-        r.setAttribute("height", "70"); 
+        r.setAttribute("x", x); r.setAttribute("y", y); 
+        r.setAttribute("width", "350"); r.setAttribute("height", "70"); 
         r.setAttribute("rx", "12");
-        r.setAttribute("class", "list-item"); // ✅ الكلاس المهم
+        r.setAttribute("class", "list-item");
         r.style.fill = item.type === 'dir' ? "#5d4037" : "rgba(0,0,0,0.8)";
         r.style.stroke = "#fff";
 
         const cleanName = item.name.replace(/\.[^/.]+$/, "");
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        t.setAttribute("x", x + 175); 
-        t.setAttribute("y", y + 42);
-        t.setAttribute("text-anchor", "middle"); 
-        t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; 
-        t.style.fontSize = "17px";
-        t.setAttribute("data-search-name", cleanName.toLowerCase());
+        t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
+        t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
+        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 
+        // 3️⃣ منطق الفلترة والأرقام الذكية للمجلدات والملفات
         if (item.type === 'dir') {
-            const count = globalFileTree.filter(f => 
-                f.path.startsWith(item.path + '/') && f.path.toLowerCase().endsWith('.pdf')
-            ).length;
-            t.textContent = `📁 (${count}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+            const filteredCount = globalFileTree.filter(f => {
+                const isInsideFolder = f.path.startsWith(item.path + '/');
+                const isPdf = f.path.toLowerCase().endsWith('.pdf');
+                if (query === "") return isInsideFolder && isPdf;
+                const fileName = f.path.split('/').pop().toLowerCase();
+                return isInsideFolder && isPdf && fileName.includes(query);
+            }).length;
+
+            t.textContent = `📁 (${filteredCount}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+            
+            // إخفاء المجلد إذا لم يحتوي على نتائج تطابق البحث
+            if (query !== "" && filteredCount === 0) g.style.display = 'none';
         } else {
             t.textContent = "📄 " + (cleanName.length > 25 ? cleanName.substring(0, 22) + "..." : cleanName);
+            // إخفاء الملف إذا لم يطابق البحث
+            if (query !== "" && !cleanName.toLowerCase().includes(query)) g.style.display = 'none';
         }
 
         g.appendChild(r); 
         g.appendChild(t);
+        
         g.onclick = (e) => {
             e.stopPropagation();
             if (item.type === 'dir') { 
@@ -627,41 +634,6 @@ if (currentFolder === "") {
             }
         };
         dynamicGroup.appendChild(g);
-    }
-    applyWoodSearchFilter();
-}
-window.updateWoodInterface = updateWoodInterface;
-
-function applyWoodSearchFilter() {
-    if (!searchInput || !mainSvg) return;
-
-
-if (item.type === 'dir') {
-    // 1. الحصول على نص البحث الحالي
-    const query = searchInput.value.toLowerCase().trim();
-
-    // 2. تصفية الملفات بناءً على المسار وبناءً على نص البحث
-    const filteredCount = globalFileTree.filter(f => {
-        const isInsideFolder = f.path.startsWith(item.path + '/');
-        const isPdf = f.path.toLowerCase().endsWith('.pdf');
-        
-        if (query === "") {
-            return isInsideFolder && isPdf; // الحالة العادية: كل ملفات الـ PDF
-        } else {
-            // حالة البحث: الملفات التي تطابق الاسم فقط داخل هذا المجلد
-            const fileName = f.path.split('/').pop().toLowerCase();
-            return isInsideFolder && isPdf && fileName.includes(query);
-        }
-    }).length;
-
-    // 3. تحديث النص ليظهر الرقم المفلتر
-    t.textContent = `📁 (${filteredCount}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-    
-    // اختياري: إخفاء المجلد تماماً إذا كان البحث لا يطابق أي ملف بداخله
-    if (query !== "" && filteredCount === 0) {
-        g.style.display = 'none';
-    } else {
-        g.style.display = 'inline';
     }
 }
 
