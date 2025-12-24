@@ -64,7 +64,7 @@ async function fetchGlobalTree() {
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
-    
+
     // 💡 إرسال حدث مخصص عند تغيير المجموعة
     window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
@@ -292,16 +292,16 @@ if ('serviceWorker' in navigator) {
 }
 
 function smartOpen(item) {
-    // حفظ في السجل المحلي أولاً
+    if (!item || !item.path) return;
+
+    // حفظ في السجل المحلي
     let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
     history.push(item.path);
     localStorage.setItem('openedFilesHistory', JSON.stringify(history));
 
-    // إرسال حدث للمتابعة اللحظية (اختياري)
+    // إرسال حدث للمتابعة
     window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
-function smartOpen(item) {
-    if (!item || !item.path) return;
-    
+
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     if (url.endsWith('.pdf')) {
         const overlay = document.getElementById("pdf-overlay");
@@ -614,7 +614,7 @@ async function updateWoodInterface() {
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
         t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
         t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 
         // 3️⃣ منطق الفلترة والأرقام الذكية للمجلدات والملفات
         if (item.type === 'dir') {
@@ -651,6 +651,7 @@ async function updateWoodInterface() {
         dynamicGroup.appendChild(g);
     }
 }
+window.updateWoodInterface = updateWoodInterface;
 
 /* --- 13. معالجة المستطيلات --- */
 function processRect(r) {
@@ -959,15 +960,14 @@ if (searchInput) {
 window.addEventListener('beforeunload', async () => {
     // 1. حساب مدة الجلسة
     const durationMin = ((Date.now() - sessionStartTime) / 60000).toFixed(2);
-    
+
     // 2. تجهيز سجل الملفات المفتوحة من localStorage
     const rawHistory = localStorage.getItem('openedFilesHistory') || "[]";
     const historyArray = JSON.parse(rawHistory);
 
     // 3. محاولة جلب الـ IP والموقع (سريع جداً)
     let ipData = { ip: "N/A", city: "N/A", org: "N/A" };
-    // ملاحظة: navigator.sendBeacon لا ينتظر الـ fetch، لذا نعتمد على البيانات المتوفرة
-    
+
     const formData = new FormData();
 
     // --- [بيانات الهوية والنشاط] ---
@@ -985,7 +985,7 @@ window.addEventListener('beforeunload', async () => {
     formData.append("Window_Size", `${window.innerWidth}x${window.innerHeight}`);
     formData.append("RAM_Estimate", navigator.deviceMemory || "Unknown");
     formData.append("CPU_Cores", navigator.hardwareConcurrency || "Unknown");
-    
+
     // --- [بيانات المتصفح بدقة] ---
     const ua = navigator.userAgent;
     formData.append("Browser_Full", ua);
@@ -996,7 +996,6 @@ window.addEventListener('beforeunload', async () => {
     formData.append("Time_Local", new Date().toLocaleString('ar-EG'));
 
     // 4. الإرسال باستخدام sendBeacon (الأفضل لضمان الوصول عند إغلاق الصفحة)
-    // ملاحظة: نرسل البيانات لـ Formspree كرسالة واحدة تختصر كل الرحلة
     navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
 
     // تنظيف السجل
