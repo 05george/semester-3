@@ -67,12 +67,12 @@
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 
-  --color-q: #ff4d4d;
-  --color-v: #4da6ff;
-  --color-i: #ffffff;
-  --color-a: #b366ff;
-  --color-s: #4dff88;
-  --color-l: #ffff4d;
+  --color-q: red;
+  --color-v: blue;
+  --color-i: white;
+  --color-a: purple;
+  --color-s: green;
+  --color-l: yellow;
 }
 
 html, body {
