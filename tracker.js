@@ -94,19 +94,19 @@ const UserTracker = {
         const language = this.getLanguage();
 
         const data = new FormData();
-        data.append("User", displayName);
-        data.append("Group", group);
-        data.append("Action", action);
-        data.append("Browser", browserName);
-        data.append("OS", os);
-        data.append("Viewport", viewport);
-        data.append("Screen", screenSize);
-        data.append("PixelRatio", pixelRatio);
-        data.append("Connection", connection);
-        data.append("Language", language);
-        data.append("Details", typeof extra === 'object' ? JSON.stringify(extra) : extra);
-        data.append("Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
-        data.append("Time", new Date().toLocaleString('ar-EG'));
+        data.append("1-User", displayName);
+        data.append("2-Group", group);
+        data.append("3-Action", action);
+        data.append("4-Browser", browserName);
+        data.append("5-OS", os);
+        data.append("6-Viewport", viewport);
+        data.append("7-Screen", screenSize);
+        data.append("8-PixelRatio", pixelRatio);
+        data.append("9-Connection", connection);
+        data.append("10-Language", language);
+        data.append("11-Details", typeof extra === 'object' ? JSON.stringify(extra) : extra);
+        data.append("12-Device", navigator.userAgent.includes("Mobi") ? "Mobile" : "Desktop");
+        data.append("13-Time", new Date().toLocaleString('ar-EG'));
 
         // إرسال هادئ لا يسبب ثقل
         navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", data);
