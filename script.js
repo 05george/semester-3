@@ -61,6 +61,9 @@ async function fetchGlobalTree() {
 function saveSelectedGroup(group) {
     localStorage.setItem('selectedGroup', group);
     currentGroup = group;
+    
+    // 💡 إرسال حدث مخصص عند تغيير المجموعة
+    window.dispatchEvent(new CustomEvent('groupChanged', { detail: group }));
 }
 
 function loadSelectedGroup() {
@@ -287,6 +290,10 @@ if ('serviceWorker' in navigator) {
 
 function smartOpen(item) {
     if (!item || !item.path) return;
+    
+    // 💡 إرسال حدث مخصص عند فتح ملف
+    window.dispatchEvent(new CustomEvent('fileOpened', { detail: item.path }));
+    
     const url = `${RAW_CONTENT_BASE}${item.path}`;
     if (url.endsWith('.pdf')) {
         const overlay = document.getElementById("pdf-overlay");
@@ -840,7 +847,7 @@ if (searchInput) {
         // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
             const href = rect.getAttribute('data-href') || '';
-            
+
             // ✅ إخفاء المستطيلات بـ data-href="#" دائماً
             if (href === '#') {
                 rect.style.display = 'none';
@@ -850,7 +857,7 @@ if (searchInput) {
                 if (bg) bg.style.display = 'none';
                 return;
             }
-            
+
             const isMatch = href.toLowerCase().includes(query) || 
                           (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
@@ -926,3 +933,17 @@ if (hasSavedGroup) {
     if (toggleContainer) toggleContainer.style.display = 'none';
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
+
+/* --- 18. مثال على كيفية الاستماع للأحداث الجديدة (اختياري) --- */
+// يمكنك استخدام هذا الكود للاستماع للأحداث المخصصة
+window.addEventListener('groupChanged', (e) => {
+    console.log('🔔 حدث: تم تغيير المجموعة إلى:', e.detail);
+    // مثال: إرسال البيانات لأداة تحليلات
+    // gtag('event', 'group_changed', { group: e.detail });
+});
+
+window.addEventListener('fileOpened', (e) => {
+    console.log('🔔 حدث: تم فتح الملف:', e.detail);
+    // مثال: تتبع الملفات الأكثر استخداماً
+    // analytics.track('file_opened', { path: e.detail });
+});
