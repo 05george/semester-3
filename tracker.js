@@ -1,16 +1,22 @@
 const UserTracker = {
     // دالة للحصول على اسم العرض (نفس المنطق المستخدم في script.js)
     getDisplayName() {
+        // 🔥 حذف أي قيم قديمة خاطئة من النظام القديم
+        const realName = localStorage.getItem('user_real_name');
+        if (realName === 'زائر مجهول' || realName === 'زائر') {
+            localStorage.removeItem('user_real_name');
+        }
+
         // 🔥 التأكد من وجود ID أولاً قبل أي شيء
         if (!localStorage.getItem('visitor_id')) {
             const newId = 'ID-' + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('visitor_id', newId);
         }
 
-        // محاولة الحصول على الاسم الحقيقي
-        const realName = localStorage.getItem('user_real_name');
-        if (realName && realName.trim()) {
-            return realName.trim();
+        // محاولة الحصول على الاسم الحقيقي (بعد التنظيف)
+        const cleanRealName = localStorage.getItem('user_real_name');
+        if (cleanRealName && cleanRealName.trim()) {
+            return cleanRealName.trim();
         }
         
         // إذا لم يكن موجوداً، استخدم الـ ID
