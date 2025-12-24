@@ -541,32 +541,16 @@ function getDisplayName() {
 function updateWelcomeMessages() {
     const displayName = getDisplayName();
 
-    // 1. تحديث الترحيب في شاشة اختيار المجموعات
-    const groupScreen = document.getElementById('group-selection-screen');
-    if (groupScreen) {
-        let welcomeText = document.getElementById('welcome-user-msg');
-        if (!welcomeText) {
-            welcomeText = document.createElement('h2');
-            welcomeText.id = 'welcome-user-msg';
-            welcomeText.style.cssText = "color: white; text-align: center; margin-bottom: 20px; font-size: 1.8rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);";
-            groupScreen.insertBefore(welcomeText, groupScreen.firstChild);
-        }
-        
-        // عرض الرسالة المناسبة
-        welcomeText.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span><br><span style="font-size: 1.5rem;">إختر جروبك</span>`;
+    // 1. تحديث النص الموجود في شاشة اختيار المجموعات (استبدال <h1>)
+    const groupScreenH1 = document.querySelector('#group-selection-screen h1');
+    if (groupScreenH1) {
+        groupScreenH1.innerHTML = `مرحباً بك يا <span style="color: #ffca28;">${displayName}</span> إختر جروبك`;
     }
 
-    // 2. تحديث الترحيب في شاشة التحميل
-    const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay && currentGroup) {
-        let loadMsg = document.getElementById('loading-welcome-msg');
-        if (!loadMsg) {
-            loadMsg = document.createElement('div');
-            loadMsg.id = 'loading-welcome-msg';
-            loadMsg.style.cssText = "color: white; font-weight: bold; margin-top: 20px; font-size: 1.5rem; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);";
-            loadingOverlay.appendChild(loadMsg);
-        }
-        loadMsg.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span><br>في <span style="color: #4fc3f7;">INTERACTIVE COLLEGE MAP</span>`;
+    // 2. تحديث النص الموجود في شاشة التحميل (استبدال <h1>)
+    const loadingH1 = document.querySelector('#loading-content h1');
+    if (loadingH1 && currentGroup) {
+        loadingH1.innerHTML = `أهلاً بك يا <span style="color: #ffca28;">${displayName}</span> في INTERACTIVE COLLEGE MAP`;
     }
 }
 
