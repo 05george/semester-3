@@ -937,12 +937,18 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. تتبع الأحداث وإرسال البيانات --- */
+/* --- 18. تتبع الأحداث وإرسال البيانات (محسّن) --- */
 
-// 💡 تحديث مستمع فتح الملفات ليخزن الأسماء بدل الإرسال الفوري
+// 💡 دالة لتخزين الملفات المفتوحة في localStorage لضمان عدم ضياعها مع Refresh
 window.addEventListener('fileOpened', (e) => {
-    sessionOpenedFiles.push(e.detail);
-    console.log("📌 تمت إضافة الملف للجلسة:", e.detail);
+    let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
+    
+    // إضافة الملف فقط إذا لم يكن موجوداً مسبقاً
+    if (!history.includes(e.detail)) {
+        history.push(e.detail);
+        localStorage.setItem('openedFilesHistory', JSON.stringify(history));
+        console.log("📌 تمت إضافة الملف للسجل:", e.detail);
+    }
 });
 
 // 💡 مستمع تغيير المجموعة (اختياري للتتبع المحلي)
@@ -950,26 +956,28 @@ window.addEventListener('groupChanged', (e) => {
     console.log('🔔 حدث: تم تغيير المجموعة إلى:', e.detail);
 });
 
-// 💡 دالة الإرسال عند إغلاق الصفحة
-window.addEventListener('beforeunload', function (e) {
-    if (sessionOpenedFiles.length > 0) {
-        console.log("📤 إرسال البيانات:", {
-            device: navigator.userAgent,
-            group: localStorage.getItem('selectedGroup') || "None",
-            files: sessionOpenedFiles.join(' , ')
-        });
+// 💡 إرسال البيانات فقط عند إغلاق المتصفح فعلياً
+window.addEventListener('beforeunload', () => {
+    const history = localStorage.getItem('openedFilesHistory');
+    
+    if (history && history !== "[]") {
+        console.log("📤 إرسال سجل الملفات المفتوحة");
 
         // تجهيز البيانات
         const formData = new FormData();
         formData.append("Device", navigator.userAgent);
         formData.append("Group", localStorage.getItem('selectedGroup') || "None");
-        formData.append("Files_Opened", sessionOpenedFiles.join(' , ')); // تحويل المصفوفة لنص
-
-        // استخدام sendBeacon لإرسال البيانات حتى بعد إغلاق المتصفح
+        formData.append("Opened_Files", history);
+        
+        // إرسال البيانات باستخدام sendBeacon
         const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
         
         if (sent) {
             console.log("✅ تم إرسال البيانات بنجاح");
+            
+            // 💡 اختياري: مسح السجل بعد الإرسال
+            // إذا كنت تريد لكل "جلسة" إيميل منفصل، أزل التعليق عن السطر التالي:
+            // localStorage.removeItem('openedFilesHistory');
         } else {
             console.warn("⚠️ فشل إرسال البيانات");
         }
