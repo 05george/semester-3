@@ -177,11 +177,11 @@ async function loadGroupSVG(groupLetter) {
     }
 }
 
- function updateWoodLogo(groupLetter) {
+function updateWoodLogo(groupLetter) {
     const dynamicGroup = document.getElementById('dynamic-links-group');
 
     // حذف اللوجو القديم
-    const oldBanner = dynamicGroup.querySelector('image[href*="logo-wood"]');
+    const oldBanner = dynamicGroup.querySelector('.wood-banner-animation');
     if (oldBanner) oldBanner.remove();
 
     if (currentFolder !== "") return;
@@ -192,20 +192,19 @@ async function loadGroupSVG(groupLetter) {
     banner.setAttribute("y", "1517.43"); 
     banner.setAttribute("width", "648.41");
     banner.setAttribute("height", "276.04"); 
+    
+    // إعدادات التصميم والأنيميشن
+    banner.setAttribute("class", "wood-banner-animation"); // إضافة الكلاس الجديد
     banner.style.mixBlendMode = "multiply";
     banner.style.opacity = "0.9";
-    
-    // --- التعديلات الجديدة هنا ---
-    banner.style.cursor = "pointer"; // تغيير شكل الماوس ليد
-    banner.style.pointerEvents = "auto"; // تفعيل التفاعل (كانت none سابقا)
-    
+    banner.style.pointerEvents = "auto"; 
+
+    // إضافة وظيفة النقر
     banner.onclick = (e) => {
         e.stopPropagation();
-        // فتح شاشة اختيار المجموعات
         if (groupSelectionScreen) groupSelectionScreen.classList.remove('hidden');
         window.goToWood();
     };
-    // ----------------------------
 
     dynamicGroup.appendChild(banner);
 }
