@@ -18,6 +18,9 @@ let totalBytes = 0;
 let loadedBytes = 0;
 let imageUrlsToLoad = [];
 
+// 💡 مصفوفة لتخزين الملفات التي فتحها المستخدم خلال الجلسة
+let sessionOpenedFiles = [];
+
 let activeState = {
     rect: null, zoomPart: null, zoomText: null, zoomBg: null,
     baseText: null, baseBg: null, animationId: null, clipPathId: null,
@@ -934,16 +937,41 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. مثال على كيفية الاستماع للأحداث الجديدة (اختياري) --- */
-// يمكنك استخدام هذا الكود للاستماع للأحداث المخصصة
-window.addEventListener('groupChanged', (e) => {
-    console.log('🔔 حدث: تم تغيير المجموعة إلى:', e.detail);
-    // مثال: إرسال البيانات لأداة تحليلات
-    // gtag('event', 'group_changed', { group: e.detail });
+/* --- 18. تتبع الأحداث وإرسال البيانات --- */
+
+// 💡 تحديث مستمع فتح الملفات ليخزن الأسماء بدل الإرسال الفوري
+window.addEventListener('fileOpened', (e) => {
+    sessionOpenedFiles.push(e.detail);
+    console.log("📌 تمت إضافة الملف للجلسة:", e.detail);
 });
 
-window.addEventListener('fileOpened', (e) => {
-    console.log('🔔 حدث: تم فتح الملف:', e.detail);
-    // مثال: تتبع الملفات الأكثر استخداماً
-    // analytics.track('file_opened', { path: e.detail });
+// 💡 مستمع تغيير المجموعة (اختياري للتتبع المحلي)
+window.addEventListener('groupChanged', (e) => {
+    console.log('🔔 حدث: تم تغيير المجموعة إلى:', e.detail);
+});
+
+// 💡 دالة الإرسال عند إغلاق الصفحة
+window.addEventListener('beforeunload', function (e) {
+    if (sessionOpenedFiles.length > 0) {
+        console.log("📤 إرسال البيانات:", {
+            device: navigator.userAgent,
+            group: localStorage.getItem('selectedGroup') || "None",
+            files: sessionOpenedFiles.join(' , ')
+        });
+
+        // تجهيز البيانات
+        const formData = new FormData();
+        formData.append("Device", navigator.userAgent);
+        formData.append("Group", localStorage.getItem('selectedGroup') || "None");
+        formData.append("Files_Opened", sessionOpenedFiles.join(' , ')); // تحويل المصفوفة لنص
+
+        // استخدام sendBeacon لإرسال البيانات حتى بعد إغلاق المتصفح
+        const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
+        
+        if (sent) {
+            console.log("✅ تم إرسال البيانات بنجاح");
+        } else {
+            console.warn("⚠️ فشل إرسال البيانات");
+        }
+    }
 });
