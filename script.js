@@ -521,14 +521,35 @@ async function updateWoodInterface() {
 
     await fetchGlobalTree();
 
-    // ✅ تحديث نص الزر
-    if (currentFolder === "") {
-        backBtnText.textContent = "➡️ إلى الخريطة ➡️";
+// ✅ تحديث نص الزر مع إضافة عدد الملفات
+if (currentFolder === "") {
+    backBtnText.textContent = "➡️ إلى الخريطة ➡️";
+} else {
+    // 1. استخراج اسم المجلد الحالي (الأخير في المسار)
+    const folderName = currentFolder.split('/').pop();
+    
+    // 2. حساب عدد الملفات داخل المجلد الحالي فقط (مع مراعاة البحث إذا وُجد)
+    const query = searchInput.value.toLowerCase().trim();
+    const countInCurrent = globalFileTree.filter(f => {
+        const isInside = f.path.startsWith(currentFolder + '/');
+        const isPdf = f.path.toLowerCase().endsWith('.pdf');
+        if (query === "") return isInside && isPdf;
+        return isInside && isPdf && f.path.toLowerCase().includes(query);
+    }).length;
+
+    // 3. تجهيز نص المسار المختصر
+    const pathParts = currentFolder.split('/');
+    const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
+    
+    // 4. دمج العدد مع النص
+    const displayLabel = ` (${countInCurrent}) ملف`;
+    if (breadcrumb.length > 30) {
+        backBtnText.textContent = `🔙 ... > ${folderName} ${displayLabel}`;
     } else {
-        const pathParts = currentFolder.split('/');
-        const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
-        backBtnText.textContent = breadcrumb.length > 35 ? `🔙 ... > ${pathParts.slice(-1)}` : `🔙 ${breadcrumb}`;
+        backBtnText.textContent = `🔙 ${breadcrumb} ${displayLabel}`;
     }
+}
+
 
     // ✅ تحديث اللوجو الديناميكي فقط عند الصفحة الرئيسية
     if (currentFolder === "" && currentGroup) {
@@ -614,15 +635,36 @@ window.updateWoodInterface = updateWoodInterface;
 function applyWoodSearchFilter() {
     if (!searchInput || !mainSvg) return;
 
+
+if (item.type === 'dir') {
+    // 1. الحصول على نص البحث الحالي
     const query = searchInput.value.toLowerCase().trim();
-    mainSvg.querySelectorAll('.wood-file-group').forEach(group => {
-        const name = group.querySelector('text').getAttribute('data-search-name') || "";
-        group.style.display = (query === "" || name.includes(query)) ? 'inline' : 'none';
-    });
-    mainSvg.querySelectorAll('.wood-folder-group').forEach(group => { 
-        group.style.display = 'inline'; 
-    });
+
+    // 2. تصفية الملفات بناءً على المسار وبناءً على نص البحث
+    const filteredCount = globalFileTree.filter(f => {
+        const isInsideFolder = f.path.startsWith(item.path + '/');
+        const isPdf = f.path.toLowerCase().endsWith('.pdf');
+        
+        if (query === "") {
+            return isInsideFolder && isPdf; // الحالة العادية: كل ملفات الـ PDF
+        } else {
+            // حالة البحث: الملفات التي تطابق الاسم فقط داخل هذا المجلد
+            const fileName = f.path.split('/').pop().toLowerCase();
+            return isInsideFolder && isPdf && fileName.includes(query);
+        }
+    }).length;
+
+    // 3. تحديث النص ليظهر الرقم المفلتر
+    t.textContent = `📁 (${filteredCount}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
+    
+    // اختياري: إخفاء المجلد تماماً إذا كان البحث لا يطابق أي ملف بداخله
+    if (query !== "" && filteredCount === 0) {
+        g.style.display = 'none';
+    } else {
+        g.style.display = 'inline';
+    }
 }
+
 
 /* --- 13. معالجة المستطيلات --- */
 function processRect(r) {
