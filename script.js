@@ -839,7 +839,19 @@ if (searchInput) {
 
         // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
         mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
+            const href = rect.getAttribute('data-href') || '';
+            
+            // ✅ إخفاء المستطيلات بـ data-href="#" دائماً
+            if (href === '#') {
+                rect.style.display = 'none';
+                const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+                const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+                if (label) label.style.display = 'none';
+                if (bg) bg.style.display = 'none';
+                return;
+            }
+            
+            const isMatch = href.toLowerCase().includes(query) || 
                           (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
             const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
             const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
