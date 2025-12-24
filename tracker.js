@@ -55,7 +55,7 @@ const UserTracker = {
         data.append("01-User", this.getDisplayName());
         data.append("02-Group", localStorage.getItem('selectedGroup') || 'لم يختر بعد');
         data.append("03-Action", action);
-
+        
         if (isFinal) {
             data.append("04-Activities_Summary", JSON.stringify(this.activities, null, 2));
         }
