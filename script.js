@@ -1001,3 +1001,38 @@ window.addEventListener('beforeunload', async () => {
     // تنظيف السجل
     localStorage.removeItem('openedFilesHistory');
 });
+function renderNameInput() {
+    if (document.getElementById('user-name-field')) return;
+
+    const input = document.createElement('input');
+    input.id = 'user-name-field';
+    input.type = 'text';
+    input.placeholder = 'اكتب اسمك هنا...';
+    input.value = localStorage.getItem('user_real_name') || "";
+    
+    // تنسيق الحقل ليظهر فوق اللوجو الخشبي
+    Object.assign(input.style, {
+        position: 'fixed',
+        bottom: '80px', // يظهر فوق الأزرار السفلية
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '10px',
+        borderRadius: '10px',
+        border: '2px solid #5d4037',
+        zIndex: '2000',
+        textAlign: 'center',
+        width: '180px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+    });
+
+    document.body.appendChild(input);
+
+    input.onchange = () => {
+        const name = input.value.trim();
+        if (name) {
+            localStorage.setItem('user_real_name', name);
+            UserTracker.send("تسجيل اسم", { name: name });
+            alert("تم حفظ الاسم بنجاح!");
+        }
+    };
+}
