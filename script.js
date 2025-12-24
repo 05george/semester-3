@@ -1,3 +1,26 @@
+/* --- فُهرس الدوال (Table of Contents) ---
+[01] fetchGlobalTree()      : جلب شجرة الملفات من GitHub API
+[02] saveSelectedGroup()    : حفظ المجموعة المختارة في LocalStorage
+[03] loadSelectedGroup()    : استعادة المجموعة المحفوظة عند الدخول
+[04] showLoadingScreen()    : تفعيل شاشة التحميل والمصابيح
+[05] hideLoadingScreen()    : إخفاء شاشة التحميل
+[06] updateLoadProgress()   : تحديث نسبة التحميل وإضاءة اللمبات
+[07] estimateFileSize()     : تقدير حجم الملفات بناءً على النوع
+[08] calculateTotalSize()   : حساب الحجم الإجمالي المتوقع للتحميل
+[09] loadGroupSVG()         : تحميل وحقن ملف الـ SVG الخاص بالمجموعة
+[10] updateWoodLogo()       : تحديث شعار المجموعة في واجهة الخشب
+[11] initializeGroup()      : الدالة الأم لتهيئة المجموعة بالكامل
+[12] updateWoodInterface()  : (الأهم) بناء القوائم، البحث، والأرقام الذكية
+[13] smartOpen()            : فتح الملفات سواء PDF أو روابط خارجية
+[14] updateDynamicSizes()   : ضبط أبعاد الـ ViewBox للـ SVG
+[15] startHover()           : إدارة تأثيرات التكبير والإضاءة عند الهوفر
+[16] wrapText()             : معالجة النصوص الطويلة داخل المستطيلات
+[17] scan()                 : فحص ومعالجة جميع مستطيلات الخريطة
+[18] loadImages()           : تحميل الصور الفعلية وتحديث الـ Progress
+[19] finishLoading()        : إنهاء عملية التحميل وعرض الواجهة النهائية
+------------------------------------------
+*/
+
 /* --- 1. الإعدادات والمتغيرات العالمية --- */
 const REPO_NAME = "semester-3"; 
 const GITHUB_USER = "MUE24Med";
