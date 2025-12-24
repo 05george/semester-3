@@ -833,24 +833,25 @@ if (searchInput) {
         }
     };
 
-    searchInput.addEventListener('input', debounce(function(e) {
-        if (!mainSvg) return;
+searchInput.addEventListener('input', debounce(function(e) {
+    if (!mainSvg) return;
 
-        const query = e.target.value.toLowerCase().trim();
+    const query = e.target.value.toLowerCase().trim();
 
-        // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
-        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
-                          (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-            if (label) label.style.display = rect.style.display; 
-            if (bg) bg.style.display = rect.style.display;
-        });
-        applyWoodSearchFilter();
-    }, 150));
-}
+    // البحث في عناصر الخريطة
+    mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+        const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
+                      (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+        const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+        const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+        rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+        if (label) label.style.display = rect.style.display; 
+        if (bg) bg.style.display = rect.style.display;
+    });
+
+    updateWoodInterface(); 
+}, 150));
+
 
 if (moveToggle) {
     moveToggle.onclick = (e) => {
