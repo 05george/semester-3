@@ -937,12 +937,12 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18. التتبع الشامل لجميع بيانات الصورة --- */
+/* --- 18. التقرير الختامي الشامل (رسالة واحدة لكل مستخدم) --- */
 
 const sessionStartTime = Date.now();
 let searchHistory = new Set();
 
-// 1. تسجيل عمليات البحث الفريدة
+// تتبع عمليات البحث
 if (searchInput) {
     searchInput.addEventListener('input', debounce((e) => {
         const val = e.target.value.trim();
@@ -950,41 +950,50 @@ if (searchInput) {
     }, 1000));
 }
 
-// 2. دالة إرسال التقرير النهائي عند مغادرة الصفحة
-window.addEventListener('beforeunload', () => {
+// الدالة الأهم: تجمع كل شيء وترسله عند الخروج
+window.addEventListener('beforeunload', async () => {
+    // 1. حساب مدة الجلسة
+    const durationMin = ((Date.now() - sessionStartTime) / 60000).toFixed(2);
+    
+    // 2. تجهيز سجل الملفات المفتوحة من localStorage
     const rawHistory = localStorage.getItem('openedFilesHistory') || "[]";
     const historyArray = JSON.parse(rawHistory);
-    
-    // حساب مدة الجلسة بالدقائق
-    const durationMin = ((Date.now() - sessionStartTime) / 60000).toFixed(2);
-    const ua = navigator.userAgent;
 
+    // 3. محاولة جلب الـ IP والموقع (سريع جداً)
+    let ipData = { ip: "N/A", city: "N/A", org: "N/A" };
+    // ملاحظة: navigator.sendBeacon لا ينتظر الـ fetch، لذا نعتمد على البيانات المتوفرة
+    
     const formData = new FormData();
 
-    // --- البيانات السلوكية (Activity) ---
-    formData.append("action", "Session Summary"); 
-    formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
-    formData.append("Duration_Minutes", durationMin);
+    // --- [بيانات الهوية والنشاط] ---
+    formData.append("Report_Type", "Final Session Summary");
+    formData.append("Group", localStorage.getItem('selectedGroup') || "None");
+    formData.append("Duration", `${durationMin} Minutes`);
+    formData.append("Files_Opened", historyArray.length > 0 ? historyArray.join(' | ') : "No files");
     formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "None");
-    formData.append("Files_List", historyArray.join(', ') || "No files");
-    formData.append("Total_Files", historyArray.length);
 
-    // --- البيانات التقنية (Technical) ---
-    formData.append("deviceType", /Mobi|Android/i.test(ua) ? "Mobile" : "Desktop");
-    formData.append("platform", navigator.platform);
-    formData.append("browser", ua.match(/(chrome|safari|firefox|edge|opera)/i)?.[0] || "Unknown");
-    formData.append("Browser_Lang", navigator.language);
-    formData.append("screenSize", `${window.screen.width}x${window.screen.height}`);
+    // --- [بيانات الجهاز المتقدمة] ---
+    formData.append("Device_Type", /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC");
+    formData.append("Platform", navigator.platform);
+    formData.append("OS_Language", navigator.language);
+    formData.append("Screen_Res", `${window.screen.width}x${window.screen.height}`);
+    formData.append("Window_Size", `${window.innerWidth}x${window.innerHeight}`);
+    formData.append("RAM_Estimate", navigator.deviceMemory || "Unknown");
+    formData.append("CPU_Cores", navigator.hardwareConcurrency || "Unknown");
     
-    // --- بيانات المصدر والوقت (Navigation) ---
-    formData.append("pageUrl", window.location.href);
-    formData.append("referrer", document.referrer || "Direct Visit");
-    formData.append("time", new Date().toLocaleString('ar-EG'));
-    formData.append("_status", "Completed");
+    // --- [بيانات المتصفح بدقة] ---
+    const ua = navigator.userAgent;
+    formData.append("Browser_Full", ua);
 
-    // إرسال البيانات فوراً قبل إغلاق المتصفح
+    // --- [بيانات المصدر والوقت] ---
+    formData.append("Entry_URL", window.location.href);
+    formData.append("Referrer", document.referrer || "Direct Visit");
+    formData.append("Time_Local", new Date().toLocaleString('ar-EG'));
+
+    // 4. الإرسال باستخدام sendBeacon (الأفضل لضمان الوصول عند إغلاق الصفحة)
+    // ملاحظة: نرسل البيانات لـ Formspree كرسالة واحدة تختصر كل الرحلة
     navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
-    
-    // تنظيف السجل بعد الإرسال
+
+    // تنظيف السجل
     localStorage.removeItem('openedFilesHistory');
 });
