@@ -192,9 +192,9 @@ function updateWoodLogo(groupLetter) {
     banner.setAttribute("y", "1517.43"); 
     banner.setAttribute("width", "648.41");
     banner.setAttribute("height", "276.04"); 
-    
+
     // إعدادات التصميم والأنيميشن
-    banner.setAttribute("class", "wood-banner-animation"); // إضافة الكلاس الجديد
+    banner.setAttribute("class", "wood-banner-animation");
     banner.style.mixBlendMode = "multiply";
     banner.style.opacity = "0.9";
     banner.style.pointerEvents = "auto"; 
@@ -507,7 +507,7 @@ function wrapText(el, maxW) {
     });
 }
 
-/* --- 12. تحديث واجهة القوائم  --- */
+/* --- 12. تحديث واجهة القوائم --- */
 async function updateWoodInterface() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
@@ -518,7 +518,7 @@ async function updateWoodInterface() {
     if (groupBtnText && currentGroup) {
         groupBtnText.textContent = `Change Group 🔄 ${currentGroup}`;
     }
-    
+
     // تنظيف القائمة القديمة قبل إعادة البناء
     dynamicGroup.querySelectorAll('.wood-folder-group, .wood-file-group').forEach(el => el.remove());
 
@@ -543,7 +543,7 @@ async function updateWoodInterface() {
         const pathParts = currentFolder.split('/');
         const breadcrumb = "الرئيسية > " + pathParts.join(' > ');
         const displayLabel = ` (${countInCurrent}) ملف`;
-        
+
         backBtnText.textContent = breadcrumb.length > 30 ? 
             `🔙 ... > ${folderName} ${displayLabel}` : 
             `🔙 ${breadcrumb} ${displayLabel}`;
@@ -582,7 +582,7 @@ async function updateWoodInterface() {
     for (let [index, item] of filteredData.entries()) {
         const x = (index % 2 === 0) ? 120 : 550;
         const y = 250 + (Math.floor(index / 2) * 90);
-        
+
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", item.type === 'dir' ? "wood-folder-group" : "wood-file-group");
         g.style.cursor = "pointer";
@@ -612,7 +612,7 @@ async function updateWoodInterface() {
             }).length;
 
             t.textContent = `📁 (${filteredCount}) ` + (cleanName.length > 15 ? cleanName.substring(0, 13) + ".." : cleanName);
-            
+
             // إخفاء المجلد إذا لم يحتوي على نتائج تطابق البحث
             if (query !== "" && filteredCount === 0) g.style.display = 'none';
         } else {
@@ -623,7 +623,7 @@ async function updateWoodInterface() {
 
         g.appendChild(r); 
         g.appendChild(t);
-        
+
         g.onclick = (e) => {
             e.stopPropagation();
             if (item.type === 'dir') { 
@@ -636,7 +636,6 @@ async function updateWoodInterface() {
         dynamicGroup.appendChild(g);
     }
 }
-
 
 /* --- 13. معالجة المستطيلات --- */
 function processRect(r) {
@@ -803,8 +802,8 @@ function finishLoading() {
     loadedBytes = totalBytes;
     updateLoadProgress();
 
-        hideLoadingScreen();
-        console.log('🎉 اكتمل التحميل والعرض');
+    hideLoadingScreen();
+    console.log('🎉 اكتمل التحميل والعرض');
 }
 window.loadImages = loadImages;
 
@@ -833,25 +832,26 @@ if (searchInput) {
         }
     };
 
-searchInput.addEventListener('input', debounce(function(e) {
-    if (!mainSvg) return;
+    searchInput.addEventListener('input', debounce(function(e) {
+        if (!mainSvg) return;
 
-    const query = e.target.value.toLowerCase().trim();
+        const query = e.target.value.toLowerCase().trim();
 
-    // البحث في عناصر الخريطة
-    mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
-        const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
-                      (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
-        const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
-        const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
-        rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
-        if (label) label.style.display = rect.style.display; 
-        if (bg) bg.style.display = rect.style.display;
-    });
+        // ✅ البحث فقط في عناصر الخريطة (ليس القوائم)
+        mainSvg.querySelectorAll('rect.m:not(.list-item)').forEach(rect => {
+            const isMatch = (rect.getAttribute('data-href') || '').toLowerCase().includes(query) || 
+                          (rect.getAttribute('data-full-text') || '').toLowerCase().includes(query);
+            const label = rect.parentNode.querySelector(`.rect-label[data-original-for='${rect.dataset.href}']`);
+            const bg = rect.parentNode.querySelector(`.label-bg[data-original-for='${rect.dataset.href}']`);
+            rect.style.display = (query.length > 0 && !isMatch) ? 'none' : '';
+            if (label) label.style.display = rect.style.display; 
+            if (bg) bg.style.display = rect.style.display;
+        });
 
-    updateWoodInterface(); 
-}, 150));
-
+        // ✅ تحديث واجهة القوائم الخشبية مع الأرقام الذكية
+        updateWoodInterface();
+    }, 150));
+}
 
 if (moveToggle) {
     moveToggle.onclick = (e) => {
