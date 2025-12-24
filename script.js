@@ -97,6 +97,9 @@ function showLoadingScreen(groupLetter) {
 
     loadingOverlay.classList.add('active');
     console.log(`🔦 شاشة التحميل نشطة للمجموعة ${groupLetter}`);
+    
+    // تحديث رسالة الترحيب في شاشة التحميل
+    updateWelcomeMessages();
 }
 
 function hideLoadingScreen() {
@@ -522,10 +525,111 @@ function wrapText(el, maxW) {
     });
 }
 
-/* --- 12. تحديث واجهة القوائم --- */
-async function updateWoodInterface() {
-    renderNameInput(); // <--- أضف هذا السطر هنا
+/* --- 12. دوال الترحيب والأسماء --- */
+function getDisplayName() {
+    const savedName = localStorage.getItem('user_real_name');
+    const visitorId = localStorage.getItem('visitor_id') || "Guest";
+    // إذا وجد اسماً يعرضه، وإذا لم يجد يعرض الـ ID
+    return savedName ? savedName : `الزائر (${visitorId})`;
+}
+
+function updateWelcomeMessages() {
+    const displayName = getDisplayName();
+
+    // 1. تحديث الترحيب في شاشة اختيار المجموعات
+    const groupScreen = document.getElementById('group-selection-screen');
+    if (groupScreen) {
+        // نبحث عن عنصر الترحيب أو ننشئه
+        let welcomeText = document.getElementById('welcome-user-msg');
+        if (!welcomeText) {
+            welcomeText = document.createElement('h2');
+            welcomeText.id = 'welcome-user-msg';
+            welcomeText.style.color = "white";
+            welcomeText.style.textAlign = "center";
+            welcomeText.style.marginBottom = "20px";
+            // نضعه في بداية شاشة الاختيار
+            groupScreen.insertBefore(welcomeText, groupScreen.firstChild);
+        }
+        welcomeText.textContent = `مرحباً بك يا ${displayName}`;
+    }
+
+    // 2. تحديث الترحيب في شاشة التحميل (Loading Overlay)
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        let loadMsg = document.getElementById('loading-welcome-msg');
+        if (!loadMsg) {
+            loadMsg = document.createElement('div');
+            loadMsg.id = 'loading-welcome-msg';
+            loadMsg.style.cssText = "color: #ffca28; font-weight: bold; margin-top: 10px; font-size: 1.2rem; text-align: center;";
+            loadingOverlay.appendChild(loadMsg);
+        }
+        loadMsg.textContent = `جاري التحميل... انتظر لحظة يا ${displayName}`;
+    }
+}
+
+function renderNameInput() {
     const dynamicGroup = document.getElementById('dynamic-links-group');
+    if (!dynamicGroup) return;
+
+    // إزالة حقل الإدخال القديم إن وجد
+    const oldInput = dynamicGroup.querySelector('.name-input-group');
+    if (oldInput) oldInput.remove();
+
+    // إنشاء مجموعة SVG للإدخال
+    const inputGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    inputGroup.setAttribute("class", "name-input-group");
+
+    // خلفية الحقل
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", "120");
+    bg.setAttribute("y", "150");
+    bg.setAttribute("width", "780");
+    bg.setAttribute("height", "60");
+    bg.setAttribute("rx", "10");
+    bg.style.fill = "rgba(0,0,0,0.7)";
+    bg.style.stroke = "#ffca28";
+    bg.style.strokeWidth = "2";
+
+    // النص التوضيحي
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", "510");
+    label.setAttribute("y", "180");
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("fill", "white");
+    label.style.fontSize = "18px";
+    label.style.fontWeight = "bold";
+    
+    // عرض الاسم الحالي أو رسالة الترحيب
+    const currentName = localStorage.getItem('user_real_name');
+    label.textContent = currentName ? `مرحباً ${currentName} - اضغط للتعديل` : "اضغط هنا لإدخال اسمك";
+
+    inputGroup.appendChild(bg);
+    inputGroup.appendChild(label);
+
+    // إضافة وظيفة النقر
+    inputGroup.style.cursor = "pointer";
+    inputGroup.onclick = () => {
+        const currentName = localStorage.getItem('user_real_name');
+        const promptMessage = currentName ? `الاسم الحالي: ${currentName}\nأدخل اسم جديد أو اترك فارغاً للإلغاء:` : "ما اسمك؟";
+        const name = prompt(promptMessage, currentName || "");
+        
+        if (name !== null && name.trim()) {
+            localStorage.setItem('user_real_name', name.trim());
+            if (typeof UserTracker !== 'undefined') {
+                UserTracker.send("تسجيل اسم", { name: name.trim() });
+            }
+            updateWelcomeMessages();
+            updateWoodInterface(); // تحديث الواجهة لإظهار الاسم الجديد
+            alert("أهلاً بك يا " + name.trim());
+        }
+    };
+
+    dynamicGroup.appendChild(inputGroup);
+}
+
+/* --- 13. تحديث واجهة القوائم --- */
+async function updateWoodInterface() {
+    renderNameInput(); // إضافة حقل الإدخال
     const dynamicGroup = document.getElementById('dynamic-links-group');
     const groupBtnText = document.getElementById('group-btn-text');
 
@@ -616,7 +720,7 @@ async function updateWoodInterface() {
         const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
         t.setAttribute("x", x + 175); t.setAttribute("y", y + 42);
         t.setAttribute("text-anchor", "middle"); t.setAttribute("fill", "white");
-t.style.fontWeight = "bold"; t.style.fontSize = "17px";
+        t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 
         // 3️⃣ منطق الفلترة والأرقام الذكية للمجلدات والملفات
         if (item.type === 'dir') {
@@ -655,7 +759,7 @@ t.style.fontWeight = "bold"; t.style.fontSize = "17px";
 }
 window.updateWoodInterface = updateWoodInterface;
 
-/* --- 13. معالجة المستطيلات --- */
+/* --- 14. معالجة المستطيلات --- */
 function processRect(r) {
     if (r.hasAttribute('data-processed')) return;
     if (r.classList.contains('w')) r.setAttribute('width', '113.5');
@@ -725,7 +829,7 @@ function processRect(r) {
     r.setAttribute('data-processed', 'true');
 }
 
-/* --- 14. فحص ومعالجة جميع المستطيلات --- */
+/* --- 15. فحص ومعالجة جميع المستطيلات --- */
 function scan() { 
     if (!mainSvg) return;
 
@@ -736,7 +840,7 @@ function scan() {
 }
 window.scan = scan;
 
-/* --- 15. تحميل الصور مع تتبع التقدم --- */
+/* --- 16. تحميل الصور مع تتبع التقدم --- */
 function loadImages() {
     if (!mainSvg) return;
 
@@ -825,7 +929,7 @@ function finishLoading() {
 }
 window.loadImages = loadImages;
 
-/* --- 16. مستمعي الأحداث --- */
+/* --- 17. مستمعي الأحداث --- */
 document.querySelectorAll('.group-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const group = this.getAttribute('data-group');
@@ -928,7 +1032,10 @@ if (mainSvg) {
     }, false);
 }
 
-/* --- 17. البدء التلقائي --- */
+/* --- 18. البدء التلقائي --- */
+// استدعاء أولي عند فتح الموقع
+updateWelcomeMessages();
+
 const hasSavedGroup = loadSelectedGroup();
 
 if (hasSavedGroup) {
