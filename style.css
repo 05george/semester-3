@@ -1,32 +1,38 @@
-/* 1. تأثير النبض الثابت (يكبر ويصغر حول مركزه فقط) */
+/* الإعدادات الأساسية للصورة */
 .wood-banner-animation {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* حركة ناعمة جداً */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* حركة Elastic لتعزيز شعور الـ 3D */
   cursor: pointer;
-  transform-box: fill-box; /* لضمان أن يكون المركز هو منتصف الصورة داخل الـ SVG */
+  transform-box: fill-box;
   transform-origin: center;
-  animation: wood-pulse 2s infinite ease-in-out;
+  /* نبض هادئ جداً في الحالة العادية */
+  animation: wood-pulse-soft 3s infinite ease-in-out;
+  will-change: transform, filter;
 }
 
-/* 2. حالة الـ Hover: يثبت مكانه (يتوقف الأنيميشن) ويتحول لزرار */
+/* تأثير الـ 3D والزوم الاحترافي عند الـ Hover */
 .wood-banner-animation:hover {
-  animation-play-state: paused; /* يوقف النبض فوراً عند وضع الماوس */
-  transform: translateY(-8px) scale(1.03); /* يرتفع للأعلى قليلاً ويكبر */
-  filter: brightness(1.1) drop-shadow(0 10px 15px rgba(255, 204, 0, 0.5)); /* ظل سفلي يعطي إيحاء الارتفاع */
+  animation-play-state: paused; /* إيقاف النبض */
+  
+  /* الزوم الـ 3D: رفع (Translate) + تكبير (Scale) */
+  /* نستخدم scale أكبر ليعطي إيحاء القرب من العين */
+  transform: translateY(-15px) scale(1.15); 
+  
+  /* التوهج المحيطي (Glow) أكنه ضوء خلفي */
+  filter: brightness(1.2) 
+          drop-shadow(0 15px 25px rgba(255, 204, 0, 0.6)) 
+          drop-shadow(0 5px 10px rgba(255, 255, 255, 0.3));
 }
 
-/* 3. تأثير الضغط (مثل زرار حقيقي) */
+/* عند الضغط: العودة لأسفل وكأن الزر ينضغط للداخل */
 .wood-banner-animation:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: translateY(-4px) scale(1.05);
+  transition: all 0.1s ease;
 }
 
-/* الأنيميشن الخاص بالنبض (تكبير وتصغير فقط) */
-@keyframes wood-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05); /* يكبر 5% فقط ويرجع */
-  }
+/* أنيميشن نبض خفيف جداً لا يؤثر على مكان الصورة */
+@keyframes wood-pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
 }
 
 /* تنسيق العناصر في قائمة الخشب  */
