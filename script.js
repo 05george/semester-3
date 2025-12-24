@@ -937,22 +937,21 @@ if (hasSavedGroup) {
     if (scrollContainer) scrollContainer.style.display = 'none';
 }
 
-/* --- 18.تتبع الأحداث وإرسال البيانات --- */
+/* --- 18. تتبع الأحداث وإرسال البيانات  --- */
 
-// 1. تسجيل وقت الدخول لحساب مدة الجلسة
+// 1. وقت الدخول (لحساب مدة الجلسة)
 const sessionStartTime = Date.now();
 
-// 2. تسجيل عمليات البحث التي قام بها المستخدم
+// 2. سجل البحث (Set لضمان عدم التكرار)
 let searchHistory = new Set();
 if (searchInput) {
     searchInput.addEventListener('input', debounce((e) => {
-        if (e.target.value.trim().length > 2) {
-            searchHistory.add(e.target.value.trim());
-        }
+        const val = e.target.value.trim();
+        if (val.length > 2) searchHistory.add(val);
     }, 1000));
 }
 
-// 3. تسجيل الملفات عند فتحها
+// 3. مستمع فتح الملفات (لحفظها في localStorage)
 window.addEventListener('fileOpened', (e) => {
     try {
         let history = JSON.parse(localStorage.getItem('openedFilesHistory') || "[]");
@@ -960,44 +959,58 @@ window.addEventListener('fileOpened', (e) => {
             history.push(e.detail);
             localStorage.setItem('openedFilesHistory', JSON.stringify(history));
         }
-    } catch (err) { console.error("Tracking Error:", err); }
+    } catch (err) { console.error("History Error:", err); }
 });
 
-// 4. إرسال التقرير النهائي الشامل
+// 4. الدالة الشاملة للإرسال عند الخروج (تجمع كل المعلومات الضائعة)
 window.addEventListener('beforeunload', () => {
     const rawHistory = localStorage.getItem('openedFilesHistory');
     
-    // نرسل التقرير إذا فتح ملفات أو قضى وقتاً طويلاً
+    // نرسل التقرير فقط إذا كان هناك نشاط (ملفات مفتوحة)
     if (rawHistory && rawHistory !== "[]") {
         const historyArray = JSON.parse(rawHistory);
         const readableHistory = historyArray.map(item => "📄 " + item).join('\n');
         
-        // حساب مدة البقاء في الموقع (بالدقائق)
-        const sessionDuration = Math.round((Date.now() - sessionStartTime) / 60000);
+        // حساب المدة بالدقائق والثواني
+        const durationSec = Math.round((Date.now() - sessionStartTime) / 1000);
+        const durationFormatted = `${Math.floor(durationSec / 60)} min ${durationSec % 60} sec`;
 
         const ua = navigator.userAgent;
-        let deviceModel = "Windows PC";
-        if (/android/i.test(ua)) deviceModel = "Android Device";
-        else if (/iPad|iPhone|iPod/.test(ua)) deviceModel = "iOS Device";
+        
+        // تحديد المتصفح بدقة (بدلاً من Netscape)
+        let browser = "Other";
+        if (ua.includes("Chrome")) browser = "Google Chrome";
+        else if (ua.includes("Firefox")) browser = "Mozilla Firefox";
+        else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+        else if (ua.includes("Edge")) browser = "Microsoft Edge";
+
+        // تحديد الجهاز
+        let device = "PC / Desktop";
+        if (/android/i.test(ua)) device = "Android Device";
+        else if (/iPad|iPhone|iPod/.test(ua)) device = "iOS Device";
 
         const formData = new FormData();
         
-        // --- القسم الأول: بيانات المستخدم والتقنية ---
-        formData.append("Device", deviceModel);
-        formData.append("Browser_Lang", navigator.language);
-        formData.append("Screen", `${window.screen.width}x${window.screen.height}`);
-        formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
-        
-        // --- القسم الثاني: إحصائيات الجلسة (الإضافات الجديدة) ---
-        formData.append("Duration_Minutes", sessionDuration + " min"); // كم دقيقة قضاها
-        formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "No Search"); // ماذا بحث
-        formData.append("Came_From", document.referrer || "Direct Visit"); // دخل للموقع من فين (فيسبوك مثلاً)
-        
-        // --- القسم الثالث: سجل الملفات ---
-        formData.append("Files_List", "\n" + readableHistory);
-        formData.append("Total_Files", historyArray.length);
+        // --- القسم 1: المعلومات التقنية (التي ضاعت منك) ---
+        formData.append("deviceType", device);
+        formData.append("platform", navigator.platform); // مثل Win32 أو Linux
+        formData.append("browser", browser);
+        formData.append("screenSize", `${window.screen.width}x${window.screen.height}`);
+        formData.append("language", navigator.language);
+        formData.append("time", new Date().toLocaleString('ar-EG'));
+        formData.append("referrer", document.referrer || "Direct Link");
+        formData.append("pageUrl", window.location.href);
 
-        // إرسال الكل باستخدام Beacon
+        // --- القسم 2: إحصائيات النشاط (المزايا الجديدة) ---
+        formData.append("Selected_Group", localStorage.getItem('selectedGroup') || "None");
+        formData.append("Stay_Duration", durationFormatted);
+        formData.append("Search_Queries", Array.from(searchHistory).join(' | ') || "No Search");
+        
+        // --- القسم 3: سجل الملفات ---
+        formData.append("Files_Report", "\n" + readableHistory);
+        formData.append("Total_Files_Opened", historyArray.length);
+
+        // الإرسال النهائي
         const sent = navigator.sendBeacon("https://formspree.io/f/xzdpqrnj", formData);
 
         if (sent) {
