@@ -11,17 +11,17 @@ const TrackingSystem = (function() {
             // جلب الـ IP والموقع الجغرافي (خدمة سريعة ومجانية)
             const res = await fetch('https://ipapi.co/json/');
             if (res.ok) ipInfo = await res.json();
-        } catch (e) { console.log("IP Tracking skiped or blocked"); }
+        } catch (e) { console.log("IP Tracking skipped or blocked"); }
 
         cachedTechData = {
             ip: ipInfo.ip,
             city: ipInfo.city,
-            isp: ipInfo.org, // شركة الإنترنت
+            isp: ipInfo.org,
             browser: navigator.userAgentData?.brands?.map(b => b.brand).join(', ') || navigator.userAgent,
             platform: navigator.platform,
             language: navigator.language,
-            cores: navigator.hardwareConcurrency || "N/A", // عدد أنوية المعالج
-            memory: navigator.deviceMemory || "N/A", // الرامات بالجيجا
+            cores: navigator.hardwareConcurrency || "N/A",
+            memory: navigator.deviceMemory || "N/A",
             screen: `${window.screen.width}x${window.screen.height}`,
             viewport: `${window.innerWidth}x${window.innerHeight}`,
             pixelRatio: window.devicePixelRatio,
@@ -32,8 +32,6 @@ const TrackingSystem = (function() {
 
     // 2. دالة الإرسال الرئيسية
     async function sendTrackingData(extraInfo = {}) {
-        // إذا كان الحدث هو "تحميل الصفحة" نجلب البيانات التقنية بالكامل
-        // أما إذا كان "فتح ملف" نرسل البيانات الأساسية فقط لتوفير السرعة
         const isInitial = extraInfo.action === "Page Load";
         const tech = isInitial ? await getTechnicalInfo() : { ip: "cached", screen: "cached" };
 
@@ -48,11 +46,9 @@ const TrackingSystem = (function() {
 
         const formData = new FormData();
         for (const key in data) {
-            // تحويل أي كائنات معقدة لنصوص لضمان وصولها لـ Formspree
             formData.append(key, typeof data[key] === 'object' ? JSON.stringify(data[key]) : data[key]);
         }
 
-        // استخدام fetch للإرسال العادي
         fetch("https://formspree.io/f/xzdpqrnj", {
             method: "POST",
             body: formData,
@@ -79,4 +75,3 @@ window.addEventListener('groupChanged', (e) => {
 window.addEventListener('fileOpened', (e) => {
     TrackingSystem.send({ action: "Open File", target: e.detail });
 });
-/* --- نهاية نظام التتبع --- */
