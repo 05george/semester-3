@@ -246,11 +246,11 @@
 <!-- Thursday 14 -->
 <g transform="translate(712.5,0)">
 
-<rect x="0" y="1300.8" height="371.58" class="m w " data-href="#"/>
+<rect x="0" y="1300.8" height="371.58" class="m w l" data-href="#"/>
 
-<rect x="0" y="863.9" height="436" class="m w " data-href="#"/>
+<rect x="0" y="863.9" height="436" class="m w l" data-href="#"/>
 
-<rect x="0" y="1673" height="620" class="m w " data-href="#" />
+<rect x="0" y="1673" height="620" class="m w l" data-href="URI/patho-2.pdf" />
 
 </g>
 </g>
