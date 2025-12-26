@@ -1,16 +1,17 @@
-const CACHE_NAME = 'interactive-map-v1';
+const CACHE_NAME = 'interactive-map-v2'; // ✅ غيّر الرقم
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './script.js',
+  './tracker.js',
   './image/wood.webp',
   './image/0.png',
-  './tracker.js',
 ];
 
-// 1. تثبيت وحفظ الملفات الأساسية
+// ✅ تثبيت
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // تفعيل فوري
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -18,24 +19,67 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 2. استراتيجية "Network First": يحاول التحديث، وإذا فشل (أوفلاين) يستخدم المخزن
+// ✅ تنظيف الكاش القديم
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('🗑️ حذف كاش قديم:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+// ✅ استراتيجية ذكية: Cache First للصور، Network First للباقي
 self.addEventListener('fetch', (event) => {
-  // ✅ تجاهل طلبات POST والطلبات غير GET
   if (event.request.method !== 'GET') {
-    event.respondWith(fetch(event.request));
     return;
   }
 
+  const url = new URL(event.request.url);
+
+  // ✅ الصور: Cache First (سريع)
+  if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg)$/i)) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request).then((response) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // ✅ HTML/CSS/JS: Network First (دائماً محدّث)
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // تحديث النسخة المخزنة في كل مرة يتوفر فيها إنترنت
         const resClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, resClone);
         });
         return response;
       })
-      .catch(() => caches.match(event.request)) // إذا انقطع الإنترنت، ابحث في الكاش
+      .catch(() => caches.match(event.request))
   );
 });
+5. تحسين إضافي في index.html
+أضف في <head>:
+<!-- ✅ Preconnect لـ GitHub -->
+<link rel="preconnect" href="https://raw.githubusercontent.com">
+<link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+
+<!-- ✅ Preload للخط الخشبي -->
+<link rel="preload" href="image/wood.webp" as="image">
