@@ -167,19 +167,19 @@ async function loadGroupSVG(groupLetter) {
             console.log(`🖼️ عدد الصور في SVG: ${injectedImages.length}`);
 
             imageUrlsToLoad = [];
-            
+
             // ✅ إضافة صورة الخلفية الخشبية أولاً (مشتركة بين كل المجموعات)
             imageUrlsToLoad.push('image/wood.webp');
-            
+
             injectedImages.forEach(img => {
                 const src = img.getAttribute('data-src');
-                
+
                 // ✅ تحميل فقط الصور التي تتبع المجموعة المختارة
                 if (src && !imageUrlsToLoad.includes(src)) {
                     const isGroupImage = src.includes(`image/${groupLetter}/`) || 
                                        src.includes(`logo-${groupLetter}`) || 
                                        src.includes(`logo-wood-${groupLetter}`);
-                    
+
                     if (isGroupImage) {
                         imageUrlsToLoad.push(src);
                     }
@@ -302,11 +302,11 @@ async function smartOpen(item) {
     if (!item || !item.path) return;
 
     const url = `${RAW_CONTENT_BASE}${item.path}`;
-    
+
     // ✅ التحقق من وجود الملف أولاً
     try {
         const response = await fetch(url, { method: 'HEAD' });
-        
+
         if (!response.ok) {
             alert(`❌ الملف غير موجود: ${item.path.split('/').pop()}`);
             console.warn(`⚠️ الملف غير موجود: ${url}`);
@@ -332,7 +332,7 @@ async function smartOpen(item) {
         overlay.classList.remove("hidden");
         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                         encodeURIComponent(url) + "#zoom=page-width";
-        
+
     } catch (error) {
         alert(`❌ خطأ في الاتصال بالملف: ${item.path.split('/').pop()}`);
         console.error(`❌ خطأ في التحقق من الملف:`, error);
@@ -624,12 +624,12 @@ function renderNameInput() {
 
         if (name !== null && name.trim()) {
             localStorage.setItem('user_real_name', name.trim());
-            
+
             // 🔴 تتبع تغيير الاسم عبر tracker.js
             if (typeof trackNameChange === 'function') {
                 trackNameChange(name.trim());
             }
-            
+
             updateWelcomeMessages();
             updateWoodInterface(); // تحديث الواجهة لإظهار الاسم الجديد
             alert("أهلاً بك يا " + name.trim());
@@ -822,7 +822,7 @@ function processRect(r) {
             // ✅ التحقق من وجود الملف أولاً
             try {
                 const response = await fetch(href, { method: 'HEAD' });
-                
+
                 if (!response.ok) {
                     alert(`❌ الملف غير موجود: ${href.split('/').pop()}`);
                     console.warn(`⚠️ الملف غير موجود: ${href}`);
@@ -835,7 +835,7 @@ function processRect(r) {
                 overlay.classList.remove("hidden");
                 pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                                 encodeURIComponent(href) + "#zoom=page-width";
-                
+
                 // 🔴 تتبع فتح الملف
                 if (typeof trackSvgOpen === 'function') {
                     trackSvgOpen(href);
@@ -862,7 +862,7 @@ function processRect(r) {
                     // ✅ التحقق من وجود الملف أولاً
                     try {
                         const response = await fetch(href, { method: 'HEAD' });
-                        
+
                         if (!response.ok) {
                             alert(`❌ الملف غير موجود: ${href.split('/').pop()}`);
                             console.warn(`⚠️ الملف غير موجود: ${href}`);
@@ -876,7 +876,7 @@ function processRect(r) {
                         overlay.classList.remove("hidden");
                         pdfViewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + 
                                         encodeURIComponent(href) + "#zoom=page-width";
-                        
+
                         // 🔴 تتبع فتح الملف
                         if (typeof trackSvgOpen === 'function') {
                             trackSvgOpen(href);
@@ -917,7 +917,7 @@ function scan() {
 }
 window.scan = scan;
 
-/* --- 16. تحميل الصور مع تتبع التقدم --- */
+/* --- 16. تحميل الصور مع تتبع التقدم (محسّن) --- */
 function loadImages() {
     if (!mainSvg) return;
 
@@ -929,30 +929,30 @@ function loadImages() {
         return;
     }
 
-    // ✅ إعادة حساب الحجم الإجمالي
     calculateTotalSize();
 
     let imagesCompleted = 0;
+    const MAX_CONCURRENT = 3; // ✅ تحميل 3 صور بالتوازي فقط
+    let currentIndex = 0;
 
-    imageUrlsToLoad.forEach((url) => {
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    function loadNextBatch() {
+        while (currentIndex < imageUrlsToLoad.length && 
+               currentIndex < imagesCompleted + MAX_CONCURRENT) {
+            
+            const url = imageUrlsToLoad[currentIndex];
+            currentIndex++;
 
-                const contentLength = response.headers.get('content-length');
-                const actualSize = contentLength ? parseInt(contentLength, 10) : estimateFileSize(url);
-
-                console.log(`📦 ${url.split('/').pop()}: ${(actualSize/1024).toFixed(1)}KB`);
-
-                return response.blob().then(blob => ({ blob, actualSize }));
-            })
-            .then(({ blob, actualSize }) => {
+            // ✅ استخدام Image API بدلاً من fetch (أسرع)
+            const img = new Image();
+            
+            img.onload = function() {
+                // تقدير الحجم بناءً على البيانات
+                const actualSize = estimateFileSize(url);
+                
                 loadedBytes += actualSize;
                 updateLoadProgress();
 
-                const objectUrl = URL.createObjectURL(blob);
-
-                // ✅ تحديث جميع الصور في mainSvg و filesListContainer
+                // تحديث جميع الصور
                 const allImages = [
                     ...mainSvg.querySelectorAll('image'),
                     ...(filesListContainer ? filesListContainer.querySelectorAll('image') : [])
@@ -961,8 +961,8 @@ function loadImages() {
                 allImages.forEach(si => {
                     const dataSrc = si.getAttribute('data-src');
                     if (dataSrc === url) {
-                        si.setAttribute('href', objectUrl);
-                        console.log(`✅ تم تحديث الصورة: ${url}`);
+                        si.setAttribute('href', this.src);
+                        console.log(`✅ تم تحديث الصورة: ${url.split('/').pop()}`);
                     }
                 });
 
@@ -971,11 +971,14 @@ function loadImages() {
                 if (imagesCompleted === imageUrlsToLoad.length) {
                     console.log('✅ اكتمل تحميل جميع الصور');
                     finishLoading();
+                } else {
+                    loadNextBatch();
                 }
-            })
-            .catch(error => {
-                console.error(`❌ خطأ في تحميل ${url}:`, error);
+            };
 
+            img.onerror = function() {
+                console.error(`❌ خطأ في تحميل ${url}`);
+                
                 const estimatedSize = estimateFileSize(url);
                 loadedBytes += estimatedSize;
                 updateLoadProgress();
@@ -984,9 +987,16 @@ function loadImages() {
 
                 if (imagesCompleted === imageUrlsToLoad.length) {
                     finishLoading();
+                } else {
+                    loadNextBatch();
                 }
-            });
-    });
+            };
+
+            img.src = url;
+        }
+    }
+
+    loadNextBatch();
 }
 
 function finishLoading() {
@@ -1027,12 +1037,12 @@ if (searchInput) {
     searchInput.onkeydown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            
+
             // 🔴 تتبع البحث
             if (typeof trackSearch === 'function') {
                 trackSearch(searchInput.value);
             }
-            
+
             window.goToWood();
         }
     };
