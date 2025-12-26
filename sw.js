@@ -1,4 +1,4 @@
-const CACHE_NAME = 'interactive-map-v2'; // ✅ غيّر الرقم
+const CACHE_NAME = 'interactive-map-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,7 +11,7 @@ const ASSETS_TO_CACHE = [
 
 // ✅ تثبيت
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // تفعيل فوري
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -75,11 +75,3 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request))
   );
 });
-5. تحسين إضافي في index.html
-أضف في <head>:
-<!-- ✅ Preconnect لـ GitHub -->
-<link rel="preconnect" href="https://raw.githubusercontent.com">
-<link rel="dns-prefetch" href="https://raw.githubusercontent.com">
-
-<!-- ✅ Preload للخط الخشبي -->
-<link rel="preload" href="image/wood.webp" as="image">
