@@ -81,7 +81,7 @@
 
 <rect x="57.5" y="1225" height="121" class="m hw a" data-href="IPC/Answer/9.pdf"/>
 
-<rect x="0" y="1810.38" height="470.24" class="m w " data-href="#"/>
+<rect x="0" y="1810.38" height="470.24" class="m w l" data-href="#"/>
 
 </g>
 <!-- Monday 9 -->
@@ -89,25 +89,25 @@
 
 <rect x="0" y="422.3" height="456.42" class="m w l" data-href="RRS/Lecture/physio-3.pdf"/>
 
-<rect x="0" y="1369" height="450" class="m w " data-href="RRS/Lecture/histo-2.pdf"/>
+<rect x="0" y="1369" height="450" class="m w l" data-href="RRS/Lecture/histo-2.pdf"/>
 
-<rect x="0" y="1812.1" height="471.44" class="m w " data-href="#"/>
+<rect x="0" y="1812.1" height="471.44" class="m w l" data-href="#"/>
 
 </g>
 <!-- Tuesday 9 -->
 <g transform="translate(485,0)">
 
-<rect x="0" y="1121.29" height="347.86" class="m w " data-href="#"/>
+<rect x="0" y="1121.29" height="347.86" class="m w l" data-href="#"/>
 
-<rect x="0" y="1470.58" height="340.47" class="m w " data-href="#"/>
+<rect x="0" y="1470.58" height="340.47" class="m w l" data-href="#"/>
 
-<rect x="0" y="1813.77" height="361.36" class="m w " data-href="#"/>
+<rect x="0" y="1813.77" height="361.36" class="m w l" data-href="#"/>
 
 </g>
 <!-- Wednesday 9 -->
 <g transform="translate(600,0)">
 
-<rect x="0" y="421.64" height="457.44" class="m w " data-href="#"/>
+<rect x="0" y="421.64" height="457.44" class="m w l" data-href="#"/>
 
 <rect x="0" y="1469.19" height="343.19" class="m w l" data-href="RRS/Lecture/physio-4.pdf"/>
 
@@ -115,11 +115,11 @@
 <!-- Thursday 9 -->
 <g transform="translate(715,0)">
 
-<rect x="0" y="422.25" height="340.47" class="m w " data-href="#"/>
+<rect x="0" y="422.25" height="340.47" class="m w l" data-href="#"/>
 
-<rect x="0" y="877.49" height="485.43" class="m w " data-href="#"/>
+<rect x="0" y="877.49" height="485.43" class="m w l" data-href="#"/>
 
-<rect x="0" y="1364.73" height="447.54" class="m w " data-href="#"/>
+<rect x="0" y="1364.73" height="447.54" class="m w l" data-href="#"/>
 
 </g>
 </g>
@@ -149,7 +149,7 @@
 <!-- Saturday 13 -->
 <g transform="translate(139,0)">
 
-<rect x="0" y="937.7" height="468.3" class="m w " data-href="#"/>
+<rect x="0" y="937.7" height="468.3" class="m w l" data-href="#"/>
 
 <rect x="0" y="1409" height="472.3" class="m w l" data-href="URI/Lecture/pharma-2.pdf"/>
 
@@ -159,9 +159,9 @@
 <!-- Monday 13 -->
 <g transform="translate(368,0)">
 
-<rect x="0" y="415.1" height="424.1" class="m w " data-href="#"/>
+<rect x="0" y="415.1" height="424.1" class="m w l" data-href="#"/>
 
-<rect x="0" y="839.15" height="445" class="m w " data-href="#"/>
+<rect x="0" y="839.15" height="445" class="m w l" data-href="#"/>
 
 <rect x="0" y="1287.75" height="484.32" class="m w i" data-href="IPC/Lecture/Chest Inspection and Palpation.pdf" data-full-text="Chest Inspection and Palpation .pdf"/>
 
@@ -173,7 +173,7 @@
 
 <rect x="0" y="311.4" height="426.454" class="m w l" data-href="URI/Lecture/patho-1.pdf"/>
 
-<rect x="0" y="1285.3" height="486" class="m w " data-href="#"/>
+<rect x="0" y="1285.3" height="486" class="m w l" data-href="#"/>
 
 </g>
 <!-- Wednesday 13 -->
@@ -183,17 +183,17 @@
 
 <rect x="0" y="841.4" height="444" class="m w l " data-href="URI/Lecture/histo-1.pdf"/>
 
-<rect x="0" y="1286.2" height="486.5" class="m w " data-href="#"/>
+<rect x="0" y="1286.2" height="486.5" class="m w l" data-href="#"/>
 
 </g>
 <!-- Thursday 13 -->
 <g transform="translate(714,0)">
 
-<rect x="0" y="418.7" height="420" class="m w " data-href="#"/>
+<rect x="0" y="418.7" height="420" class="m w l" data-href="#"/>
 
-<rect x="0" y="1286.5" height="485" class="m w " data-href="#"/>
+<rect x="0" y="1286.5" height="485" class="m w l" data-href="#"/>
 
-<rect x="0" y="1772.3" height="508.2" class="m w " data-href="#"/>
+<rect x="0" y="1772.3" height="508.2" class="m w l" data-href="#"/>
 </g>
 </g>
 <!-- الاسبوع الرابع عشر-->
@@ -202,9 +202,9 @@
 
 <!-- Saturday 14 -->
 <g transform="translate(138,0)">
-<rect x="0" y="242" height="350.6" class="m w " data-href="#" />
+<rect x="0" y="242" height="350.6" class="m w l" data-href="#" />
 
-<rect x="0" y="593" height="341.5" class="m w " data-href="#" />
+<rect x="0" y="593" height="341.5" class="m w l" data-href="#" />
 
 <rect x="0" y="934.3" height="320" class="m w l" data-href="URI/Lecture/pharma-3.pdf" />
 </g>
@@ -220,27 +220,27 @@
 
 <rect x="0" y="1204.3"  height="494.7" class="m w l" data-href="URI/Lecture/para-1.pdf" />
 
-<rect x="0" y="650.4" height="350" class="m w " data-href="#" />
+<rect x="0" y="650.4" height="350" class="m w l" data-href="#" />
 </g>
 
 <!-- Tuesday 14 -->
 <g transform="translate(483,0)">
 
-<rect x="0" y="1301.4"  height="495" class="m w " data-href="#" />
+<rect x="0" y="1301.4"  height="495" class="m w l" data-href="#" />
 
 <rect x="0" y="817.5" height="436" class="m w i" data-href="IPC/Question/Discussion-1.pdf" />
 
-<rect x="0" y="1797.6" height="494.7" class="m w " data-href="#" />
+<rect x="0" y="1797.6" height="494.7" class="m w l" data-href="#" />
 </g>
 
 <!-- Wednesday 14 -->
 <g transform="translate(598,0)">
 
-<rect x="0" y="864.5"  height="436.6" class="m w " data-href="#" />
+<rect x="0" y="864.5"  height="436.6" class="m w l" data-href="#" />
 
-<rect x="0" y="288.7"  height="350.55" class="m w " data-href="#" />
+<rect x="0" y="288.7"  height="350.55" class="m w l" data-href="#" />
 
-<rect x="0" y="1300.7"  height="495.8" class="m w " data-href="URI/patho-2.pdf" />
+<rect x="0" y="1300.7"  height="495.8" class="m w l" data-href="URI/patho-2.pdf" />
 </g>
 
 <!-- Thursday 14 -->
