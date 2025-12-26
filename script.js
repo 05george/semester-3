@@ -777,7 +777,15 @@ function processRect(r) {
     if (r.classList.contains('w')) r.setAttribute('width', '113.5');
     if (r.classList.contains('hw')) r.setAttribute('width', '56.75');
 
-    const href = r.getAttribute('data-href') || '';
+    let href = r.getAttribute('data-href') || '';
+    
+    // ✅ تحويل الروابط النسبية إلى مطلقة
+    if (href && href !== '#' && !href.startsWith('http')) {
+        href = `${RAW_CONTENT_BASE}${href}`;
+        r.setAttribute('data-href', href);
+        console.log(`🔗 تحويل رابط: ${href}`);
+    }
+    
     const name = r.getAttribute('data-full-text') || (href !== '#' ? href.split('/').pop().split('#')[0].split('.').slice(0, -1).join('.') : '');
     const w = parseFloat(r.getAttribute('width')) || r.getBBox().width;
     const x = parseFloat(r.getAttribute('x')); 
