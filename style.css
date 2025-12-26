@@ -1,3 +1,27 @@
+/* ===== منع Samsung Dark Mode ===== */
+html {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+body {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+  background-color: #000000 !important;
+}
+
+/* منع الفلاتر على جميع العناصر */
+* {
+  color-scheme: only light !important;
+  -webkit-color-scheme: only light !important;
+}
+
+/* منع Samsung من تطبيق الفلاتر */
+html, body, div, svg, image, img {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
 /* الحالة العادية */
 .wood-banner-animation {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
